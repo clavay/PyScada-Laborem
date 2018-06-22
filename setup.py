@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 import os
-import pyscada
+from pyscada import laborem
 
 
 CLASSIFIERS = [
@@ -23,7 +23,7 @@ setup(
     author="Camille Lavayssière",
     author_email="clavayssiere@univ-pau.fr",
     name='pyscada-laborem',
-    version=pyscada.__version__,
+    version=laborem.__version__,
     description='LaboREM extension for PyScada a Python and Django based Open Source SCADA System',
     long_description=open(os.path.join(os.path.dirname(__file__), 'README.rst')).read(),
     url='http://www.github.com/clavay/PyScada-LaboREM',
@@ -37,4 +37,5 @@ setup(
     include_package_data=True,
     zip_safe=False,
     test_suite='runtests.main',
+    namespace_packages=['pyscada']
 )
