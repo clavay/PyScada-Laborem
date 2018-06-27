@@ -9,4 +9,4 @@ from django.utils.translation import ugettext_lazy as _
 class PyScadaLaboREMConfig(AppConfig):
     name = 'pyscada.laborem'
     verbose_name = _("PyScada LaboREM")
-    path = os.path.realpath(__file__)
+    path = os.path.dirname(os.path.realpath(__file__))
