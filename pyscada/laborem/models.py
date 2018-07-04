@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from pyscada.models import Device
-from pyscada.models import Variable
+from pyscada.models import Device, Variable, Unit
 from pyscada.gpio.models import GPIOVariable
-
+from pyscada.visa.models import VISADevice
 
 from django.db import models
 from django.db.models.signals import post_save
@@ -14,6 +13,7 @@ from django.utils.encoding import python_2_unicode_compatible
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 @python_2_unicode_compatible
 class LaboremMotherboardDevice(models.Model):
@@ -36,9 +36,28 @@ class LaboremMotherboardDevice(models.Model):
     plug16 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug16')
     MotherboardIOConfig = models.ForeignKey('LaboremMotherboardIOConfig')
     # TODO : Make the motherboard Config to be restrictive on plug selection
+    plug_choices = (('0', '0'),
+                    ('1', '1'),
+                    ('2', '2'),
+                    ('3', '3'),
+                    ('4', '4'),
+                    ('5', '5'),
+                    ('6', '6'),
+                    ('7', '7'),
+                    ('8', '8'),
+                    ('9', '9'),
+                    ('10', '10'),
+                    ('11', '11'),
+                    ('12', '12'),
+                    ('13', '13'),
+                    ('14', '14'),
+                    ('15', '15'),
+                    ('16', '16'))
+    plug = models.CharField(max_length=254, choices=plug_choices, default=0)
 
     def __str__(self):
         return self.laboremmotherboard_device.short_name
+
 
 @python_2_unicode_compatible
 class LaboremMotherboardIOConfig(models.Model):
@@ -65,6 +84,7 @@ class LaboremMotherboardIOConfig(models.Model):
     def __str__(self):
         return self.name
 
+
 @python_2_unicode_compatible
 class LaboremMotherboardIOElement(models.Model):
     name = models.CharField(default='', max_length=255)
@@ -72,6 +92,7 @@ class LaboremMotherboardIOElement(models.Model):
 
     def __str__(self):
         return self.name
+
 
 @python_2_unicode_compatible
 class LaboremPlugDevice(models.Model):
@@ -85,37 +106,38 @@ class LaboremPlugDevice(models.Model):
     def __str__(self):
         return self.name
 
+
 @python_2_unicode_compatible
-class LaboremMotherboardVariable(models.Model):
-    laboremmotherboard_variable = models.OneToOneField(Variable, null=True, blank=True)
-    plug_choices = (('1', '1'),
-                    ('2', '2'),
-                    ('3', '3'),
-                    ('4', '4'),
-                    ('5', '5'),
-                    ('6', '6'),
-                    ('7', '7'),
-                    ('8', '8'),
-                    ('9', '9'),
-                    ('10', '10'),
-                    ('11', '11'),
-                    ('12', '12'),
-                    ('13', '13'),
-                    ('14', '14'),
-                    ('15', '15'),
-                    ('16', '16'))
-    plug = models.CharField(max_length=254, choices=plug_choices)
+class LaboremRobotElement(models.Model):
+    name = models.CharField(default='', max_length=255)
+    description = models.TextField(default='', verbose_name="Description", null=True)
+    robot = models.ForeignKey(VISADevice)
+    value = models.FloatField(default=0)
+    unit = models.ForeignKey(Unit, on_delete=models.SET(1))
+    active = models.PositiveSmallIntegerField(default=0)
+    R = models.FloatField(default=0)
+    theta = models.FloatField(default=0)
+    z = models.FloatField(default=0)
 
     def __str__(self):
-        return self.laboremmotherboard_variable.short_name
+        return self.name
+
+
+@python_2_unicode_compatible
+class LaboremRobotBase(models.Model):
+    name = models.CharField(default='', max_length=255)
+    description = models.TextField(default='', verbose_name="Description", null=True)
+    element = models.ForeignKey(LaboremRobotElement)
+    # TODO : 2 bases cannot select the same element
+
+    def __str__(self):
+        return self.name
+
 
 @receiver(post_save, sender=LaboremMotherboardDevice)
-@receiver(post_save, sender=LaboremMotherboardVariable)
 def _reinit_daq_daemons(sender, instance, **kwargs):
     """
     update the daq daemon configuration when changes be applied in the models
     """
     if type(instance) is LaboremMotherboardDevice:
         post_save.send_robust(sender=Device, instance=instance.laboremmotherboard_device)
-    elif type(instance) is LaboremMotherboardVariable:
-        post_save.send_robust(sender=Variable, instance=instance.laboremmotherboard_variable)
