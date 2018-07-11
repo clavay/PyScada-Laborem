@@ -128,6 +128,9 @@ class LaboremRobotBase(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
     element = models.ForeignKey(LaboremRobotElement)
+    R = models.FloatField(default=0)
+    theta = models.FloatField(default=0)
+    z = models.FloatField(default=0)
     # TODO : 2 bases cannot select the same element
 
     def __str__(self):

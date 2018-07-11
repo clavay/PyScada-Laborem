@@ -13,6 +13,106 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
+def take_and_drop(robot, r1, theta1, z1, r2, theta2, z2):
+    # init
+    pince(robot, 1)
+    prepare_epaule_coude_poignet(robot, 20, 5, 3)
+    rotation_base(robot, 0)
+    # on place le bras pour prendre
+    prepare_epaule_coude_poignet(robot, r1, z1, 1)
+    # on tourne le bras pour prendre
+    rotation_base(robot, theta1)
+    # on ferme la pince
+    pince(robot, 0)
+    # on leve le bras
+    prepare_epaule_coude_poignet(robot, r1, 5, 2)
+    # on tourne le bras pour déposer
+    rotation_base(robot, theta2)
+    # on place le bras pour deposer
+    prepare_epaule_coude_poignet(robot, r2, z2, 3)
+    # on ouvre la pince
+    pince(robot, 1)
+
+
+def format_ascii(rot_ascii, axe):
+    if rot_ascii < 0:
+        ret = axe + '-' + str(int(rot_ascii))[1:].zfill(3)
+        print(ret)
+        return ret
+    else:
+        ret = axe + '+' + str(int(rot_ascii)).zfill(3)
+        print(ret)
+        return ret
+
+
+def deg_to_ascii(angle_deg, angle_max_deg):
+    return int(min(max(angle_deg, -angle_max_deg), angle_max_deg) * 511 / angle_max_deg)
+
+
+def prepare_epaule_coude_poignet(robot, r, z, mouvement):
+    l_epaule = 11.5
+    l_coude = 14.8
+    l_poignet = 8.8
+    l_base = 11
+
+    angle_max_epaule = 43
+    angle_max_coude = 125
+    angle_max_poignet = 90
+
+    correction_angle_poignet = 28.5
+
+    xp = r
+    yp = z - l_base + l_poignet
+
+    r_alpha = (xp**2 + yp**2 - l_epaule**2 - l_coude**2)/(-2*l_epaule*l_coude)
+    alpha = np.arccos(r_alpha)
+    theta_coude = -np.pi + alpha
+
+    theta_5 = np.arctan2(yp, xp) + np.arcsin(l_coude*np.sin(alpha)/(xp**2 + yp**2)**0.5)
+    theta_epaule = -np.pi/4 + theta_5
+
+    theta_poignet = -np.pi/2 - np.pi/4 - theta_epaule - theta_coude
+
+    if mouvement == 1:
+        robot.write(format_ascii(deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+                                              angle_max_poignet), 'F'))
+        time.sleep(1)
+        robot.write(format_ascii(deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
+        time.sleep(1)
+        robot.write(format_ascii(deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+        time.sleep(1)
+    elif mouvement == 2:
+        robot.write(format_ascii(deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+        time.sleep(1)
+    elif mouvement == 3:
+        robot.write(format_ascii(deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+        time.sleep(1)
+        robot.write(format_ascii(deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
+        time.sleep(1)
+        robot.write(format_ascii(deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+                                              angle_max_poignet), 'F'))
+        time.sleep(1)
+    return True
+
+
+def rotation_base(robot, theta):
+    angle_max_base = 130
+    theta_base = theta*np.pi/180
+    robot.write(format_ascii(deg_to_ascii(theta_base*180/np.pi, angle_max_base), 'B'))
+    time.sleep(2)
+    return True
+
+
+def pince(robot, openclose):
+    if openclose == 0:
+        robot.write('P+511')
+        time.sleep(2)
+    else:
+        robot.write('P-511')
+        time.sleep(2)
+    return True
+
+
 def startup(self):
     """
     write your code startup code here, don't change the name of this function
@@ -26,7 +126,7 @@ def startup(self):
         logger.error("Error importing gpiozero in script")
     device_laborem = Device.objects.get(pk=10)
     plug_selected = device_laborem.laboremmotherboarddevice.plug
-    #plug_selected = int(self.read_variable_property(variable_name='BODE_RUN', property_name='BODE_PLUG'))
+    # plug_selected = int(self.read_variable_property(variable_name='BODE_RUN', property_name='BODE_PLUG'))
 
     # TODO: Keep the GPIO config in DB. Add gpiozero to the GPIO model
     d = []
@@ -36,21 +136,21 @@ def startup(self):
     d.append(LED(19))
     d.append(LED(26))
     relay = d[4]
-    #relay.on()
-    logger.info("Plug selected : %s" % (plug_selected))
-    '''for i in range(0, 4):
+    relay.on()
+    logger.info("Plug selected : %s" % plug_selected)
+    for i in range(0, 4):
         if bin(plug_selected)[2:].zfill(4)[i:i+1]:
             d[i].on()
         else:
             d[i].off()
-'''
+
     visa_backend = '@py'  # use PyVISA-py as backend
     if hasattr(settings, 'VISA_BACKEND'):
         visa_backend = settings.VISA_BACKEND
     device_mdo = Device.objects.get(pk=3)
     device_afg = Device.objects.get(pk=2)
     device_dmm = Device.objects.get(pk=1)
-    # device_robot = Device.objects.get(pk=7)
+    device_robot = Device.objects.get(pk=7)
 
     try:
         self.rm = visa.ResourceManager(visa_backend)
@@ -102,7 +202,7 @@ def startup(self):
     except:
         logger.error("Visa ResourceManager cannot open resource : %s" % device_dmm.__str__())
         pass
-    '''try:
+    try:
         resource_prefix = device_robot.visadevice.resource_name.split('::')[0]
         extras = {}
         if hasattr(settings, 'VISA_DEVICE_SETTINGS'):
@@ -117,7 +217,7 @@ def startup(self):
     except:
         logger.error("Visa ResourceManager cannot open resource : %s" % device_robot.__str__())
         pass
-    '''
+
     return True
 
 
@@ -175,31 +275,13 @@ def script(self):
                             ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM')
         # Move the robot
         for base in LaboremRobotBase.objects.all():
-            R = base.element.R
-            theta = base.element.theta
-            z = base.element.z
-            l_epaule = 11.5
-            l_coude = 14.8
-            l_poignet = 8.8
-            offset_base = 11.3
-            z2 = z + l_poignet + offset_base
-            angle_coude = min(
-                max(np.arccos((R ** 2 + z2 ** 2 - (l_epaule ** 2 + l_coude ** 2)) /
-                              (2 * l_epaule * l_coude * (R**2 + z2**2)**0.5))*180/np.pi, -125), 25)
-            angle_epaule = min(max(np.arctan2((z2 * (l_epaule + l_coude * np.cos(angle_coude)) -
-                                               R * l_coude * np.sin(angle_coude)),
-                                              (z2 * (l_epaule + l_coude * np.cos(angle_coude)) +
-                                               R * l_coude * np.sin(angle_coude)))*180/np.pi, -43), 43)
-            angle_poignet = min(max(180 - angle_coude - angle_epaule, -90), 90)
-            angle_base = min(max(theta, -180), 180)
-            rot_e = angle_epaule*511/180
-            rot_c = angle_coude*511/180
-            rot_p = angle_poignet*511/180
-            rot_b = angle_base*511/180
-            logger.info("%s %s %s %s %s %s %s %s %s %s %s %s" % (R, theta, z, z2, l_epaule, l_coude, l_poignet,
-                                                                 offset_base, angle_epaule, angle_coude,
-                                                                 angle_poignet, angle_base))
-            logger.info("%s %s %s %s" % (rot_e, rot_c, rot_p, rot_b))
+            r_element = base.element.R
+            theta_element = base.element.theta
+            z_element = base.element.z
+            r_base = base.R
+            theta_base = base.theta
+            z_base = base.z
+            take_and_drop(self.inst_robot, r_element, theta_element, z_element, r_base, theta_base, z_base)
 
     loop = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_loop'))
     if loop:
