@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import pyscada
 
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 __author__ = 'Camille Lavayssière'
 
 default_app_config = 'pyscada.laborem.apps.PyScadaLaboREMConfig'

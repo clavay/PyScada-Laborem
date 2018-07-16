@@ -5,7 +5,7 @@ handles write tasks for variables attached to the generic devices
 """
 
 from pyscada.models import DeviceWriteTask, VariableProperty
-from time import time
+from time import time, sleep
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,6 +16,7 @@ def startup(self):
     write your code startup code here, don't change the name of this function
     :return:
     """
+    sleep(60)
     pass
 
 
@@ -35,7 +36,7 @@ def script(self):
     # add
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
                                                variable_property__variable__device__protocol=1):
-        logger.info('DeviceWriteTask VP : %s' % task.__str__())
+        # logger.info('DeviceWriteTask VP : %s' % task.__str__())
         if task.variable_property.variable.scaling is not None:
             task.value = task.variable_property.variable.scaling.scale_output_value(task.value)
         if task.variable_property:
@@ -56,7 +57,7 @@ def script(self):
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
                                                variable__device__protocol=1).order_by('start'):
         data = []
-        logger.info('DeviceWriteTask V : %s' % task.__str__())
+        # logger.info('DeviceWriteTask V : %s' % task.__str__())
         if task.variable.scaling is not None:
             task.value = task.variable.scaling.scale_output_value(task.value)
         if task.variable:

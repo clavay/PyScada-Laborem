@@ -1,0 +1,17 @@
+[Unit]
+Description=LaboREM Camera
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/tmp/laborem_camera.pid
+User=pyscada
+Group=pyscada
+ExecStart=/usr/local/bin/mjpg_streamer -i "input_uvc.so -d /dev/video0" -o "output_http.so -p 8090"
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
+
+
