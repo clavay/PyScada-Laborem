@@ -35,8 +35,9 @@ def script(self):
     """
     # add
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
-                                               variable_property__variable__device__protocol=1):
-        # logger.info('DeviceWriteTask VP : %s' % task.__str__())
+                                               variable_property__variable__device__protocol=1)\
+            .order_by('variable_property__name'):
+        logger.info('GenericDeviceWriteTask VP : %s' % task.__str__())
         if task.variable_property.variable.scaling is not None:
             task.value = task.variable_property.variable.scaling.scale_output_value(task.value)
         if task.variable_property:
@@ -53,31 +54,22 @@ def script(self):
         task.finished = time()
         task.save()
 
-    '''
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
-                                               variable__device__protocol=1).order_by('start'):
-        data = []
-        # logger.info('DeviceWriteTask V : %s' % task.__str__())
-        if task.variable.scaling is not None:
-            task.value = task.variable.scaling.scale_output_value(task.value)
+                                               variable__device__protocol=1).order_by('variable__name'):
+        logger.info('GenericDeviceWriteTask Variable : %s' % task.__str__())
+        # if task.variable.scaling is not None:
+        #    task.value = task.variable.scaling.scale_output_value(task.value)
         if task.variable:
             # write value to Variable use that for later read
-            tmp_data = self.device.write_data(task.variable.id, task.value, task)
-            if isinstance(tmp_data, list):
-                if len(tmp_data) > 0:
-                    task.done = True
-                    task.finished = time()
-                    task.save()
-                    data.append(tmp_data)
-                else:
-                    task.failed = True
-                    task.finished = time()
-                    task.save()
+            tmp_data = task.variable.update_value(task.value, time())
+            logger.info("tmp data : %s - %s - %s - %s - %s" % (tmp_data, task.value, task.variable.value,
+                                                               task.variable.store_value, task.variable.timestamp))
+            if tmp_data:
+                task.done = True
+                task.finished = time()
+                task.save()
+                logger.info(task.variable.create_recorded_data_element())
             else:
                 task.failed = True
                 task.finished = time()
                 task.save()
-            if isinstance(data, list):
-                if len(data) > 0:
-                    return 1, data
-    '''

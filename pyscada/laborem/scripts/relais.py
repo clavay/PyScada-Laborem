@@ -50,7 +50,7 @@ def script(self):
     if plug_selected:
         plug_selected = plug_selected - 1
         for i in range(0, 4):
-            if int(bin(plug_selected)[2:].zfill(4)[i:i + 1]):
+            if int(bin(plug_selected)[2:].zfill(4)[4 - i - 1:4 - i]):
                 self.d[i].on()
             else:
                 self.d[i].off()

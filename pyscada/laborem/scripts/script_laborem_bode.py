@@ -294,10 +294,10 @@ def script(self):
             z_base = base.z
             take_and_drop(self, self.inst_robot, r_base, theta_base, z_base, r_element, theta_element, z_element)
 
-    bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_loop'))
+    bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
         logger.info("Bode running...")
-        vepp = self.read_variable_property(variable_name='Bode_run', property_name='Bode_Vepp')
+        vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
                             'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
         self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
@@ -305,11 +305,11 @@ def script(self):
                             str(1.2 * float(vepp) / (2 * 4)) + ';:CH2:YUN "V";:CH2:BANdwidth 10000000;:'
                             'CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;'
                             ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM')
-        self.write_variable_property(variable_name='Bode_run', property_name='Bode_loop', value=0,
+        self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
                                      value_class='BOOLEAN')
-        fmin = self.read_variable_property(variable_name='Bode_run', property_name='Bode_Fmin')
-        fmax = self.read_variable_property(variable_name='Bode_run', property_name='Bode_Fmax')
-        nb_points = self.read_variable_property(variable_name='Bode_run', property_name='Bode_nb_points')
+        fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
+        fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
+        nb_points = self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS')
 
         for f in np.geomspace(fmin, fmax, nb_points):
             # Set the generator to freq f
