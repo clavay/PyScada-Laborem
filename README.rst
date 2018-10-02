@@ -26,7 +26,7 @@ Installation
  - Install gpiozero : sudo pip install gpiozero
  - Install PyScada-LaboREM : sudo pip install https://github.com/clavay/PyScada-LaboREM/tarball/master
  - Install PyScada-GPIO : sudo pip install pyscada-gpio
- - In /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py add : url(r'^', include('pyscada.laborem.urls')),
+ - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py : url(r'^', include('pyscada.laborem.urls')),
  - Add pyscada and gpio apps in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
     INSTALLED_APPS = [
     ...
@@ -50,6 +50,10 @@ Without proxy :
         'django_cas_ng.backends.CASBackend',
     ]
     CAS_SERVER_URL = 'https://account.example.com/cas/'
+ - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
+    url(r'^accounts/login$', django_cas_ng.views.login, name='cas_ng_login'),
+    url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
+    url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
 
 Behind a proxy for CAS V2 :
  - sudo pip install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
@@ -68,6 +72,12 @@ Behind a proxy for CAS V2 :
     CAS_SERVER_URL = 'https://account.example.com/cas/'
     CAS_VERSION = '2'
     CAS_EXTRA_LOGIN_KWARGS = {'proxies': {'https': 'http://proxy.com:3128'}, 'timeout': 5}
+ - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
+    url(r'^accounts/login$', django_cas_ng.views.login, name='cas_ng_login'),
+    url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
+    url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
+
+sudo /var/www/pyscada/PyScadaServer/manage.py migrate
 
 To add a USB camera
 -------------------

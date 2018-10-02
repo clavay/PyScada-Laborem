@@ -18,8 +18,8 @@ def startup(self):
     os.environ["PIGPIO_ADDR"] = "10.3.205.173"
     try:
         from gpiozero import LED
-    except:
-        logger.error("Error importing gpiozero in script")
+    except Exception as e:
+        logger.error("Error importing gpiozero in script - Exception : %s" % e)
 
     # TODO: Keep the GPIO config in DB. Add gpiozero to the GPIO model
     self.d = {0: LED(5),
@@ -36,7 +36,7 @@ def shutdown(self):
     :return:
     """
     # Wait for the robot to go to a safe position
-    time.sleep(3)
+    time.sleep(5)
 
 
 def script(self):

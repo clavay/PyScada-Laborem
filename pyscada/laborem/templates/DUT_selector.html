@@ -1,0 +1,56 @@
+<br><br><br>list plugs :<br>
+{% if not dut_selector.plug1 and not dut_selector.plug2 and not dut_selector.plug3 and not dut_selector.plug4 and not dut_selector.plug5 and not dut_selector.plug6 and not dut_selector.plug7 and not dut_selector.plug8 and not dut_selector.plug9 and not dut_selector.plug10 and not dut_selector.plug11 and not dut_selector.plug12 and not dut_selector.plug13 and not dut_selector.plug14 and not dut_selector.plug15 and not dut_selector.plug16 %}
+    No plug config
+{% else %}
+    <div class="col-md-4"><img src="/media/img/laborem/plugs/select_filter.jpg" class="img-plug img-responsive" alt="DUT selected"></div>
+    <div class="list-group col-md-4" id="ListPlugs">
+        {% if dut_selector.plug1 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug1 plug_id="1" %}
+        {% endif %}
+        {% if dut_selector.plug2 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug2 plug_id="2" %}
+        {% endif %}
+        {% if dut_selector.plug3 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug3 plug_id="3" %}
+        {% endif %}
+        {% if dut_selector.plug4 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug4 plug_id="4" %}
+        {% endif %}
+        {% if dut_selector.plug5 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug5 plug_id="5" %}
+        {% endif %}
+        {% if dut_selector.plug6 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug6 plug_id="6" %}
+        {% endif %}
+        {% if dut_selector.plug7 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug7 plug_id="7" %}
+        {% endif %}
+        {% if dut_selector.plug8 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug8 plug_id="8" %}
+        {% endif %}
+        {% if dut_selector.plug9 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug9 plug_id="9" %}
+        {% endif %}
+        {% if dut_selector.plug10 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug10 plug_id="10" %}
+        {% endif %}
+        {% if dut_selector.plug11 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug11 plug_id="11" %}
+        {% endif %}
+        {% if dut_selector.plug12 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug12 plug_id="12" %}
+        {% endif %}
+        {% if dut_selector.plug13 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug13 plug_id="13" %}
+        {% endif %}
+        {% if dut_selector.plug14 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug14 plug_id="14" %}
+        {% endif %}
+        {% if dut_selector.plug15 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug15 plug_id="15" %}
+        {% endif %}
+        {% if dut_selector.plug16 %}
+            {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug16 plug_id="16" %}
+        {% endif %}
+    </div>
+{% endif %}

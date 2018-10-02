@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import os
 from pyscada.models import Device
-from pyscada.laborem.models import LaboremMotherboardDevice, LaboremRobotBase
+from pyscada.laborem.models import LaboremRobotBase
 import logging
 import visa
 import time
@@ -12,6 +11,10 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+
+###################################################
+# This part is for the robot used in GIM IUT Anglet
+###################################################
 
 def take_and_drop(self, robot, r1, theta1, z1, r2, theta2, z2):
     # init
@@ -134,6 +137,10 @@ def pince(robot, openclose):
     return True
 
 
+#######################
+# End of the robot part
+#######################
+
 def startup(self):
     """
     write your code startup code here, don't change the name of this function
@@ -153,8 +160,8 @@ def startup(self):
 
     try:
         self.rm = visa.ResourceManager(visa_backend)
-    except:
-        logger.error("Visa ResourceManager cannot load resources : %s" % self)
+    except Exception as e:
+        logger.error("Visa ResourceManager cannot load resources : %s - Exception : %s" % (self, e))
         return False
 
     try:
@@ -169,8 +176,8 @@ def startup(self):
             logger.debug('Connected visa device : %s' % device_mdo.__str__())
         else:
             logger.debug('NOT connected visa device : %s' % device_mdo.__str__())
-    except:
-        logger.error("Visa ResourceManager cannot open resource : %s" % device_mdo.__str__())
+    except Exception as e:
+        logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_mdo.__str__(), e))
         pass
     try:
         resource_prefix = device_afg.visadevice.resource_name.split('::')[0]
@@ -184,8 +191,8 @@ def startup(self):
             logger.debug('Connected visa device : %s' % device_afg.__str__())
         else:
             logger.debug('NOT connected visa device : %s' % device_afg.__str__())
-    except:
-        logger.error("Visa ResourceManager cannot open resource : %s" % device_afg.__str__())
+    except Exception as e:
+        logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_afg.__str__(), e))
         pass
     try:
         resource_prefix = device_dmm.visadevice.resource_name.split('::')[0]
@@ -199,8 +206,8 @@ def startup(self):
             logger.debug('Connected visa device : %s' % device_dmm.__str__())
         else:
             logger.debug('NOT connected visa device : %s' % device_dmm.__str__())
-    except:
-        logger.error("Visa ResourceManager cannot open resource : %s" % device_dmm.__str__())
+    except Exception as e:
+        logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_dmm.__str__(), e))
         pass
     try:
         resource_prefix = device_robot.visadevice.resource_name.split('::')[0]
@@ -214,8 +221,8 @@ def startup(self):
             logger.debug('Connected visa device : %s' % device_robot.__str__())
         else:
             logger.debug('NOT connected visa device : %s' % device_robot.__str__())
-    except:
-        logger.error("Visa ResourceManager cannot open resource : %s" % device_robot.__str__())
+    except Exception as e:
+        logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_robot.__str__(), e))
         pass
 
     return True
@@ -322,7 +329,7 @@ def script(self):
             while i < i_max:
                 try:
                     i += 1
-                    time.sleep(0.5)
+                    time.sleep(1)
                     vseff = self.inst_dmm.query(':READ?')
                     break
                 except Exception as e:

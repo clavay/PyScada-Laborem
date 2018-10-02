@@ -1,0 +1,9 @@
+{% if plug.plug_image %}
+    <a href="#" class="list-group-item" data-img="{{ plug.plug_image.url }}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}">{{ plug.description }}
+{% else %}
+    <a href="#" class="list-group-item" data-img="/media/img/laborem/plugs/no_img.jpg" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}">{{ plug.description }}
+{% endif %}
+{% if "ROBOT" in plug.name|upper %}
+    <span class="badge">Robot</span>
+{% endif %}
+</a>
