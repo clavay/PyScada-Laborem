@@ -310,7 +310,7 @@ def script(self):
         self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
         self.inst_mdo.write('*RST;:SEL:CH1 1;:SEL:CH2 1;:HORIZONTAL:POSITION 0;:CH1:YUN "V";:CH1:SCALE ' +
                             str(1.2 * float(vepp) / (2 * 4)) + ';:CH2:YUN "V";:CH2:BANdwidth 10000000;:'
-                            'CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;'
+                            ':CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;'
                             ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM')
         self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
                                      value_class='BOOLEAN')
@@ -406,3 +406,138 @@ def script(self):
             logger.info("Freq : %s - Gain : %s - Phase : %s" % (f, gain, mean_phase))
             self.write_values_to_db(data={'Bode_Freq': [f], 'Bode_Gain': [gain], 'Bode_Phase': [mean_phase]})
         logger.info("Bode end")
+
+    waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_1_Waveform'))
+    if waveform:
+        logger.info("Waveform running...")
+        self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_1_Waveform', value=0,
+                                     value_class='BOOLEAN')
+
+        vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
+
+        # Set the generator to freq f
+        f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_F')
+        mdo_horiz_scale = str(round(float(4.0 / (10.0 * float(f))), 6))
+
+        self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
+                            'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
+        self.inst_afg.write('SOUR1:FREQ:FIX ' + str(f))
+        self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
+        self.inst_mdo.write('*RST;:SEL:CH1 1;:HORIZONTAL:POSITION 0;:CH1:YUN "V";'
+                            ':CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;'
+                            ':TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;:TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM')
+        self.inst_mdo.write(':HORIZONTAL:SCALE ' + mdo_horiz_scale + ';:CH1:SCALE ' + str(1.2 * float(vepp) / (2 * 4)))
+        self.inst_mdo.write(':SEL:CH2 1;:CH2:YUN "V";:CH2:BANdwidth 10000000;')
+
+        self.inst_mdo.write
+
+        # io config
+        self.inst_mdo.write('header 0')
+        self.inst_mdo.write('data:encdg SRIBINARY')
+        self.inst_mdo.write('data:source CH1')  # channel
+        self.inst_mdo.write('data:start 1')  # first sample
+        record = int(self.inst_mdo.query('horizontal:recordlength?'))
+        self.inst_mdo.write('data:stop {}'.format(record))  # last sample
+        self.inst_mdo.write('wfmoutpre:byt_n 1')  # 1 byte per sample
+
+        # acq config
+        self.inst_mdo.write('acquire:state 0')  # stop
+        self.inst_mdo.write('acquire:stopafter SEQUENCE')  # single
+        self.inst_mdo.write('acquire:state 1')  # run
+
+        # data query
+        time.sleep(20 / f)
+        bin_wave_ch1 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
+        bin_wave_ch1 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
+
+        # retrieve scaling factors
+        #tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
+        #tstart = float(self.inst_mdo.query('wfmoutpre:xzero?'))
+        vscale_ch1 = float(self.inst_mdo.query('wfmoutpre:ymult?'))  # volts / level
+        voff_ch1 = float(self.inst_mdo.query('wfmoutpre:yzero?'))  # reference voltage
+        vpos_ch1 = float(self.inst_mdo.query('wfmoutpre:yoff?'))  # reference position (level)
+
+        # create scaled vectors
+        # horizontal (time)
+        #total_time = tscale * record
+        #tstop = tstart + total_time
+        #scaled_time = np.linspace(tstart, tstop, num=record, endpoint=False)
+        # vertical (voltage)
+        unscaled_wave_ch1 = np.array(bin_wave_ch1, dtype='double')  # data type conversion
+        scaled_wave_ch1 = (unscaled_wave_ch1 - vpos_ch1) * vscale_ch1 + voff_ch1
+        scaled_wave_ch1 = scaled_wave_ch1.tolist()
+
+        # Read from the multimeter the RMS value of the output
+        i = 0
+        i_max = 3  # Try X time max to read 3  vseff
+        vseff = 0
+        while i < i_max:
+            try:
+                i += 1
+                time.sleep(1)
+                vseff = self.inst_dmm.query(':READ?')
+                break
+            except Exception as e:
+                logger.error("Error reading multimeter : %s" % e)
+        vsmax = float(vseff) * float(np.sqrt(2))
+        mdo_ch2_scale = str(1.4 * float(vsmax) / 4.0)
+
+        # Set the oscilloscope horizontal scale and vertical scale for the output
+        self.inst_mdo.write(':CH2:SCALE ' + mdo_ch2_scale + ';:TRIG:A:LEV:CH2 0;')
+
+        # io config
+        self.inst_mdo.write('header 0')
+        self.inst_mdo.write('data:encdg SRIBINARY')
+        self.inst_mdo.write('data:source CH2')  # channel
+        self.inst_mdo.write('data:start 1')  # first sample
+        record = int(self.inst_mdo.query('horizontal:recordlength?'))
+        self.inst_mdo.write('data:stop {}'.format(record))  # last sample
+        self.inst_mdo.write('wfmoutpre:byt_n 1')  # 1 byte per sample
+
+        # acq config
+        self.inst_mdo.write('acquire:state 0')  # stop
+        self.inst_mdo.write('acquire:stopafter SEQUENCE')  # single
+        self.inst_mdo.write('acquire:state 1')  # run
+
+        # data query
+        time.sleep(20 / f)
+        bin_wave_ch2 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
+        bin_wave_ch2 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
+
+        # retrieve scaling factors
+        #tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
+        #tstart = float(self.inst_mdo.query('wfmoutpre:xzero?'))
+        vscale_ch2 = float(self.inst_mdo.query('wfmoutpre:ymult?'))  # volts / level
+        voff_ch2 = float(self.inst_mdo.query('wfmoutpre:yzero?'))  # reference voltage
+        vpos_ch2 = float(self.inst_mdo.query('wfmoutpre:yoff?'))  # reference position (level)
+
+        # create scaled vectors
+        # horizontal (time)
+        #total_time = tscale * record
+        #tstop = tstart + total_time
+        #scaled_time = np.linspace(tstart, tstop, num=record, endpoint=False)
+        # vertical (voltage)
+        unscaled_wave_ch2 = np.array(bin_wave_ch2, dtype='double')  # data type conversion
+        scaled_wave_ch2 = (unscaled_wave_ch2 - vpos_ch2) * vscale_ch2 + voff_ch2
+        scaled_wave_ch2 = scaled_wave_ch2.tolist()
+
+        #scaled_time = scaled_time * 1000
+        #scaled_time = scaled_time.tolist()
+
+        logger.info("time : %s" % time.time())
+        timevalues = list()
+        time_now = time.time()
+        scaled_wave_ch1_mini = list()
+        scaled_wave_ch2_mini = list()
+        for i in range(0, 1000):
+            timevalues.append(time_now + 0.001 * i)
+            scaled_wave_ch1_mini.append(scaled_wave_ch1[i*10])
+            scaled_wave_ch2_mini.append(scaled_wave_ch2[i*10])
+
+        logger.info("length of scaled_wave_ch1 and timevalues : %s and %s" % (len(scaled_wave_ch1_mini), len(timevalues)))
+        logger.info("min max wave 1 : %s et %s" % (min(scaled_wave_ch1_mini), max(scaled_wave_ch1_mini)))
+        logger.info("min max wave 2 : %s et %s" % (min(scaled_wave_ch2_mini), max(scaled_wave_ch2_mini)))
+        logger.info("min max time : %s et %s" % (min(timevalues), max(timevalues)))
+        self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': timevalues})
+        self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': timevalues})
+        self.write_values_to_db(data={'Wave_time': timevalues, 'timevalues': timevalues})
