@@ -157,10 +157,10 @@ class LaboremRobotElement(models.Model):
 
 
 @python_2_unicode_compatible
-class LaboremRobotBase(models.Model):
+class LaboremRobotBase(WidgetContentModel):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
-    element = models.ForeignKey(LaboremRobotElement)
+    element = models.ForeignKey(LaboremRobotElement, blank=True, null=True)
     R = models.FloatField(default=0)
     theta = models.FloatField(default=0)
     z = models.FloatField(default=0)
@@ -169,6 +169,24 @@ class LaboremRobotBase(models.Model):
     def __str__(self):
         return self.name
 
+    def change_selected_element(self, element_id):
+        self.element.pk = element_id
+        self.save()
+        return True
+
+    def visible(self):
+        return True
+
+    def gen_html(self, **kwargs):
+        """
+
+        :return: main panel html and sidebar html as
+        """
+        visible_robot_element_list = LaboremRobotElement.objects.all()
+        main_template = get_template('robot_selector.html')
+        main_content = main_template.render(dict(base=self, visible_robot_element_list=visible_robot_element_list))
+        sidebar_content = None
+        return main_content, sidebar_content
 
 @receiver(post_save, sender=LaboremMotherboardDevice)
 def _reinit_daq_daemons(sender, instance, **kwargs):
