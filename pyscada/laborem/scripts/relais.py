@@ -45,7 +45,7 @@ def script(self):
     :return:
     """
 
-    device_laborem = Device.objects.get(pk=2)
+    device_laborem = Device.objects.get(pk=8)
     plug_selected = int(device_laborem.laboremmotherboarddevice.plug)
     if plug_selected:
         plug_selected = plug_selected - 1
