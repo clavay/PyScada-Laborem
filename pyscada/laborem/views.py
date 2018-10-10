@@ -9,6 +9,7 @@ from pyscada.hmi.models import Widget
 from pyscada.hmi.models import View
 
 from .models import LaboremRobotElement
+from .models import LaboremRobotBase
 from .models import LaboremMotherboardDevice
 
 from django.http import HttpResponse
@@ -136,5 +137,16 @@ def form_write_plug(request):
         plug_id = int(request.POST['plug_id'])
         for mb in LaboremMotherboardDevice.objects.filter(pk=mb_id):
             mb.change_selected_plug(plug_id)
+        return HttpResponse(status=200)
+    return HttpResponse(status=404)
+
+def form_write_robot_base(request):
+    if not request.user.is_authenticated():
+        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    if 'base_id' in request.POST and 'element_id' in request.POST:
+        base_id = int(request.POST['base_id'])
+        element_id = int(request.POST['element_id'])
+        for base in LaboremRobotBase.objects.filter(pk=base_id):
+            base.change_selected_element(element_id)
         return HttpResponse(status=200)
     return HttpResponse(status=404)
