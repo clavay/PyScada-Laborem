@@ -8,6 +8,7 @@ from pyscada.hmi.models import GroupDisplayPermission
 from pyscada.hmi.models import Widget
 from pyscada.hmi.models import View
 
+from pyscada.models import VariableProperty
 from .models import LaboremRobotElement
 from .models import LaboremRobotBase
 from .models import LaboremMotherboardDevice
@@ -140,6 +141,7 @@ def form_write_plug(request):
         return HttpResponse(status=200)
     return HttpResponse(status=404)
 
+
 def form_write_robot_base(request):
     if not request.user.is_authenticated():
         return redirect('/accounts/choose_login/?next=%s' % request.path)
@@ -148,5 +150,17 @@ def form_write_robot_base(request):
         element_id = int(request.POST['element_id'])
         for base in LaboremRobotBase.objects.filter(pk=base_id):
             base.change_selected_element(element_id)
+        return HttpResponse(status=200)
+    return HttpResponse(status=404)
+
+
+def form_write_property(request):
+    if not request.user.is_authenticated():
+        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    if 'variable_property_id' in request.POST and 'value' in request.POST:
+        variable_property_id = int(request.POST['variable_property_id'])
+        value = int(request.POST['value'])
+        for variable_property in VariableProperty.objects.filter(pk=variable_property_id):
+            variable_property.objects.update_property(variable_property=variable_property.name, value=value)
         return HttpResponse(status=200)
     return HttpResponse(status=404)

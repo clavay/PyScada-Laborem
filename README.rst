@@ -20,18 +20,19 @@ Installation
 
  - Install PyScada : https://pyscada.readthedocs.io/en/dev-0.7.x/installation.html
  - Change : sudo pip install https://github.com/trombastic/PyScada/archive/dev/0.7.x.zip
-       to : sudo pip install https://github.com/clavay/PyScada/archive/dev/0.7.x.zip
- - Install dev version of pyvisa-py : pip install https://github.com/pyvisa/pyvisa-py/tarball/master
+    to : sudo pip install https://github.com/clavay/PyScada/archive/dev/0.7.x.zip
  - Install pyusb : sudo pip install pyusb
  - Install gpiozero : sudo pip install gpiozero
  - Install PyScada-LaboREM : sudo pip install https://github.com/clavay/PyScada-LaboREM/tarball/master
  - Install PyScada-GPIO : sudo pip install pyscada-gpio
+ - Install PyScada-Scripting : sudo pip install pyscada-scripting
  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py : url(r'^', include('pyscada.laborem.urls')),
  - Add pyscada and gpio apps in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
     INSTALLED_APPS = [
-    ...
+        ...
         'pyscada.laborem',
         'pyscada.gpio',
+
     ]
 
 To use CAS auth
@@ -41,13 +42,15 @@ Without proxy :
  - sudo pip install django_cas_ng
  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
     INSTALLED_APPS = [
-    ...
+        ...
         'django_cas_ng',
+
     ]
 
     AUTHENTICATION_BACKENDS = [
         'django.contrib.auth.backends.ModelBackend',
         'django_cas_ng.backends.CASBackend',
+
     ]
     CAS_SERVER_URL = 'https://account.example.com/cas/'
  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
@@ -60,13 +63,15 @@ Behind a proxy for CAS V2 :
  - sudo pip install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
     INSTALLED_APPS = [
-    ...
+        ...
         'django_cas_ng',
+
     ]
 
     AUTHENTICATION_BACKENDS = [
         'django.contrib.auth.backends.ModelBackend',
         'django_cas_ng.backends.CASBackend',
+
     ]
 
     CAS_SERVER_URL = 'https://account.example.com/cas/'
