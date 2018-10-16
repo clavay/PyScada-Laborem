@@ -407,21 +407,22 @@ def script(self):
             self.write_values_to_db(data={'Bode_Freq': [f], 'Bode_Gain': [gain], 'Bode_Phase': [mean_phase]})
         logger.info("Bode end")
 
-    waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_2_Waveform'))
+    waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_10_Waveform'))
     if waveform:
         logger.info("Waveform running...")
-        self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_2_Waveform', value=0,
+        self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_10_Waveform', value=0,
                                      value_class='BOOLEAN')
 
         self.inst_mdo.timeout = 10000
 
         vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
+        funcshape1 = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_3_FUNCTION_SHAPE')
 
         # Set the generator to freq f
         f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
         mdo_horiz_scale = str(round(float(4.0 / (10.0 * float(f))), 6))
 
-        self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
+        self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP ' + funcshape1 + ';SOUR1:'
                             'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
         self.inst_afg.write('SOUR1:FREQ:FIX ' + str(f))
         self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
@@ -448,10 +449,11 @@ def script(self):
         # data query
         time.sleep(20 / f)
         bin_wave_ch1 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
+        time.sleep(20 / f)
         bin_wave_ch1 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
 
         # retrieve scaling factors
-        #tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
+        tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
         #tstart = float(self.inst_mdo.query('wfmoutpre:xzero?'))
         vscale_ch1 = float(self.inst_mdo.query('wfmoutpre:ymult?'))  # volts / level
         voff_ch1 = float(self.inst_mdo.query('wfmoutpre:yzero?'))  # reference voltage
@@ -502,104 +504,54 @@ def script(self):
         # data query
         time.sleep(20 / f)
         bin_wave_ch2 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
+        time.sleep(20 / f)
         bin_wave_ch2 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
 
         # retrieve scaling factors
-        #tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
-        #tstart = float(self.inst_mdo.query('wfmoutpre:xzero?'))
         vscale_ch2 = float(self.inst_mdo.query('wfmoutpre:ymult?'))  # volts / level
         voff_ch2 = float(self.inst_mdo.query('wfmoutpre:yzero?'))  # reference voltage
         vpos_ch2 = float(self.inst_mdo.query('wfmoutpre:yoff?'))  # reference position (level)
 
         # create scaled vectors
-        # horizontal (time)
-        #total_time = tscale * record
-        #tstop = tstart + total_time
-        #scaled_time = np.linspace(tstart, tstop, num=record, endpoint=False)
         # vertical (voltage)
         unscaled_wave_ch2 = np.array(bin_wave_ch2, dtype='double')  # data type conversion
         scaled_wave_ch2 = (unscaled_wave_ch2 - vpos_ch2) * vscale_ch2 + voff_ch2
         scaled_wave_ch2 = scaled_wave_ch2.tolist()
-
-        #scaled_time = scaled_time * 1000
-        #scaled_time = scaled_time.tolist()
-
-        """
-        # FFT CH1
-        self.inst_mdo.write('MATH:TYPE FFT;:MATH:DEFINE ' + "FFT(CH1)" + ';:SELECT:MATH1;:MATH:HORIZONTAL:POSITION 10;')
-        self.inst_mdo.write(':MATH:HORIZONTAL:SCALE ' + str(f * 10) + ';:MATH1:SPECTRAL:MAG LINEAR;')
-        self.inst_mdo.write(':MATH1:SPECTRAL:WINDOW HANNING;:MATH:AUTOSCALE 0')
-        self.inst_mdo.write(':MATH1:VERTICAL:POSITION 0;')
-        self.inst_mdo.write(':MATH1:VERTICAL:SCALE ' + str(vepp * 0.9 / 8))
-
-        # io config
-        self.inst_mdo.write('header 0')
-        self.inst_mdo.write('data:encdg SRIBINARY')
-        self.inst_mdo.write('data:source MATH')  # channel
-        self.inst_mdo.write('data:start 1')  # first sample
-        record = int(self.inst_mdo.query('horizontal:recordlength?'))
-        self.inst_mdo.write('data:stop {}'.format(record))  # last sample
-        self.inst_mdo.write('wfmoutpre:byt_n 1')  # 1 byte per sample
-
-        # acq config
-        self.inst_mdo.write('acquire:state 0')  # stop
-        self.inst_mdo.write('acquire:stopafter SEQUENCE')  # single
-        self.inst_mdo.write('acquire:state 1')  # run
-
-        # data query
-        time.sleep(20 / f)
-        bin_wave_math1 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20 / f)
-
-        # retrieve scaling factors
-        vscale_math1 = float(self.inst_mdo.query('wfmoutpre:ymult?'))  # volts / level
-        voff_math1 = float(self.inst_mdo.query('wfmoutpre:yzero?'))  # reference voltage
-        vpos_math1 = float(self.inst_mdo.query('wfmoutpre:yoff?'))  # reference position (level)
-
-        # create scaled vectors
-        # vertical (voltage)
-        unscaled_wave_math1 = np.array(bin_wave_math1, dtype='double')  # data type conversion
-        scaled_wave_math1 = (unscaled_wave_math1 - vpos_math1) * vscale_math1 + voff_math1
-        scaled_wave_math1 = scaled_wave_math1.tolist()
-        """
 
         logger.info("time : %s" % time.time())
         timevalues = list()
         time_now = time.time()
         scaled_wave_ch1_mini = list()
         scaled_wave_ch2_mini = list()
-        scaled_wave_math1_mini = list()
-
-        for i in range(0, 1000):
+        save_duration = 1000 # in ms
+        for i in range(0, save_duration):
             timevalues.append(time_now + 0.001 * i)
-            scaled_wave_ch1_mini.append(scaled_wave_ch1[i*10])
-            scaled_wave_ch2_mini.append(scaled_wave_ch2[i*10])
-        #    scaled_wave_math1_mini.append(scaled_wave_math1[i*10])
+            scaled_wave_ch1_mini.append(scaled_wave_ch1[i*len(scaled_wave_ch1)/save_duration])
+            scaled_wave_ch2_mini.append(scaled_wave_ch2[i*len(scaled_wave_ch2)/save_duration])
 
         # FFT CH1
-        eta1 = scaled_wave_ch1_mini
-        nfft1 = len(scaled_wave_ch1_mini)
+        eta1 = scaled_wave_ch1
+        nfft1 = len(eta1)
         etaHann1 = np.hanning(nfft1) * eta1
         EtaSpectrumHann1 = abs(np.fft.fft(etaHann1))
         EtaSpectrumHann1 = EtaSpectrumHann1 * 2 * 2 / nfft1  # also correct for Hann filter
-        frequencies1 = np.linspace(0, 9999, nfft1, endpoint=False).tolist()
+        frequencies1 = np.linspace(0, 1/tscale, nfft1, endpoint=False).tolist()
 
-        # FFT CH1
-        eta2 = scaled_wave_ch2_mini
-        nfft2 = len(scaled_wave_ch2_mini)
+        logger.info("tscale %s - f %s - Ech/s %s" % (tscale, f, f/tscale))
+        logger.info("length eta1 %s - hanning %s - etaHann1 %s - EtaSpectrumHann1 %s - frequencies1 %s"
+                    % (nfft1, len(np.hanning(nfft1)), len(etaHann1), len(EtaSpectrumHann1), len(frequencies1)))
+
+        # FFT CH2
+        eta2 = scaled_wave_ch2
+        nfft2 = len(eta2)
         etaHann2 = np.hanning(nfft2) * eta2
         EtaSpectrumHann2 = abs(np.fft.fft(etaHann2))
         EtaSpectrumHann2 = EtaSpectrumHann2 * 2 * 2 / nfft2  # also correct for Hann filter
-        #frequencies2 = np.linspace(0, 9999, nfft1, endpoint=False).tolist()
+        frequencies2 = np.linspace(0, 1/tscale, nfft2, endpoint=False).tolist()
 
-        logger.info("length of scaled_wave_ch1 and timevalues : %s and %s" % (len(scaled_wave_ch1_mini), len(timevalues)))
-        logger.info("min max wave 1 : %s et %s" % (min(scaled_wave_ch1_mini), max(scaled_wave_ch1_mini)))
-        logger.info("min max wave 2 : %s et %s" % (min(scaled_wave_ch2_mini), max(scaled_wave_ch2_mini)))
-        logger.info("min max time : %s et %s" % (min(timevalues), max(timevalues)))
-        #logger.info("min max len math 1 : %s et %s et %s" % (
-        #        min(scaled_wave_math1_mini), max(scaled_wave_math1_mini), len(scaled_wave_math1_mini)))
         self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': timevalues})
         self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': timevalues})
         self.write_values_to_db(data={'Wave_time': timevalues, 'timevalues': timevalues})
-        self.write_values_to_db(data={'FFT_CH1': EtaSpectrumHann1, 'timevalues': timevalues})
-        self.write_values_to_db(data={'FFT_CH2': EtaSpectrumHann2, 'timevalues': timevalues})
-        self.write_values_to_db(data={'Bode_Freq': frequencies1, 'timevalues': timevalues})
+        self.write_values_to_db(data={'FFT_CH1': EtaSpectrumHann1[:100], 'timevalues': timevalues})
+        self.write_values_to_db(data={'FFT_CH2': EtaSpectrumHann2[:100], 'timevalues': timevalues})
+        self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})

@@ -34,6 +34,14 @@ Installation
         'pyscada.gpio',
 
     ]
+ - Add access to USB devices for pyscada user :
+    Add in /etc/udev/rules.d/10-usb.rules : SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pyscada"
+    sudo usermod -a -G pyscada www-data
+ - Add access to serial devices for pyscada user :
+    Add : KERNEL=="ttyS[0-9]", GROUP="dialout", MODE="0777"
+    sudo usermod -a -G dialout pyscada
+ - Add access to I2C for pyscada user :
+    sudo adduser pyscada i2c
 
 To use CAS auth
 ---------------

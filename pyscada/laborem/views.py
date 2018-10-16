@@ -159,8 +159,9 @@ def form_write_property(request):
         return redirect('/accounts/choose_login/?next=%s' % request.path)
     if 'variable_property_id' in request.POST and 'value' in request.POST:
         variable_property_id = int(request.POST['variable_property_id'])
-        value = int(request.POST['value'])
-        for variable_property in VariableProperty.objects.filter(pk=variable_property_id):
-            variable_property.objects.update_property(variable_property=variable_property.name, value=value)
+        value = request.POST['value']
+        for vp in VariableProperty.objects.filter(pk=variable_property_id):
+            VariableProperty.objects.update_property(variable_property=VariableProperty.objects.get(name=vp.name),
+                                                     value=value)
         return HttpResponse(status=200)
     return HttpResponse(status=404)

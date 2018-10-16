@@ -1,10 +1,10 @@
-Robot selector :<br>
+Robot selector for {{ base.name }}:<br>
 <div class="dropdown col-md-2" id="{{ base.pk }}">
-    <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">{{ base.name }}
+    <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">-------
     <span class="caret"></span></button>
     <ul class="dropdown-menu">
         {% for Element in visible_robot_element_list %}
-            <li class="dropdown-base" id="{{ Element.pk }}"><a href="#">{{ Element.name }}</a></li>
+            <li class="dropdown-base" id="{{ Element.pk }}"><a href="javascript:;">{{ Element.name }} </a></li>
         {% endfor %}
     </ul>
  </div>
