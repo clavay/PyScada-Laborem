@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from pyscada.laborem import PROTOCOL_ID
 from pyscada.laborem.models import LaboremMotherboardDevice, LaboremMotherboardIOConfig, LaboremMotherboardIOElement
 from pyscada.laborem.models import LaboremPlugDevice, LaboremRobotElement, LaboremRobotBase
+from pyscada.laborem.models import LaboremTOP10 , LaboremTOP10Score, LaboremTOP10Ranking
 from pyscada.admin import DeviceAdmin
 from pyscada.admin import admin_site
 from pyscada.models import Device, DeviceProtocol
@@ -42,9 +43,21 @@ class LaboremMotherboardDeviceAdmin(DeviceAdmin):
     ]
 
 
+class LaboremTOP10ScoreAdmin(admin.ModelAdmin):
+    list_display = ('user', 'plug', 'TOP10QA', 'note', 'active')
+    list_display_links = ('user', 'plug')
+
+
+class LaboremTOP10RankingAdmin(admin.ModelAdmin):
+    list_display = ('user', 'score', 'active')
+
+
 admin_site.register(ExtendedLaboremMotherboardDevice, LaboremMotherboardDeviceAdmin)
 admin_site.register(LaboremMotherboardIOConfig)
 admin_site.register(LaboremMotherboardIOElement)
 admin_site.register(LaboremPlugDevice)
 admin_site.register(LaboremRobotElement)
 admin_site.register(LaboremRobotBase)
+admin_site.register(LaboremTOP10)
+admin_site.register(LaboremTOP10Score, LaboremTOP10ScoreAdmin)
+admin_site.register(LaboremTOP10Ranking, LaboremTOP10RankingAdmin)

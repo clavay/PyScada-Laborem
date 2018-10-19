@@ -12,12 +12,21 @@ from pyscada.models import VariableProperty
 from .models import LaboremRobotElement
 from .models import LaboremRobotBase
 from .models import LaboremMotherboardDevice
+from .models import LaboremTOP10
+from .models import LaboremTOP10Score
+from .models import LaboremTOP10Ranking
 
 from django.http import HttpResponse
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import requires_csrf_token
+from django.contrib.auth.models import User
+
+
+import json
+import numpy as np
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -113,6 +122,14 @@ def view_laborem(request, link_title):
                 {'page': page, 'widget_rows_html': widget_rows_html, 'has_chart': has_chart},
                 request)
 
+        try:
+            form_top10qa = Form.objects.get(title="TOP10QA")
+        except Form.DoesNotExist or Form.MultipleObjectsReturned:
+            return HttpResponse(status=404)
+
+        top10ranking_list_user = LaboremTOP10Ranking.objects.all().order_by('-score').values_list("user__username",
+                                                                                                  "score")
+
         c = {
             'page_list': page_list,
             'pages_html': pages_html,
@@ -124,10 +141,12 @@ def view_laborem(request, link_title):
             'visible_robot_element_list': visible_robot_element_list,
             'view_title': v.title,
             'view_show_timeline': v.show_timeline,
-            'version_string': core_version
+            'version_string': core_version,
+            'form_top10qa': form_top10qa,
+            'top10ranking_list_user': top10ranking_list_user
         }
 
-        return TemplateResponse(request, 'view.html', c)
+        return TemplateResponse(request, 'view_laborem.html', c)
 
 
 def form_write_plug(request):
@@ -165,3 +184,137 @@ def form_write_property(request):
                                                      value=value)
         return HttpResponse(status=200)
     return HttpResponse(status=404)
+
+
+def query_top10_question(request):
+    if not request.user.is_authenticated():
+        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    if LaboremMotherboardDevice.objects.all().first().plug == "1":
+        plug = LaboremMotherboardDevice.objects.all().first().plug1
+    elif LaboremMotherboardDevice.objects.all().first().plug == "2":
+        plug = LaboremMotherboardDevice.objects.all().first().plug2
+    elif LaboremMotherboardDevice.objects.all().first().plug == "3":
+        plug = LaboremMotherboardDevice.objects.all().first().plug3
+    elif LaboremMotherboardDevice.objects.all().first().plug == "4":
+        plug = LaboremMotherboardDevice.objects.all().first().plug4
+    elif LaboremMotherboardDevice.objects.all().first().plug == "5":
+        plug = LaboremMotherboardDevice.objects.all().first().plug5
+    elif LaboremMotherboardDevice.objects.all().first().plug == "6":
+        plug = LaboremMotherboardDevice.objects.all().first().plug6
+    elif LaboremMotherboardDevice.objects.all().first().plug == "7":
+        plug = LaboremMotherboardDevice.objects.all().first().plug7
+    elif LaboremMotherboardDevice.objects.all().first().plug == "8":
+        plug = LaboremMotherboardDevice.objects.all().first().plug8
+    elif LaboremMotherboardDevice.objects.all().first().plug == "9":
+        plug = LaboremMotherboardDevice.objects.all().first().plug9
+    elif LaboremMotherboardDevice.objects.all().first().plug == "10":
+        plug = LaboremMotherboardDevice.objects.all().first().plug10
+    elif LaboremMotherboardDevice.objects.all().first().plug == "11":
+        plug = LaboremMotherboardDevice.objects.all().first().plug11
+    elif LaboremMotherboardDevice.objects.all().first().plug == "12":
+        plug = LaboremMotherboardDevice.objects.all().first().plug12
+    elif LaboremMotherboardDevice.objects.all().first().plug == "13":
+        plug = LaboremMotherboardDevice.objects.all().first().plug13
+    elif LaboremMotherboardDevice.objects.all().first().plug == "14":
+        plug = LaboremMotherboardDevice.objects.all().first().plug14
+    elif LaboremMotherboardDevice.objects.all().first().plug == "15":
+        plug = LaboremMotherboardDevice.objects.all().first().plug15
+    elif LaboremMotherboardDevice.objects.all().first().plug == "16":
+        plug = LaboremMotherboardDevice.objects.all().first().plug16
+    else:
+        logger.error("Cannot select plug un query_top10_question")
+        return HttpResponse(status=404)
+    data = {}
+    for top10qa in LaboremTOP10.objects.filter(plug=plug,
+                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.value,
+                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.unit,
+                                               robot_base2__value=LaboremRobotBase.objects.get(name="base2").element.value,
+                                               robot_base2__unit=LaboremRobotBase.objects.get(name="base2").element.unit):
+        data['question1'] = top10qa.question1
+        data['question2'] = top10qa.question2
+        data['question3'] = top10qa.question3
+        data['question4'] = top10qa.question4
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
+
+def validate_top10_answers(request):
+    if not request.user.is_authenticated():
+        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    if LaboremMotherboardDevice.objects.all().first().plug == "1":
+        plug = LaboremMotherboardDevice.objects.all().first().plug1
+    elif LaboremMotherboardDevice.objects.all().first().plug == "2":
+        plug = LaboremMotherboardDevice.objects.all().first().plug2
+    elif LaboremMotherboardDevice.objects.all().first().plug == "3":
+        plug = LaboremMotherboardDevice.objects.all().first().plug3
+    elif LaboremMotherboardDevice.objects.all().first().plug == "4":
+        plug = LaboremMotherboardDevice.objects.all().first().plug4
+    elif LaboremMotherboardDevice.objects.all().first().plug == "5":
+        plug = LaboremMotherboardDevice.objects.all().first().plug5
+    elif LaboremMotherboardDevice.objects.all().first().plug == "6":
+        plug = LaboremMotherboardDevice.objects.all().first().plug6
+    elif LaboremMotherboardDevice.objects.all().first().plug == "7":
+        plug = LaboremMotherboardDevice.objects.all().first().plug7
+    elif LaboremMotherboardDevice.objects.all().first().plug == "8":
+        plug = LaboremMotherboardDevice.objects.all().first().plug8
+    elif LaboremMotherboardDevice.objects.all().first().plug == "9":
+        plug = LaboremMotherboardDevice.objects.all().first().plug9
+    elif LaboremMotherboardDevice.objects.all().first().plug == "10":
+        plug = LaboremMotherboardDevice.objects.all().first().plug10
+    elif LaboremMotherboardDevice.objects.all().first().plug == "11":
+        plug = LaboremMotherboardDevice.objects.all().first().plug11
+    elif LaboremMotherboardDevice.objects.all().first().plug == "12":
+        plug = LaboremMotherboardDevice.objects.all().first().plug12
+    elif LaboremMotherboardDevice.objects.all().first().plug == "13":
+        plug = LaboremMotherboardDevice.objects.all().first().plug13
+    elif LaboremMotherboardDevice.objects.all().first().plug == "14":
+        plug = LaboremMotherboardDevice.objects.all().first().plug14
+    elif LaboremMotherboardDevice.objects.all().first().plug == "15":
+        plug = LaboremMotherboardDevice.objects.all().first().plug15
+    elif LaboremMotherboardDevice.objects.all().first().plug == "16":
+        plug = LaboremMotherboardDevice.objects.all().first().plug16
+    else:
+        logger.error("Cannot select plug un validate_top10_answers")
+        return HttpResponse(status=404)
+    for top10qa in LaboremTOP10.objects.filter(plug=plug,
+                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.value,
+                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.unit,
+                                               robot_base2__value=LaboremRobotBase.objects.get(name="base2").element.value,
+                                               robot_base2__unit=LaboremRobotBase.objects.get(name="base2").element.unit):
+        if plug.level == "1":
+            level_plug = 1
+        elif plug.level == "2":
+            level_plug = 3
+        elif plug.level == "3":
+            level_plug = 5
+        else:
+            logger.error("Level plug error : %s" % plug.level)
+        note = 0
+
+        if top10qa.question1:
+            note += calculate_note(level_plug, top10qa.answer1, request.POST['value1'])
+        if top10qa.question2:
+            note += calculate_note(level_plug, top10qa.answer2, request.POST['value2'])
+        if top10qa.question3:
+            note += calculate_note(level_plug, top10qa.answer3, request.POST['value3'])
+        if top10qa.question4:
+            note += calculate_note(level_plug, top10qa.answer4, request.POST['value4'])
+
+        score = LaboremTOP10Score(user=request.user, plug=plug, TOP10QA=top10qa, note=note)
+        score.save()
+        return HttpResponse(status=200)
+    return HttpResponse(status=404)
+
+
+def calculate_note(level, answer, student_answer):
+    return level * np.exp(-abs(1-float(student_answer)/float(answer))*5)
+
+
+def rank_top10(request):
+    LaboremTOP10Ranking.objects.all().delete()
+    for user in LaboremTOP10Score.objects.values_list('user').distinct():
+        score_total = 0
+        for item in LaboremTOP10Score.objects.filter(user=user).values_list('TOP10QA').distinct():
+            score_total += LaboremTOP10Score.objects.filter(user=user, TOP10QA=item).order_by('id').first().note
+        rank = LaboremTOP10Ranking(user=User.objects.get(pk=user[0]), score=score_total)
+        rank.save()
+    return HttpResponse(status=200)

@@ -11,6 +11,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.encoding import python_2_unicode_compatible
 from django.template.loader import get_template
+from django.contrib.auth.models import User
 
 import logging
 
@@ -187,6 +188,63 @@ class LaboremRobotBase(WidgetContentModel):
         main_content = main_template.render(dict(base=self, visible_robot_element_list=visible_robot_element_list))
         sidebar_content = None
         return main_content, sidebar_content
+
+
+@python_2_unicode_compatible
+class LaboremTOP10(models.Model):
+    name = models.CharField(default='', max_length=255)
+    description = models.TextField(default='', verbose_name="Description", null=True)
+    plug = models.ForeignKey(LaboremPlugDevice)
+    robot_base1 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base1')
+    robot_base2 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base2')
+    question1 = models.CharField(default='', max_length=255, blank=True, null=True)
+    answer1 = models.CharField(default='', max_length=255, blank=True, null=True)
+    question2 = models.CharField(default='', max_length=255, blank=True, null=True)
+    answer2 = models.CharField(default='', max_length=255, blank=True, null=True)
+    question3 = models.CharField(default='', max_length=255, blank=True, null=True)
+    answer3 = models.CharField(default='', max_length=255, blank=True, null=True)
+    question4 = models.CharField(default='', max_length=255, blank=True, null=True)
+    answer4 = models.CharField(default='', max_length=255, blank=True, null=True)
+    active = models.BooleanField(default=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Laborem TOP10 Questions/Answers'
+        verbose_name_plural = 'Laborem TOP10 Questions/Answers'
+
+
+@python_2_unicode_compatible
+class LaboremTOP10Score(models.Model):
+    user = models.ForeignKey(User)
+    plug = models.ForeignKey(LaboremPlugDevice)
+    TOP10QA = models.ForeignKey(LaboremTOP10)
+    note = models.FloatField(default=0)
+    active = models.BooleanField(default=True, blank=True)
+
+    def __str__(self):
+        return str(self.id)
+
+    class Meta:
+        verbose_name = 'Laborem TOP10 Score'
+        verbose_name_plural = 'Laborem TOP10 Scores'
+
+
+@python_2_unicode_compatible
+class LaboremTOP10Ranking(models.Model):
+    user = models.ForeignKey(User)
+    score = models.FloatField(default=0)
+    active = models.BooleanField(default=True, blank=True)
+
+    def __str__(self):
+        return str(self.id)
+
+    class Meta:
+        verbose_name = 'Laborem TOP10 Ranking'
+        verbose_name_plural = 'Laborem TOP10 Ranking'
+        ordering = ['-score']
+
 
 @receiver(post_save, sender=LaboremMotherboardDevice)
 def _reinit_daq_daemons(sender, instance, **kwargs):
