@@ -127,9 +127,6 @@ def view_laborem(request, link_title):
         except Form.DoesNotExist or Form.MultipleObjectsReturned:
             return HttpResponse(status=404)
 
-        top10ranking_list_user = LaboremTOP10Ranking.objects.all().order_by('-score').values_list("user__username",
-                                                                                                  "score")
-
         c = {
             'page_list': page_list,
             'pages_html': pages_html,
@@ -142,8 +139,7 @@ def view_laborem(request, link_title):
             'view_title': v.title,
             'view_show_timeline': v.show_timeline,
             'version_string': core_version,
-            'form_top10qa': form_top10qa,
-            'top10ranking_list_user': top10ranking_list_user
+            'form_top10qa': form_top10qa
         }
 
         return TemplateResponse(request, 'view_laborem.html', c)
@@ -317,4 +313,9 @@ def rank_top10(request):
             score_total += LaboremTOP10Score.objects.filter(user=user, TOP10QA=item).order_by('id').first().note
         rank = LaboremTOP10Ranking(user=User.objects.get(pk=user[0]), score=score_total)
         rank.save()
-    return HttpResponse(status=200)
+    top10ranking_list = LaboremTOP10Ranking.objects.all().order_by('-score')
+    data = ""
+    for item in top10ranking_list:
+        data += '<tr class="top10-item"><td>' + str(item.user.username) + \
+                   '</td><td style="text-align: center">' + str(round(item.score, 2)) + '</td></tr>'
+    return HttpResponse(json.dumps(data), content_type='application/json')

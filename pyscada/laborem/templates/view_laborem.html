@@ -14,17 +14,11 @@
         <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-stats"></span> TOP10 Results <strong class="caret"></strong></a>
         <div class="dropdown-menu" style="padding: 15px; width: auto;">
             <div class="control-panel">
-                <table class="table table-condensed table-striped table-responsive">
-                  <tr>
+                <table class="table table-condensed table-striped table-responsive table-top10">
+                  <tr class="top10-header">
                       <th style="text-align: center">User</th>
                       <th style="text-align: center">Score</th>
                   </tr>
-                  {% for item in top10ranking_list_user %}
-                    <tr>
-                        <td>{{ item.0 }}</td>
-                        <td style="text-align: center">{{ item.1|floatformat:"1" }}</td>
-                    </tr>
-                  {% endfor %}
                 </table>
             </div>
         </div>

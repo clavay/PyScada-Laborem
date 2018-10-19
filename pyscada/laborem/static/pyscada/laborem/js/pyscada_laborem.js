@@ -51,7 +51,8 @@ function reload_top10_ranking() {
         url: ROOT_URL+'form/rank_top10/',
         data: {},
         success: function (data) {
-
+            $(".top10-item").remove();
+            $(".table-top10 tbody").append( data );
         },
         error: function(data) {
             add_notification('rank top10 failed',3);
@@ -97,7 +98,7 @@ $( document ).ready(function() {
     // Active the selected item in a listbox and disable it in others listboxes
     $('.dropdown-base').on('click', function() {
         var $this = $(this);
-        dropdown_item = document.getElementsByClassName("dropdown-base")
+        dropdown_item = document.getElementsByClassName("dropdown-base");
         for (i=0;i<dropdown_item.length;i++){
             if ($(dropdown_item[i]).context.parentElement.parentElement.id !== $this.context.parentElement.parentElement.id) {
                 if ($(dropdown_item[i]).context.id == $this.context.id) {
