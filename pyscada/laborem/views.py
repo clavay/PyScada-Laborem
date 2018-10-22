@@ -7,6 +7,8 @@ from pyscada.hmi.models import Form
 from pyscada.hmi.models import GroupDisplayPermission
 from pyscada.hmi.models import Widget
 from pyscada.hmi.models import View
+from pyscada.hmi.models import Page
+
 
 from pyscada.models import VariableProperty
 from .models import LaboremRobotElement
@@ -56,7 +58,6 @@ def view_laborem(request, link_title):
             # visible_xy_chart_list = XYChart.objects.all().values_list('pk', flat=True)
             visible_control_element_list = ControlItem.objects.all().values_list('pk', flat=True)
             visible_form_list = Form.objects.all().values_list('pk', flat=True)
-            visible_robot_element_list = LaboremRobotElement.objects.all().values_list('name', flat=True)
         else:
             page_list = v.pages.filter(groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).distinct()
 
@@ -222,10 +223,14 @@ def query_top10_question(request):
         return HttpResponse(status=404)
     data = {}
     for top10qa in LaboremTOP10.objects.filter(plug=plug,
-                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.value,
-                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.unit,
-                                               robot_base2__value=LaboremRobotBase.objects.get(name="base2").element.value,
-                                               robot_base2__unit=LaboremRobotBase.objects.get(name="base2").element.unit):
+                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.
+                                               value,
+                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.
+                                               unit,
+                                               robot_base2__value=LaboremRobotBase.objects.get(name="base2").element.
+                                               value,
+                                               robot_base2__unit=LaboremRobotBase.objects.get(name="base2").element.
+                                               unit):
         data['question1'] = top10qa.question1
         data['question2'] = top10qa.question2
         data['question3'] = top10qa.question3
@@ -272,10 +277,15 @@ def validate_top10_answers(request):
         logger.error("Cannot select plug un validate_top10_answers")
         return HttpResponse(status=404)
     for top10qa in LaboremTOP10.objects.filter(plug=plug,
-                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.value,
-                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.unit,
-                                               robot_base2__value=LaboremRobotBase.objects.get(name="base2").element.value,
-                                               robot_base2__unit=LaboremRobotBase.objects.get(name="base2").element.unit):
+                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.
+                                               value,
+                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.
+                                               unit,
+                                               robot_base2__value=LaboremRobotBase.objects.get(name="base2").element.
+                                               value,
+                                               robot_base2__unit=LaboremRobotBase.objects.get(name="base2").element.
+                                               unit):
+        level_plug = 0
         if plug.level == "1":
             level_plug = 1
         elif plug.level == "2":
@@ -306,6 +316,8 @@ def calculate_note(level, answer, student_answer):
 
 
 def rank_top10(request):
+    if not request.user.is_authenticated():
+        return redirect('/accounts/choose_login/?next=%s' % request.path)
     LaboremTOP10Ranking.objects.all().delete()
     for user in LaboremTOP10Score.objects.values_list('user').distinct():
         score_total = 0
@@ -319,3 +331,43 @@ def rank_top10(request):
         data += '<tr class="top10-item"><td>' + str(item.user.username) + \
                    '</td><td style="text-align: center">' + str(round(item.score, 2)) + '</td></tr>'
     return HttpResponse(json.dumps(data), content_type='application/json')
+
+
+def query_previous_and_next_btn(request):
+    if not request.user.is_authenticated():
+        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    if 'actual_hash' in request.POST and 'direction' in request.POST and 'extras' in request.POST:
+        actual_hash = request.POST['actual_hash']
+        direction = request.POST['direction']
+        extras = request.POST['extras']
+        position = Page.objects.get(link_title=actual_hash).position
+        if direction == 'start':
+            next_page = query_page(position + 1, extras)
+            previous_page = ""
+        elif direction == 'btn-next':
+            next_page = query_page(position + 2, extras)
+            previous_page = actual_hash
+        elif direction == 'btn-previous':
+            next_page = actual_hash
+            previous_page = query_page(position - 2, extras)
+        elif direction == 'idle':
+            next_page = query_page(position + 1, extras)
+            previous_page = "="
+        data = {}
+        data['next_page'] = next_page
+        data['previous_page'] = previous_page
+        return HttpResponse(json.dumps(data), content_type='application/json')
+    return HttpResponse(status=404)
+
+
+def query_page(position, extras):
+    try:
+        page = Page.objects.get(position=position).link_title
+    except Page.DoesNotExist:
+        page = ""
+    except Page.MultipleObjectsReturned:
+        if extras != "":
+            page = Page.objects.get(position=position, link_title=extras).link_title
+        else:
+            page = ""
+    return page

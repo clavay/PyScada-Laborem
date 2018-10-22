@@ -1,12 +1,14 @@
-{% extends "base.html" %}
+{% extends "base_laborem.html" %}
 {% load i18n staticfiles %}
 
-{% block title %}{{ view_title }} - PyScada Control Center{% endblock %}
+{% block title %}{{ view_title }} - PyScada-LaboREM Control Center{% endblock %}
 {% block body_confic_data %} data-data-file="json/cache_data/" {% endblock %}
 {% block top_menu_left %}
     {% for page in page_list %}
-        <li><a href="#{{page.link_title}}">{{page.title}}</a></li>
+        <li class="hidden"><a href="#{{page.link_title}}">{{page.title}}</a></li>
     {% endfor %}
+    <li><a href="#" style="color: red" class="btn-previous">Previous <span class="glyphicon glyphicon-chevron-left"></span></a></li>
+    <li><a href="#" style="color: green" class="btn-next"><span class="glyphicon glyphicon-chevron-right"></span> Next</a></li>
 {% endblock %}
 
 {% block top_menu_right %}
@@ -23,8 +25,8 @@
             </div>
         </div>
     </li>
-    <li class="dropdown dropdown-TOP10QA">
-        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-pencil"></span> TOP10 Questions/Answers <strong class="caret"></strong></a>
+    <li class="dropdown dropdown-TOP10QA hidden">
+        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-pencil" style="color: orange"></span> TOP10 Questions/Answers <strong class="caret"></strong></a>
         <div class="dropdown-menu" style="padding: 15px; width: auto;">
             <div class="control-panel">
                 {% include "form_TOP10.html" with form=form_top10qa %}
