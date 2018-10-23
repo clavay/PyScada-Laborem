@@ -52,12 +52,28 @@ class LaboremTOP10RankingAdmin(admin.ModelAdmin):
     list_display = ('user', 'score', 'active')
 
 
+class LaboremTOP10Admin(admin.ModelAdmin):
+    list_display = ('name', 'plug', 'robot_base1', 'robot_base2')
+
+
+class LaboremPlugDeviceAdmin(admin.ModelAdmin):
+    list_display = ('name', 'motherboardIOConfig', 'level')
+
+
+class LaboremRobotBaseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'element', 'R', 'theta', 'z')
+
+
+class LaboremRobotElementAdmin(admin.ModelAdmin):
+        list_display = ('name', 'value', 'unit', 'R', 'theta', 'z')
+
+
 admin_site.register(ExtendedLaboremMotherboardDevice, LaboremMotherboardDeviceAdmin)
 admin_site.register(LaboremMotherboardIOConfig)
 admin_site.register(LaboremMotherboardIOElement)
-admin_site.register(LaboremPlugDevice)
-admin_site.register(LaboremRobotElement)
-admin_site.register(LaboremRobotBase)
-admin_site.register(LaboremTOP10)
+admin_site.register(LaboremPlugDevice, LaboremPlugDeviceAdmin)
+admin_site.register(LaboremRobotElement, LaboremRobotElementAdmin)
+admin_site.register(LaboremRobotBase, LaboremRobotBaseAdmin)
+admin_site.register(LaboremTOP10, LaboremTOP10Admin)
 admin_site.register(LaboremTOP10Score, LaboremTOP10ScoreAdmin)
 admin_site.register(LaboremTOP10Ranking, LaboremTOP10RankingAdmin)

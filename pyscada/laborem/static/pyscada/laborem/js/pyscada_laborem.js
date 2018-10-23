@@ -100,15 +100,40 @@ function reset_page(page_name) {
         $('.dropdown-base').show();
         $('.ui-dropdown-robot-bnt').text("------- ");
         $(".btn-next").hide();
+        move_robot("drop");
     }else if (page_name === "preconf") {
         $(".btn-next").show();
         reset_robot_bases()
+        move_robot("drop");
     }else if (page_name === "plugs") {
         $('.list-group-item').removeClass('active');
         $(".btn-next").hide();
+        move_robot("drop");
     }else if (page_name === "start") {
         $(".btn-next").show();
+        move_robot("drop");
+    }else if (page_name === "bode") {
+        $(".btn-next").hide();
+    }else if (page_name === "spectrum") {
+        $(".btn-next").hide();
+    }else if (page_name === "expe_choice") {
+        $(".btn-next").hide();
+        move_robot("move");
     }
+}
+
+function move_robot(mov) {
+    $.ajax({
+        type: 'post',
+        url: ROOT_URL+'form/move_robot/',
+        data: {move:mov},
+        success: function (data) {
+
+        },
+        error: function(data) {
+            add_notification('move robot failed',3);
+        }
+    });
 }
 
 function reset_robot_bases() {
@@ -293,8 +318,6 @@ $( document ).ready(function() {
                             || (questions[1].textContent != "Question2" && questions[1].textContent != "")
                             || (questions[2].textContent != "Question3" && questions[2].textContent != "")
                             || (questions[3].textContent != "Question4" && questions[3].textContent != "")) {
-                                console.log("data after : ");
-                                console.log(data);
                                 $(".dropdown-TOP10QA").removeClass("hidden");
                                 $(".dropdown-TOP10QA").show();
                                 for (i=0;i<questions.length;i++) {
@@ -311,7 +334,8 @@ $( document ).ready(function() {
                             }
                         },
                         error: function(data) {
-                            add_notification('cache top10 question failed',3);
+                            console.log("query top10 question failed");
+                            add_notification('query top10 question failed',3);
                         }
                     });
                 }else {

@@ -274,18 +274,19 @@ def script(self):
     # logger.info("Script Bode running...")
     put_on_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_put_on'))
     if put_on_bode:
-        self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
-                                     value_class='BOOLEAN')
         logger.info("Putting on Elements...")
         # Move the robot
         for base in LaboremRobotBase.objects.all():
-            r_element = base.element.R
-            theta_element = base.element.theta
-            z_element = base.element.z
-            r_base = base.R
-            theta_base = base.theta
-            z_base = base.z
-            take_and_drop(self, self.inst_robot, r_element, theta_element, z_element, r_base, theta_base, z_base)
+            if base.element is None:
+                r_element = base.element.R
+                theta_element = base.element.theta
+                z_element = base.element.z
+                r_base = base.R
+                theta_base = base.theta
+                z_base = base.z
+                take_and_drop(self, self.inst_robot, r_element, theta_element, z_element, r_base, theta_base, z_base)
+            else:
+                logger.warning("Base %s NOT empty" % base)
 
     take_off_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_take_off'))
     if take_off_bode:
@@ -293,13 +294,16 @@ def script(self):
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_take_off', value=0,
                                      value_class='BOOLEAN')
         for base in LaboremRobotBase.objects.all():
-            r_element = base.element.R
-            theta_element = base.element.theta
-            z_element = base.element.z
-            r_base = base.R
-            theta_base = base.theta
-            z_base = base.z
-            take_and_drop(self, self.inst_robot, r_base, theta_base, z_base, r_element, theta_element, z_element)
+            if base.element is not None:
+                r_element = base.element.R
+                theta_element = base.element.theta
+                z_element = base.element.z
+                r_base = base.R
+                theta_base = base.theta
+                z_base = base.z
+                take_and_drop(self, self.inst_robot, r_base, theta_base, z_base, r_element, theta_element, z_element)
+            else:
+                logger.warning("Base %s empty" % base)
 
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:

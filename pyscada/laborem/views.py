@@ -10,7 +10,7 @@ from pyscada.hmi.models import View
 from pyscada.hmi.models import Page
 
 
-from pyscada.models import VariableProperty
+from pyscada.models import VariableProperty, DeviceWriteTask
 from .models import LaboremRobotElement
 from .models import LaboremRobotBase
 from .models import LaboremMotherboardDevice
@@ -25,7 +25,7 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import requires_csrf_token
 from django.contrib.auth.models import User
 
-
+import time
 import json
 import numpy as np
 
@@ -222,19 +222,30 @@ def query_top10_question(request):
         logger.error("Cannot select plug un query_top10_question")
         return HttpResponse(status=404)
     data = {}
-    for top10qa in LaboremTOP10.objects.filter(plug=plug,
-                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.
-                                               value,
-                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.
-                                               unit,
-                                               robot_base2__value=LaboremRobotBase.objects.get(name="base2").element.
-                                               value,
-                                               robot_base2__unit=LaboremRobotBase.objects.get(name="base2").element.
-                                               unit):
-        data['question1'] = top10qa.question1
-        data['question2'] = top10qa.question2
-        data['question3'] = top10qa.question3
-        data['question4'] = top10qa.question4
+    if LaboremRobotBase.objects.get(name="base1").element is not None \
+            and LaboremRobotBase.objects.get(name="base2").element is not None:
+        for top10qa in LaboremTOP10.objects.filter(plug=plug,
+                                                   robot_base1__value=LaboremRobotBase.objects.get(name="base1").
+                                                   element.value,
+                                                   robot_base1__unit=LaboremRobotBase.objects.get(name="base1").
+                                                   element.unit,
+                                                   robot_base2__value=LaboremRobotBase.objects.get(name="base2").
+                                                   element.value,
+                                                   robot_base2__unit=LaboremRobotBase.objects.get(name="base2").
+                                                   element.unit):
+            data['question1'] = top10qa.question1
+            data['question2'] = top10qa.question2
+            data['question3'] = top10qa.question3
+            data['question4'] = top10qa.question4
+    elif LaboremRobotBase.objects.get(name="base1").element is None \
+            and LaboremRobotBase.objects.get(name="base2").element is None:
+        for top10qa in LaboremTOP10.objects.filter(plug=plug):
+            data['question1'] = top10qa.question1
+            data['question2'] = top10qa.question2
+            data['question3'] = top10qa.question3
+            data['question4'] = top10qa.question4
+    else:
+        return HttpResponse(status=404)
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
@@ -341,6 +352,8 @@ def query_previous_and_next_btn(request):
         direction = request.POST['direction']
         extras = request.POST['extras']
         position = Page.objects.get(link_title=actual_hash).position
+        next_page = ""
+        previous_page = ""
         if direction == 'start':
             next_page = query_page(position + 1, extras)
             previous_page = ""
@@ -379,3 +392,23 @@ def reset_robot_bases(request):
     for base in LaboremRobotBase.objects.all():
         base.change_selected_element(None)
     return HttpResponse(status=200)
+
+
+def move_robot(request):
+    if not request.user.is_authenticated():
+        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    if 'move' in request.POST:
+        move = request.POST['move']
+        if move == 'put':
+            vp = VariableProperty.objects.get_property(variable="Bode_run", name="Bode_put_on")
+            key = vp.id
+            cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
+            cwt.save()
+            return HttpResponse(status=200)
+        if move == 'drop':
+            vp = VariableProperty.objects.get_property(variable="Bode_run", name="Bode_take_off")
+            key = vp.id
+            cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
+            cwt.save()
+            return HttpResponse(status=200)
+    return HttpResponse(status=404)
