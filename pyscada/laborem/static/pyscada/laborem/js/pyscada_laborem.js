@@ -279,6 +279,9 @@ $( document ).ready(function() {
                             || (questions[1].textContent != "Question2" && questions[1].textContent != "")
                             || (questions[2].textContent != "Question3" && questions[2].textContent != "")
                             || (questions[3].textContent != "Question4" && questions[3].textContent != "")) {
+                                console.log("data after : ");
+                                console.log(data);
+                                $(".dropdown-TOP10QA").removeClass("hidden");
                                 $(".dropdown-TOP10QA").show();
                                 for (i=0;i<questions.length;i++) {
                                     if (questions[i].textContent != "Question1" && questions[i].textContent != "") {
@@ -286,10 +289,12 @@ $( document ).ready(function() {
 
                                     }
                                     else {
+                                        console.log("hide top 10 input : " + input_group[i]);
                                         input_group[i].className += " hidden"
                                     }
                                 }
                             }else {
+                                console.log("hide top10 qa");
                                 $(".dropdown-TOP10QA").hide();
                             }
                         },
@@ -300,6 +305,7 @@ $( document ).ready(function() {
                         }
                     });
                 }else {
+                    console.log("hide 2 top10 qa");
                     $(".dropdown-TOP10QA").hide();
                 }
             }
