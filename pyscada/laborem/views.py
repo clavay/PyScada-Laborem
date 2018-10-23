@@ -371,3 +371,11 @@ def query_page(position, extras):
         else:
             page = ""
     return page
+
+
+def reset_robot_bases(request):
+    if not request.user.is_authenticated():
+        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    for base in LaboremRobotBase.objects.all():
+        base.change_selected_element(None)
+    return HttpResponse(status=200)

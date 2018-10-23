@@ -18,4 +18,5 @@ urlpatterns = [
     url(r'^form/validate_top10_answers/$', views.validate_top10_answers),
     url(r'^form/rank_top10/$', views.rank_top10),
     url(r'^json/query_previous_and_next_btn/$', views.query_previous_and_next_btn),
+    url(r'^form/reset_robot_bases/$', views.reset_robot_bases),
 ]

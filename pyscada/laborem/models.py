@@ -171,7 +171,10 @@ class LaboremRobotBase(WidgetContentModel):
         return self.name
 
     def change_selected_element(self, element_id):
-        self.element = LaboremRobotElement.objects.get(pk=element_id)
+        if element_id is None:
+            self.element = None
+        else:
+            self.element = LaboremRobotElement.objects.get(pk=element_id)
         self.save()
         return True
 

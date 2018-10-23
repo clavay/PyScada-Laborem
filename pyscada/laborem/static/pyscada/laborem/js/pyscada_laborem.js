@@ -102,12 +102,26 @@ function reset_page(page_name) {
         $(".btn-next").hide();
     }else if (page_name === "preconf") {
         $(".btn-next").show();
+        reset_robot_bases()
     }else if (page_name === "plugs") {
         $('.list-group-item').removeClass('active');
         $(".btn-next").hide();
     }else if (page_name === "start") {
         $(".btn-next").show();
     }
+}
+
+function reset_robot_bases() {
+    $.ajax({
+        type: 'post',
+        url: ROOT_URL+'form/reset_robot_bases/',
+        data: {},
+        success: function (data) {
+        },
+        error: function(data) {
+            add_notification('reset robot bases failed',3);
+        }
+    });
 }
 
 $( document ).ready(function() {
@@ -289,23 +303,18 @@ $( document ).ready(function() {
 
                                     }
                                     else {
-                                        console.log("hide top 10 input : " + input_group[i]);
                                         input_group[i].className += " hidden"
                                     }
                                 }
                             }else {
-                                console.log("hide top10 qa");
                                 $(".dropdown-TOP10QA").hide();
                             }
                         },
                         error: function(data) {
-                            console.log("cache top10 question failed ");
-                            console.log(data);
                             add_notification('cache top10 question failed',3);
                         }
                     });
                 }else {
-                    console.log("hide 2 top10 qa");
                     $(".dropdown-TOP10QA").hide();
                 }
             }
