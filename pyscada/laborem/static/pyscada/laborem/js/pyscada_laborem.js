@@ -7,6 +7,7 @@ Licensed under the GPL.
 
 */
 
+
 $('button.write-task-form-top10-set').click(function(){
     name_form = $(this.form).attr('name');
     tabinputs = document.forms[name_form].getElementsByTagName("input");
@@ -61,11 +62,11 @@ function reload_top10_ranking() {
 };
 
 
-function query_previous_and_next_btn(actual_hash, direction, extras) {
+function query_previous_and_next_btn(actual_hash, direction, robot, expe) {
     $.ajax({
         type: 'post',
         url: ROOT_URL+'json/query_previous_and_next_btn/',
-        data: {actual_hash:actual_hash, direction:direction, extras:extras},
+        data: {actual_hash:actual_hash, direction:direction, robot:robot, expe:expe},
         success: function (data) {
             previous = data['previous_page'];
             next = data['next_page'];
@@ -106,7 +107,7 @@ function reset_page(page_name) {
         reset_robot_bases()
         move_robot("drop");
     }else if (page_name === "plugs") {
-        $('.list-group-item').removeClass('active');
+        $('.list-dut-item').removeClass('active');
         $(".btn-next").hide();
         move_robot("drop");
     }else if (page_name === "start") {
@@ -117,10 +118,11 @@ function reset_page(page_name) {
     }else if (page_name === "spectrum") {
         $(".btn-next").hide();
     }else if (page_name === "expe_choice") {
+        $('.expe_list_item').removeClass('active');
         $(".btn-next").hide();
         move_robot("move");
     }
-}
+};
 
 function move_robot(mov) {
     $.ajax({
@@ -134,7 +136,7 @@ function move_robot(mov) {
             add_notification('move robot failed',3);
         }
     });
-}
+};
 
 function reset_robot_bases() {
     $.ajax({
@@ -147,7 +149,97 @@ function reset_robot_bases() {
             add_notification('reset robot bases failed',3);
         }
     });
-}
+};
+
+function change_plug_img($this, $img) {
+    $(".img-plug").attr("src",$img);
+};
+
+function change_plug_selected_motherboard(mb_id, plug_id, plug_name) {
+    if (mb_id === "" || plug_id === ""){
+        add_notification('mb_id or plug_id empty',3);
+    }else{
+        $.ajax({
+            type: 'post',
+            url: ROOT_URL+'form/write_plug/',
+            data: {mb_id:mb_id, plug_id:plug_id},
+            success: function (data) {
+                $(".btn-next").show();
+            },
+            error: function(data) {
+                add_notification('write plug selected failed',3);
+            }
+        });
+    };
+};
+
+function refresh_top10_qa() {
+    dropdown_TOP10QA = document.getElementsByClassName("dropdown-TOP10QA");
+    pages = document.getElementsByClassName("sub-page");
+    for (i=0;i<pages.length;i++){
+        if (pages[i].id === window.location.hash.substr(1)) {
+            if (pages[i].getElementsByClassName("ShowTOP10QA").length) {
+                questions = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group-addon-label");
+                input_group = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group");
+                //changes the number and value of the questions
+                $.ajax({
+                    url: ROOT_URL+'json/query_top10_question/',
+                    dataType: "json",
+                    type: "POST",
+                    data: {},
+                    success: function (data) {
+                        questions[0].textContent = data['question1'];
+                        questions[1].textContent = data['question2'];
+                        questions[2].textContent = data['question3'];
+                        questions[3].textContent = data['question4'];
+                        if ((questions[0].textContent != "Question1" && questions[0].textContent != "")
+                        || (questions[1].textContent != "Question2" && questions[1].textContent != "")
+                        || (questions[2].textContent != "Question3" && questions[2].textContent != "")
+                        || (questions[3].textContent != "Question4" && questions[3].textContent != "")) {
+                            $(".dropdown-TOP10QA").removeClass("hidden");
+                            $(".dropdown-TOP10QA").show();
+                            for (i=0;i<questions.length;i++) {
+                                if (questions[i].textContent != "Question1" && questions[i].textContent != "") {
+                                    input_group[i].classList.remove("hidden");
+
+                                }
+                                else {
+                                    input_group[i].className += " hidden"
+                                }
+                            }
+                        }else {
+                            $(".dropdown-TOP10QA").hide();
+                        }
+                    },
+                    error: function(data) {
+                        console.log("query top10 question failed");
+                        add_notification('query top10 question failed',3);
+                    }
+                });
+            }else {
+                $(".dropdown-TOP10QA").hide();
+            }
+        }
+    }
+};
+
+function change_base_selected_element(base_id, element_id) {
+    if (base_id === "" || element_id === ""){
+        add_notification('base_id or element_id empty',3);
+    }else{
+        $.ajax({
+            type: 'post',
+            url: ROOT_URL+'form/write_robot_base/',
+            data: {base_id:base_id, element_id:element_id},
+            success: function (data) {
+
+            },
+            error: function(data) {
+                add_notification('write plug selected failed',3);
+            }
+        });
+    };
+};
 
 $( document ).ready(function() {
     //change text and link of PyScada in navbar
@@ -155,29 +247,38 @@ $( document ).ready(function() {
     $(".navbar-brand").removeAttr("target");
     $(".navbar-brand").text("PyScada-LaboREM");
     $(".btn-previous").hide();
-    query_previous_and_next_btn("start", "start", "")
-    //Change the link of btn previous on btn-next click
+
+    //Load next and previous button at start
+    query_previous_and_next_btn("start", "start", "", "")
+
+    //Change the link of btn next/previous on click
     $('.btn-next, .btn-previous').on('click', function() {
         var classNames = this.className.split(/\s+/);
         var cls = $.grep(classNames, function(c, i) {
             return $.inArray(c, ['btn-next','btn-previous']) !== -1;
         })[0];
-        data_plug_name = $('.list-group-item.active').attr('data-plug-name');
+        data_plug_name = $('.list-dut-item.active').attr('data-plug-name');
         actual_hash = window.location.hash.substr(1);
         direction = cls;
         if (typeof data_plug_name != 'undefined') {
             if (~data_plug_name.indexOf('ROBOT')) {
-                extras = 'robot';
+                robot = '1';
             }else {
-                extras = 'preconf';
+                robot = '0';
             }
         }else {
-            extras = ""
+            robot = ""
         }
-        query_previous_and_next_btn(actual_hash, direction, extras)
+        if (typeof $('.expe_list_item.active').attr('name') != 'undefined') {
+            expe = $('.expe_list_item.active').attr('name')
+        }else {
+            expe = ""
+        }
+        query_previous_and_next_btn(actual_hash, direction, robot, expe)
     });
-    // actualize the picture of the dut selector for laborem with the list selection
-    $('.list-group-item').on('click', function() {
+
+    // actualize the picture of the dut selector for LaboREM with the list selection
+    $('.list-dut-item').on('click', function() {
         var $this = $(this);
         var $img = $this.data('img');
         var $mb_id = $this.data('motherboard-id');
@@ -185,40 +286,32 @@ $( document ).ready(function() {
         var $plug_name = $this.data('plug-name');
 
         if (~$plug_name.indexOf('ROBOT')) {
-            extras = 'robot';
+            robot = '1';
         }else {
-            extras = 'preconf';
+            robot = '0';
         }
-        query_previous_and_next_btn(window.location.hash.substr(1), "idle", extras)
+        query_previous_and_next_btn(window.location.hash.substr(1), "idle", robot,"")
 
-        $('.list-group-item.active').removeClass('active');
+        $('.list-dut-item.active').removeClass('active');
         $this.toggleClass('active');
 
-        // Pass clicked link element to another function
         change_plug_img($this, $img)
         change_plug_selected_motherboard($mb_id, $plug_id, $plug_name)
-    })
-    function change_plug_img($this, $img) {
-        $(".img-plug").attr("src",$img);
-    }
-    function change_plug_selected_motherboard(mb_id, plug_id, plug_name) {
-        if (mb_id === "" || plug_id === ""){
-            add_notification('mb_id or plug_id empty',3);
-        }else{
-            $.ajax({
-                type: 'post',
-                url: ROOT_URL+'form/write_plug/',
-                data: {mb_id:mb_id, plug_id:plug_id},
-                success: function (data) {
-                    $(".btn-next").show();
-                },
-                error: function(data) {
-                    add_notification('write plug selected failed',3);
-                }
-            });
-        };
-    }
-    // Active the selected item in a listbox and disable it in others listboxes
+    });
+
+    $('.expe_list_item').on('click', function() {
+        var $this = $(this);
+        var expe_name = $this.attr('name');
+        robot = ""
+
+        query_previous_and_next_btn(window.location.hash.substr(1), "idle", robot, expe_name);
+
+        $('.expe_list_item.active').removeClass('active');
+        $this.addClass('active');
+        $(".btn-next").show();
+    });
+
+    // For the robot : active the selected item in a listbox and disable it in others listboxes
     $('.dropdown-base').on('click', function() {
         var $this = $(this);
         dropdown_item = document.getElementsByClassName("dropdown-base");
@@ -243,24 +336,8 @@ $( document ).ready(function() {
         $this.context.parentElement.parentElement.getElementsByClassName('ui-dropdown-robot-bnt')[0].textContent = $this.context.textContent;
         $this.addClass('active');
         change_base_selected_element($this.context.parentElement.parentElement.id, $this.context.id)
-    })
-    function change_base_selected_element(base_id, element_id) {
-        if (base_id === "" || element_id === ""){
-            add_notification('base_id or element_id empty',3);
-        }else{
-            $.ajax({
-                type: 'post',
-                url: ROOT_URL+'form/write_robot_base/',
-                data: {base_id:base_id, element_id:element_id},
-                success: function (data) {
+    });
 
-                },
-                error: function(data) {
-                    add_notification('write plug selected failed',3);
-                }
-            });
-        };
-    }
     // Active the selected item in a listbox and disable it in others listboxes
     $('.dropdown-afg-function').on('click', function() {
         var $this = $(this);
@@ -291,57 +368,15 @@ $( document ).ready(function() {
             });
         }
     });
+
+    //load top10 ranking at start
     reload_top10_ranking();
+
     $(window).on('hashchange', function() {
         //reset the pages settings to force the user to interact with
         reset_page(window.location.hash.substr(1));
-        // Check if we are on a page that need to show the TOP10QAs
-        dropdown_TOP10QA = document.getElementsByClassName("dropdown-TOP10QA");
-        pages = document.getElementsByClassName("sub-page");
-        for (i=0;i<pages.length;i++){
-            if (pages[i].id === window.location.hash.substr(1)) {
-                if (pages[i].getElementsByClassName("ShowTOP10QA").length) {
-                    questions = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group-addon-label");
-                    input_group = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group");
-                    //changes the number and value of the questions
-                    $.ajax({
-                        url: ROOT_URL+'json/query_top10_question/',
-                        dataType: "json",
-                        type: "POST",
-                        data: {},
-                        success: function (data) {
-                            questions[0].textContent = data['question1'];
-                            questions[1].textContent = data['question2'];
-                            questions[2].textContent = data['question3'];
-                            questions[3].textContent = data['question4'];
-                            if ((questions[0].textContent != "Question1" && questions[0].textContent != "")
-                            || (questions[1].textContent != "Question2" && questions[1].textContent != "")
-                            || (questions[2].textContent != "Question3" && questions[2].textContent != "")
-                            || (questions[3].textContent != "Question4" && questions[3].textContent != "")) {
-                                $(".dropdown-TOP10QA").removeClass("hidden");
-                                $(".dropdown-TOP10QA").show();
-                                for (i=0;i<questions.length;i++) {
-                                    if (questions[i].textContent != "Question1" && questions[i].textContent != "") {
-                                        input_group[i].classList.remove("hidden");
 
-                                    }
-                                    else {
-                                        input_group[i].className += " hidden"
-                                    }
-                                }
-                            }else {
-                                $(".dropdown-TOP10QA").hide();
-                            }
-                        },
-                        error: function(data) {
-                            console.log("query top10 question failed");
-                            add_notification('query top10 question failed',3);
-                        }
-                    });
-                }else {
-                    $(".dropdown-TOP10QA").hide();
-                }
-            }
-        }
+        // Check if we are on a page that need to show the TOP10QAs
+        refresh_top10_qa();
     });
 });

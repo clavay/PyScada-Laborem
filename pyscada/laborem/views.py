@@ -10,7 +10,7 @@ from pyscada.hmi.models import View
 from pyscada.hmi.models import Page
 
 
-from pyscada.models import VariableProperty, DeviceWriteTask
+from pyscada.models import Variable, VariableProperty, DeviceWriteTask
 from .models import LaboremRobotElement
 from .models import LaboremRobotBase
 from .models import LaboremMotherboardDevice
@@ -344,27 +344,29 @@ def rank_top10(request):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-def query_previous_and_next_btn(request):
+def query_previous_and_next_btn(request, **kwargs):
     if not request.user.is_authenticated():
         return redirect('/accounts/choose_login/?next=%s' % request.path)
-    if 'actual_hash' in request.POST and 'direction' in request.POST and 'extras' in request.POST:
+    if 'actual_hash' in request.POST and 'direction' in request.POST \
+            and 'robot' in request.POST and 'expe' in request.POST:
         actual_hash = request.POST['actual_hash']
         direction = request.POST['direction']
-        extras = request.POST['extras']
+        kwargs['robot'] = request.POST['robot']
+        kwargs['expe'] = request.POST['expe']
         position = Page.objects.get(link_title=actual_hash).position
         next_page = ""
         previous_page = ""
         if direction == 'start':
-            next_page = query_page(position + 1, extras)
+            next_page = query_page(position + 1, **kwargs)
             previous_page = ""
         elif direction == 'btn-next':
-            next_page = query_page(position + 2, extras)
+            next_page = query_page(position + 2, **kwargs)
             previous_page = actual_hash
         elif direction == 'btn-previous':
             next_page = actual_hash
-            previous_page = query_page(position - 2, extras)
+            previous_page = query_page(position - 2, **kwargs)
         elif direction == 'idle':
-            next_page = query_page(position + 1, extras)
+            next_page = query_page(position + 1, **kwargs)
             previous_page = "="
         data = {}
         data['next_page'] = next_page
@@ -373,14 +375,28 @@ def query_previous_and_next_btn(request):
     return HttpResponse(status=404)
 
 
-def query_page(position, extras):
+def query_page(position, **kwargs):
+    robot = kwargs.get('robot', None)
+    expe = kwargs.get('expe', None)
     try:
         page = Page.objects.get(position=position).link_title
     except Page.DoesNotExist:
         page = ""
     except Page.MultipleObjectsReturned:
-        if extras != "":
-            page = Page.objects.get(position=position, link_title=extras).link_title
+        if expe is not None and expe != "":
+            try:
+                page = Page.objects.get(position=position, link_title=expe).link_title
+            except Page.DoesNotExist:
+                try:
+                    page = Page.objects.get(position=position,
+                                            link_title="robot" if robot == '1' else "preconf").link_title
+                except Page.DoesNotExist:
+                    page = ""
+        elif robot is not None and robot != "":
+            try:
+                page = Page.objects.get(position=position, link_title="robot" if robot == '1' else "preconf").link_title
+            except Page.DoesNotExist:
+                page = ""
         else:
             page = ""
     return page
@@ -399,16 +415,24 @@ def move_robot(request):
         return redirect('/accounts/choose_login/?next=%s' % request.path)
     if 'move' in request.POST:
         move = request.POST['move']
+        try:
+            variable = Variable.objects.get(name="Bode_run")
+        except Variable.DoesNotExist:
+            return HttpResponse(status=200)
         if move == 'put':
-            vp = VariableProperty.objects.get_property(variable="Bode_run", name="Bode_put_on")
+            vp = VariableProperty.objects.get_property(variable=variable, name="Bode_put_on")
+            if vp is None:
+                return HttpResponse(status=200)
             key = vp.id
             cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
             cwt.save()
             return HttpResponse(status=200)
         if move == 'drop':
-            vp = VariableProperty.objects.get_property(variable="Bode_run", name="Bode_take_off")
+            vp = VariableProperty.objects.get_property(variable=variable, name="Bode_take_off")
+            if vp is None:
+                return HttpResponse(status=200)
             key = vp.id
             cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
             cwt.save()
             return HttpResponse(status=200)
-    return HttpResponse(status=404)
+    return HttpResponse(status=200)

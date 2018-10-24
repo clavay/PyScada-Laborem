@@ -274,6 +274,8 @@ def script(self):
     # logger.info("Script Bode running...")
     put_on_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_put_on'))
     if put_on_bode:
+        self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
+                                     value_class='BOOLEAN')
         logger.info("Putting on Elements...")
         # Move the robot
         for base in LaboremRobotBase.objects.all():

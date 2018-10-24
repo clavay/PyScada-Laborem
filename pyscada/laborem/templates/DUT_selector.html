@@ -3,7 +3,7 @@
     No plug config
 {% else %}
     <div class="col-md-4"><img src="/media/img/laborem/plugs/select_filter.jpg" class="img-plug img-responsive" alt="DUT selected"></div>
-    <div class="list-group col-md-4" id="ListPlugs">
+    <div class="list-group list-dut col-md-4" id="ListPlugs">
         {% if dut_selector.plug1 %}
             {% include "DUT.html" with dut_selector=dut_selector plug=dut_selector.plug1 plug_id="1" %}
         {% endif %}
