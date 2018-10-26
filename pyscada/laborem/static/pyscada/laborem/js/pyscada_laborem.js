@@ -11,6 +11,7 @@ Licensed under the GPL.
 $('button.write-task-form-top10-set').click(function(){
     name_form = $(this.form).attr('name');
     tabinputs = document.forms[name_form].getElementsByTagName("input");
+    mb_id = $('.list-dut-item.active').data('motherboard-id');
     request_data = {}
     for (i=0;i<tabinputs.length;i++){
         j=i+1;
@@ -19,16 +20,15 @@ $('button.write-task-form-top10-set').click(function(){
         $.each($('.variable-config'),function(kkey,val){
             name_var = $(val).data('name');
             if (name_var==var_name){
-                key = parseInt($(val).data('key'));
-                //request_data.push("value" + key + ":" + value);
+                //key = parseInt($(val).data('key'));
                 request_data['value'+j] = value;
-                //item_type = $(val).data('type');
             }
         });
     };
+    request_data['mb_id'] = mb_id;
     if (request_data[0] === 'value1:' && request_data[1] === 'value2:' && request_data[2] === 'value3:' && request_data[3] === 'value4:'){
         add_notification('please provide a value',3);
-        alert("data empty");
+        alert("Please answer something");
     }else{
         $.ajax({
             type: 'post',
@@ -39,7 +39,6 @@ $('button.write-task-form-top10-set').click(function(){
             },
             error: function(data) {
                 add_notification('add new write task failed',3);
-                alert("Form Set NOK "+data+" - key "+key+" - value "+value+" - item_type "+item_type + " - name "+var_name)
             }
         });
     };
@@ -104,7 +103,7 @@ function reset_page(page_name) {
         move_robot("drop");
     }else if (page_name === "preconf") {
         $(".btn-next").show();
-        reset_robot_bases()
+        reset_robot_bases();
         move_robot("drop");
     }else if (page_name === "plugs") {
         $('.list-dut-item').removeClass('active');
@@ -181,12 +180,13 @@ function refresh_top10_qa() {
             if (pages[i].getElementsByClassName("ShowTOP10QA").length) {
                 questions = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group-addon-label");
                 input_group = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group");
+                mb_id = $('.list-dut-item.active').data('motherboard-id');
                 //changes the number and value of the questions
                 $.ajax({
                     url: ROOT_URL+'json/query_top10_question/',
                     dataType: "json",
                     type: "POST",
-                    data: {},
+                    data: {mb_id:mb_id},
                     success: function (data) {
                         questions[0].textContent = data['question1'];
                         questions[1].textContent = data['question2'];
@@ -241,12 +241,29 @@ function change_base_selected_element(base_id, element_id) {
     };
 };
 
+function check_users() {
+    $.ajax({
+        type: 'post',
+        url: ROOT_URL+'form/check_users/',
+        data: {},
+        success: function (data) {
+
+        },
+        error: function(data) {
+            add_notification('write plug selected failed',3);
+        }
+    });
+}
+
 $( document ).ready(function() {
     //change text and link of PyScada in navbar
     $(".navbar-brand").attr("href", "");
     $(".navbar-brand").removeAttr("target");
-    $(".navbar-brand").text("PyScada-LaboREM");
+    $(".navbar-brand").text(' PyScada-LaboREM');
+    $(".navbar-brand").prepend('<span class="glyphicon glyphicon-home"></span>');
     $(".btn-previous").hide();
+
+    setInterval(function() {check_users()}, 5000);
 
     //Load next and previous button at start
     query_previous_and_next_btn("start", "start", "", "")

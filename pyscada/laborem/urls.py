@@ -20,4 +20,5 @@ urlpatterns = [
     url(r'^json/query_previous_and_next_btn/$', views.query_previous_and_next_btn),
     url(r'^form/reset_robot_bases/$', views.reset_robot_bases),
     url(r'^form/move_robot/$', views.move_robot),
+    url(r'^form/check_users/$', views.check_users),
 ]

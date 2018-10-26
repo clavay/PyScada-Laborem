@@ -4,7 +4,7 @@
 handles write tasks for variables attached to the generic devices
 """
 
-from pyscada.models import DeviceWriteTask, VariableProperty
+from pyscada.models import DeviceWriteTask, VariableProperty, RecordedData
 from time import time, sleep
 import logging
 
@@ -62,13 +62,11 @@ def script(self):
         if task.variable:
             # write value to Variable use that for later read
             tmp_data = task.variable.update_value(task.value, time())
-            logger.info("tmp data : %s - %s - %s - %s - %s" % (tmp_data, task.value, task.variable.value,
-                                                               task.variable.store_value, task.variable.timestamp))
             if tmp_data:
                 task.done = True
                 task.finished = time()
                 task.save()
-                logger.info(task.variable.create_recorded_data_element())
+                RecordedData.objects.bulk_create([task.variable.create_recorded_data_element()])
             else:
                 task.failed = True
                 task.finished = time()
