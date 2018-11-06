@@ -266,7 +266,7 @@ class LaboremGroupInputPermission(models.Model):
 @python_2_unicode_compatible
 class LaboremUser(models.Model):
     user = models.OneToOneField(User)
-    laborem_group_input = models.OneToOneField(LaboremGroupInputPermission, null=True, blank=True)
+    laborem_group_input = models.ForeignKey(LaboremGroupInputPermission, null=True, blank=True)
     connection_time = models.DateTimeField(default=datetime.now, blank=True)
     start_time = models.DateTimeField(null=True, blank=True)
     last_check = models.DateTimeField(null=True, blank=True)

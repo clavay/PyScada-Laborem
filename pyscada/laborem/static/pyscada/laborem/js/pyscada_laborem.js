@@ -120,6 +120,9 @@ function reset_page(page_name) {
         $('.expe_list_item').removeClass('active');
         $(".btn-next").hide();
         move_robot("move");
+    }else if (page_name === "viewer") {
+        $(".btn-next").hide();
+        $(".btn-previous").hide();
     }
 };
 
@@ -247,7 +250,23 @@ function check_users() {
         url: ROOT_URL+'form/check_users/',
         data: {},
         success: function (data) {
-
+            $(".waitingusers-item").remove();
+            $(".table-waitingusers tbody").append(data['waitingusers']);
+            $(".activeuser-item").remove();
+            $(".table-activeuser tbody").append(data['activeuser']);
+            if (data['viewer'] == 1 && window.location.hash.substr(1) != "viewer") {
+                window.location.href = "#viewer";
+            }else if (data['viewer'] == 0 && window.location.hash.substr(1) == "viewer") {
+                window.location.href = "#start";
+            }
+            if (data['viewer'] == 1) {
+                $(".dropdown-WaitingList-toggle").text(' Waiting : ');
+            }else if (data['viewer'] == 0) {
+                $(".dropdown-WaitingList-toggle").text(' Working : ');
+            }
+            $(".dropdown-WaitingList-toggle").append(data['titletime']);
+            $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
+            $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
         },
         error: function(data) {
             add_notification('write plug selected failed',3);
@@ -263,7 +282,8 @@ $( document ).ready(function() {
     $(".navbar-brand").prepend('<span class="glyphicon glyphicon-home"></span>');
     $(".btn-previous").hide();
 
-    setInterval(function() {check_users()}, 5000);
+    //Send info and actualize data
+    setInterval(function() {check_users()}, 1000);
 
     //Load next and previous button at start
     query_previous_and_next_btn("start", "start", "", "")
@@ -388,6 +408,9 @@ $( document ).ready(function() {
 
     //load top10 ranking at start
     reload_top10_ranking();
+
+    //reset the pages settings at start
+    reset_page(window.location.hash.substr(1));
 
     $(window).on('hashchange', function() {
         //reset the pages settings to force the user to interact with

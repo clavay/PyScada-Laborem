@@ -428,8 +428,8 @@ def script(self):
         f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
         mdo_horiz_scale = str(round(float(4.0 / (10.0 * float(f))), 6))
 
-        self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP ' + funcshape1 + ';SOUR1:'
-                            'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
+        self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP ' + funcshape1
+                            + ';SOUR1:VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
         self.inst_afg.write('SOUR1:FREQ:FIX ' + str(f))
         self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
         self.inst_mdo.write('*RST;:SEL:CH1 1;:HORIZONTAL:POSITION 0;:CH1:YUN "V";'
@@ -454,22 +454,22 @@ def script(self):
 
         # data query
         time.sleep(20 / f)
-        bin_wave_ch1 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
+        self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
         time.sleep(20 / f)
         bin_wave_ch1 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
 
         # retrieve scaling factors
         tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
-        #tstart = float(self.inst_mdo.query('wfmoutpre:xzero?'))
+        # tstart = float(self.inst_mdo.query('wfmoutpre:xzero?'))
         vscale_ch1 = float(self.inst_mdo.query('wfmoutpre:ymult?'))  # volts / level
         voff_ch1 = float(self.inst_mdo.query('wfmoutpre:yzero?'))  # reference voltage
         vpos_ch1 = float(self.inst_mdo.query('wfmoutpre:yoff?'))  # reference position (level)
 
         # create scaled vectors
         # horizontal (time)
-        #total_time = tscale * record
-        #tstop = tstart + total_time
-        #scaled_time = np.linspace(tstart, tstop, num=record, endpoint=False)
+        # total_time = tscale * record
+        # tstop = tstart + total_time
+        # scaled_time = np.linspace(tstart, tstop, num=record, endpoint=False)
         # vertical (voltage)
         unscaled_wave_ch1 = np.array(bin_wave_ch1, dtype='double')  # data type conversion
         scaled_wave_ch1 = (unscaled_wave_ch1 - vpos_ch1) * vscale_ch1 + voff_ch1
@@ -509,7 +509,7 @@ def script(self):
 
         # data query
         time.sleep(20 / f)
-        bin_wave_ch2 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
+        self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
         time.sleep(20 / f)
         bin_wave_ch2 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20/f)
 
@@ -529,7 +529,7 @@ def script(self):
         time_now = time.time()
         scaled_wave_ch1_mini = list()
         scaled_wave_ch2_mini = list()
-        save_duration = 1000 # in ms
+        save_duration = 1000  # in ms
         for i in range(0, save_duration):
             timevalues.append(time_now + 0.001 * i)
             scaled_wave_ch1_mini.append(scaled_wave_ch1[i*len(scaled_wave_ch1)/save_duration])
@@ -538,26 +538,26 @@ def script(self):
         # FFT CH1
         eta1 = scaled_wave_ch1
         nfft1 = len(eta1)
-        etaHann1 = np.hanning(nfft1) * eta1
-        EtaSpectrumHann1 = abs(np.fft.fft(etaHann1))
-        EtaSpectrumHann1 = EtaSpectrumHann1 * 2 * 2 / nfft1  # also correct for Hann filter
+        hanning_1 = np.hanning(nfft1) * eta1
+        spectrum_hanning_1 = abs(np.fft.fft(hanning_1))
+        spectrum_hanning_1 = spectrum_hanning_1 * 2 * 2 / nfft1  # also correct for Hann filter
         frequencies1 = np.linspace(0, 1/tscale, nfft1, endpoint=False).tolist()
 
         logger.info("tscale %s - f %s - Ech/s %s" % (tscale, f, f/tscale))
-        logger.info("length eta1 %s - hanning %s - etaHann1 %s - EtaSpectrumHann1 %s - frequencies1 %s"
-                    % (nfft1, len(np.hanning(nfft1)), len(etaHann1), len(EtaSpectrumHann1), len(frequencies1)))
+        logger.info("length eta1 %s - hanning %s - hanning_1 %s - spectrum_hanning_1 %s - frequencies1 %s"
+                    % (nfft1, len(np.hanning(nfft1)), len(hanning_1), len(spectrum_hanning_1), len(frequencies1)))
 
         # FFT CH2
         eta2 = scaled_wave_ch2
         nfft2 = len(eta2)
-        etaHann2 = np.hanning(nfft2) * eta2
-        EtaSpectrumHann2 = abs(np.fft.fft(etaHann2))
-        EtaSpectrumHann2 = EtaSpectrumHann2 * 2 * 2 / nfft2  # also correct for Hann filter
-        frequencies2 = np.linspace(0, 1/tscale, nfft2, endpoint=False).tolist()
+        hanning_2 = np.hanning(nfft2) * eta2
+        spectrum_hanning_2 = abs(np.fft.fft(hanning_2))
+        spectrum_hanning_2 = spectrum_hanning_2 * 2 * 2 / nfft2  # also correct for Hann filter
+        # frequencies2 = np.linspace(0, 1/tscale, nfft2, endpoint=False).tolist()
 
         self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': timevalues})
         self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': timevalues})
         self.write_values_to_db(data={'Wave_time': timevalues, 'timevalues': timevalues})
-        self.write_values_to_db(data={'FFT_CH1': EtaSpectrumHann1[:100], 'timevalues': timevalues})
-        self.write_values_to_db(data={'FFT_CH2': EtaSpectrumHann2[:100], 'timevalues': timevalues})
+        self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': timevalues})
+        self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})

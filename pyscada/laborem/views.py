@@ -23,8 +23,8 @@ from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import requires_csrf_token
-from django.contrib.auth.models import User
-from django.utils.timezone import now
+from django.contrib.auth.models import User, Group
+from django.utils.timezone import now, timedelta
 
 import time
 import json
@@ -46,7 +46,7 @@ def user_check(request):
 
 @requires_csrf_token
 def view_laborem(request, link_title):
-    #if not request.user.is_authenticated():
+    # if not request.user.is_authenticated():
     #    return redirect('/accounts/choose_login/?next=%s' % request.path)
     user_check(request)
 
@@ -158,8 +158,7 @@ def view_laborem(request, link_title):
 
 
 def form_write_plug(request):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    user_check(request)
     if 'mb_id' in request.POST and 'plug_id' in request.POST:
         mb_id = int(request.POST['mb_id'])
         plug_id = int(request.POST['plug_id'])
@@ -168,7 +167,8 @@ def form_write_plug(request):
         else:
             try:
                 mb = LaboremMotherboardDevice.objects.get(pk=mb_id,
-                                                          laboremgroupinputpermission__hmi_group__in=request.user.groups.iterator())
+                                                          laboremgroupinputpermission__hmi_group__in=request.user.
+                                                          groups.iterator())
             except LaboremMotherboardDevice.DoesNotExist:
                 return HttpResponse(status=200)
         if mb is not None:
@@ -178,13 +178,12 @@ def form_write_plug(request):
 
 
 def form_write_robot_base(request):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    user_check(request)
     if LaboremGroupInputPermission.objects.count() > 0:
-        for group in request.user.groups.iterator():
-            if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
-                continue
-        return HttpResponse(status=200)
+        try:
+            LaboremGroupInputPermission.objects.get(move_robot=True, hmi_group__in=request.user.groups.all())
+        except LaboremGroupInputPermission.DoesNotExist:
+            return HttpResponse(status=404)
     if 'base_id' in request.POST and 'element_id' in request.POST:
         base_id = int(request.POST['base_id'])
         element_id = int(request.POST['element_id'])
@@ -195,8 +194,7 @@ def form_write_robot_base(request):
 
 
 def form_write_property(request):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    user_check(request)
     if 'variable_property_id' in request.POST and 'value' in request.POST:
         variable_property_id = int(request.POST['variable_property_id'])
         value = request.POST['value']
@@ -208,7 +206,8 @@ def form_write_property(request):
             try:
                 for vp in VariableProperty.objects.filter(pk=variable_property_id):
                     vpgetbyname = VariableProperty.objects.get(name=vp.name,
-                                                               laboremgroupinputpermission__hmi_group__in=request.user.groups.iterator())
+                                                               laboremgroupinputpermission__hmi_group__in=request.user.
+                                                               groups.iterator())
                     VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
             except VariableProperty.DoesNotExist:
                 return HttpResponse(status=200)
@@ -217,9 +216,8 @@ def form_write_property(request):
 
 
 def query_top10_question(request):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
-    if not 'mb_id' in request.POST:
+    user_check(request)
+    if 'mb_id' not in request.POST:
         return HttpResponse(status=404)
     mb_id = int(request.POST['mb_id'])
     if LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "1":
@@ -271,11 +269,13 @@ def query_top10_question(request):
                                               element.unit).order_by('id').first()
     elif LaboremRobotBase.objects.get(name="base1").element is None \
             and LaboremRobotBase.objects.get(name="base2").element is None:
-        top10qa = LaboremTOP10.objects.filter(plug=plug,robot_base1__value=None, robot_base1__unit=None,
+        top10qa = LaboremTOP10.objects.filter(plug=plug, robot_base1__value=None, robot_base1__unit=None,
                                               robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
     else:
+        logger.info("bases vide ou non vide not ok")
         return HttpResponse(status=404)
     if top10qa is None:
+        logger.info("top10qa is None")
         return HttpResponse(status=404)
     data['question1'] = top10qa.question1
     data['question2'] = top10qa.question2
@@ -285,8 +285,7 @@ def query_top10_question(request):
 
 
 def validate_top10_answers(request):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    user_check(request)
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).top10_answer:
@@ -353,7 +352,7 @@ def validate_top10_answers(request):
                                               unit).order_by('id').first()
     elif LaboremRobotBase.objects.get(name="base1").element is None \
             and LaboremRobotBase.objects.get(name="base2").element is None:
-        top10qa = LaboremTOP10.objects.filter(plug=plug,robot_base1__value=None, robot_base1__unit=None,
+        top10qa = LaboremTOP10.objects.filter(plug=plug, robot_base1__value=None, robot_base1__unit=None,
                                               robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
     else:
         return HttpResponse(status=404)
@@ -377,8 +376,7 @@ def calculate_note(level, answer, student_answer):
 
 
 def rank_top10(request):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    user_check(request)
     LaboremTOP10Ranking.objects.all().delete()
     for user in LaboremTOP10Score.objects.values_list('user').distinct():
         score_total = 0
@@ -395,8 +393,8 @@ def rank_top10(request):
 
 
 def query_previous_and_next_btn(request, **kwargs):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    user_check(request)
+    data = {}
     if 'actual_hash' in request.POST and 'direction' in request.POST \
             and 'robot' in request.POST and 'expe' in request.POST:
         actual_hash = request.POST['actual_hash']
@@ -418,7 +416,6 @@ def query_previous_and_next_btn(request, **kwargs):
         elif direction == 'idle':
             next_page = query_page(position + 1, **kwargs)
             previous_page = "="
-        data = {}
         data['next_page'] = next_page
         data['previous_page'] = previous_page
         return HttpResponse(json.dumps(data), content_type='application/json')
@@ -453,8 +450,7 @@ def query_page(position, **kwargs):
 
 
 def reset_robot_bases(request):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    user_check(request)
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
@@ -465,8 +461,7 @@ def reset_robot_bases(request):
 
 
 def move_robot(request):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
+    user_check(request)
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
@@ -496,5 +491,53 @@ def move_robot(request):
 
 
 def check_users(request):
+    user_check(request)
     LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
-    return HttpResponse(status=200)
+    laborem_waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
+        order_by('connection_time')
+    laborem_working_user = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").first()
+    if laborem_working_user is None:
+        return HttpResponse(status=200)
+    data = {}
+    current_user = LaboremUser.objects.filter(user=request.user).first()
+    data['titletime'] = "unlimited"
+    data['waitingusers'] = ""
+    i = 0
+    td = timedelta(minutes=5)
+    for item in laborem_waiting_users_list:
+        data['waitingusers'] += '<tr class="waitingusers-item"><td>' + str(item.user.username) + \
+                                '</td><td style="text-align: center">'
+        if (td - (now() - laborem_working_user.start_time) + i * td).seconds // 60 > 0:
+            data['waitingusers'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
+                                    + ' min '
+        data['waitingusers'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds
+                                    % 60) + ' sec' + '</td></tr>'
+        if current_user == item:
+            data['titletime'] = ""
+            if (td - (now() - laborem_working_user.start_time) + i * td).seconds // 60 > 0:
+                data['titletime'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
+                                     + ' min '
+            data['titletime'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds % 60) + ' sec'
+        i += 1
+    time_left = ' unlimited '
+    if i > 0:
+        if (td - (now() - laborem_working_user.start_time)).seconds // 60 > 0:
+            time_left = str((td - (now() - laborem_working_user.start_time)).seconds // 60) + ' min ' \
+                        + str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
+            if current_user == laborem_working_user:
+                data['titletime'] = ""
+                data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds
+                                         // 60) + ' min ' + str((td - (now() - laborem_working_user.start_time)).seconds
+                                                                % 60) + ' sec'
+        else:
+            time_left = str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
+            if current_user == laborem_working_user:
+                data['titletime'] = ""
+                data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
+    data['activeuser'] = '<tr class="waitingusers-item"><td>' + str(laborem_working_user.user.username) + \
+                         '</td><td style="text-align: center">' + time_left + '</td></tr>'
+    data['viewer'] = 0
+    if request.user.groups.all().first() == Group.objects.get(name="viewer") \
+            or request.user.groups.all().first() is None:
+        data['viewer'] = 1
+    return HttpResponse(json.dumps(data), content_type='application/json')
