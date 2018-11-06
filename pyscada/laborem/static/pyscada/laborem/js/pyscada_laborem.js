@@ -254,19 +254,27 @@ function check_users() {
             $(".table-waitingusers tbody").append(data['waitingusers']);
             $(".activeuser-item").remove();
             $(".table-activeuser tbody").append(data['activeuser']);
-            if (data['viewer'] == 1 && window.location.hash.substr(1) != "viewer") {
+            if (data['user_type'] == 1 && window.location.hash.substr(1) != "viewer") {
                 window.location.href = "#viewer";
-            }else if (data['viewer'] == 0 && window.location.hash.substr(1) == "viewer") {
+            }else if (data['user_type'] == 2 && window.location.hash.substr(1) == "viewer") {
                 window.location.href = "#start";
             }
-            if (data['viewer'] == 1) {
+            if (data['user_type'] == 1) {
                 $(".dropdown-WaitingList-toggle").text(' Waiting : ');
-            }else if (data['viewer'] == 0) {
+                $(".dropdown-WaitingList-toggle").append(data['titletime']);
+                $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
+                $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
+            }else if (data['user_type'] == 2) {
                 $(".dropdown-WaitingList-toggle").text(' Working : ');
+                $(".dropdown-WaitingList-toggle").append(data['titletime']);
+                $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
+                $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
+            }else if (data['user_type'] == 0) {
+                $(".dropdown-WaitingList-toggle").text(' Waiting List ');
+                $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
+                $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
             }
-            $(".dropdown-WaitingList-toggle").append(data['titletime']);
-            $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
-            $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
+
         },
         error: function(data) {
             add_notification('write plug selected failed',3);

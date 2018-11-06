@@ -536,8 +536,10 @@ def check_users(request):
                 data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
     data['activeuser'] = '<tr class="waitingusers-item"><td>' + str(laborem_working_user.user.username) + \
                          '</td><td style="text-align: center">' + time_left + '</td></tr>'
-    data['viewer'] = 0
+    data['user_type'] = 0
     if request.user.groups.all().first() == Group.objects.get(name="viewer") \
             or request.user.groups.all().first() is None:
-        data['viewer'] = 1
+        data['user_type'] = 1
+    elif request.user.groups.all().first() == Group.objects.get(name="worker"):
+        data['user_type'] = 2
     return HttpResponse(json.dumps(data), content_type='application/json')
