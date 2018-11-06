@@ -20,7 +20,7 @@ Installation
 
  - Install PyScada : https://pyscada.readthedocs.io/en/dev-0.7.x/installation.html
  - Change : sudo pip install https://github.com/trombastic/PyScada/archive/dev/0.7.x.zip
-    to : sudo pip install https://github.com/clavay/PyScada/archive/dev/0.7.x.zip
+    to : sudo pip install https://github.com/clavay/PyScada/tarball/hmi
  - Install pyusb : sudo pip install pyusb
  - Install gpiozero : sudo pip install gpiozero
  - Install PyScada-LaboREM : sudo pip install https://github.com/clavay/PyScada-LaboREM/tarball/master
