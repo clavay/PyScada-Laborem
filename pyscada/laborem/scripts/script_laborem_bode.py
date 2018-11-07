@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from pyscada.models import Device
+from pyscada.models import Device, DeviceWriteTask
 from pyscada.laborem.models import LaboremRobotBase
 import logging
 import visa
@@ -289,6 +289,7 @@ def script(self):
                 take_and_drop(self, self.inst_robot, r_element, theta_element, z_element, r_base, theta_base, z_base)
             else:
                 logger.warning("Base %s NOT empty" % base)
+        DeviceWriteTask.objects.filter(variable_property__name='Bode_put_on', done=False, failed=False).delete()
 
     take_off_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_take_off'))
     if take_off_bode:
@@ -306,6 +307,7 @@ def script(self):
                 take_and_drop(self, self.inst_robot, r_base, theta_base, z_base, r_element, theta_element, z_element)
             else:
                 logger.warning("Base %s empty" % base)
+        DeviceWriteTask.objects.filter(variable_property__name='Bode_take_off', done=False, failed=False).delete()
 
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
@@ -412,6 +414,7 @@ def script(self):
             logger.info("Freq : %s - Gain : %s - Phase : %s" % (f, gain, mean_phase))
             self.write_values_to_db(data={'Bode_Freq': [f], 'Bode_Gain': [gain], 'Bode_Phase': [mean_phase]})
         logger.info("Bode end")
+        DeviceWriteTask.objects.filter(variable_property__name='BODE_5_LOOP', done=False, failed=False).delete()
 
     waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_10_Waveform'))
     if waveform:
@@ -561,3 +564,4 @@ def script(self):
         self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})
+        DeviceWriteTask.objects.filter(variable_property__name='Spectre_10_Waveform', done=False, failed=False).delete()
