@@ -274,8 +274,6 @@ def script(self):
     # logger.info("Script Bode running...")
     put_on_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_put_on'))
     if put_on_bode:
-        self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
-                                     value_class='BOOLEAN')
         logger.info("Putting on Elements...")
         # Move the robot
         for base in LaboremRobotBase.objects.all():
@@ -289,13 +287,12 @@ def script(self):
                 take_and_drop(self, self.inst_robot, r_element, theta_element, z_element, r_base, theta_base, z_base)
             else:
                 logger.warning("Base %s NOT empty" % base)
-        DeviceWriteTask.objects.filter(variable_property__name='Bode_put_on', done=False, failed=False).delete()
+        self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
+                                     value_class='BOOLEAN')
 
     take_off_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_take_off'))
     if take_off_bode:
         logger.info("Taking off Elements...")
-        self.write_variable_property(variable_name='Bode_run', property_name='Bode_take_off', value=0,
-                                     value_class='BOOLEAN')
         for base in LaboremRobotBase.objects.all():
             if base.element is not None:
                 r_element = base.element.R
@@ -305,9 +302,12 @@ def script(self):
                 theta_base = base.theta
                 z_base = base.z
                 take_and_drop(self, self.inst_robot, r_base, theta_base, z_base, r_element, theta_element, z_element)
+                base.element = None
+                base.save()
             else:
                 logger.warning("Base %s empty" % base)
-        DeviceWriteTask.objects.filter(variable_property__name='Bode_take_off', done=False, failed=False).delete()
+        self.write_variable_property(variable_name='Bode_run', property_name='Bode_take_off', value=0,
+                                     value_class='BOOLEAN')
 
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
@@ -320,8 +320,6 @@ def script(self):
                             str(1.2 * float(vepp) / (2 * 4)) + ';:CH2:YUN "V";:CH2:BANdwidth 10000000;:'
                             ':CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;'
                             ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM')
-        self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
-                                     value_class='BOOLEAN')
         fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
         fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
         nb_points = self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS')
@@ -414,13 +412,12 @@ def script(self):
             logger.info("Freq : %s - Gain : %s - Phase : %s" % (f, gain, mean_phase))
             self.write_values_to_db(data={'Bode_Freq': [f], 'Bode_Gain': [gain], 'Bode_Phase': [mean_phase]})
         logger.info("Bode end")
-        DeviceWriteTask.objects.filter(variable_property__name='BODE_5_LOOP', done=False, failed=False).delete()
+        self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
+                                     value_class='BOOLEAN')
 
     waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_10_Waveform'))
     if waveform:
         logger.info("Waveform running...")
-        self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_10_Waveform', value=0,
-                                     value_class='BOOLEAN')
 
         self.inst_mdo.timeout = 10000
 
@@ -564,4 +561,5 @@ def script(self):
         self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})
-        DeviceWriteTask.objects.filter(variable_property__name='Spectre_10_Waveform', done=False, failed=False).delete()
+        self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_10_Waveform', value=0,
+                                     value_class='BOOLEAN')
