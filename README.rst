@@ -46,51 +46,61 @@ Installation
 To use CAS auth
 ---------------
 
-Without proxy :
- - sudo pip install django_cas_ng
- - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
-    INSTALLED_APPS = [
-        ...
-        'django_cas_ng',
+ - sudo apt-get install libxml2-dev libxslt-dev python-dev
 
-    ]
+ Without proxy :
+  - sudo pip install django_cas_ng
+  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
 
-    AUTHENTICATION_BACKENDS = [
-        'django.contrib.auth.backends.ModelBackend',
-        'django_cas_ng.backends.CASBackend',
+   INSTALLED_APPS = [
+    - ...
+    - 'django_cas_ng',
 
-    ]
-    CAS_SERVER_URL = 'https://account.example.com/cas/'
- - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
-    url(r'^accounts/login$', django_cas_ng.views.login, name='cas_ng_login'),
-    url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
-    url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
+   ]
 
-Behind a proxy for CAS V2 :
- - sudo pip install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
- - sudo pip install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
- - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
-    INSTALLED_APPS = [
-        ...
-        'django_cas_ng',
+   AUTHENTICATION_BACKENDS = [
+    - 'django.contrib.auth.backends.ModelBackend',
+    - 'django_cas_ng.backends.CASBackend',
 
-    ]
+   ]
 
-    AUTHENTICATION_BACKENDS = [
-        'django.contrib.auth.backends.ModelBackend',
-        'django_cas_ng.backends.CASBackend',
+   CAS_SERVER_URL = 'https://account.example.com/cas/'
 
-    ]
+  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
 
-    CAS_SERVER_URL = 'https://account.example.com/cas/'
-    CAS_VERSION = '2'
-    CAS_EXTRA_LOGIN_KWARGS = {'proxies': {'https': 'http://proxy.com:3128'}, 'timeout': 5}
- - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
-    url(r'^accounts/login$', django_cas_ng.views.login, name='cas_ng_login'),
-    url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
-    url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
+   url(r'^accounts/login$', django_cas_ng.views.login, name='cas_ng_login'),
+   url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
+   url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
 
-sudo /var/www/pyscada/PyScadaServer/manage.py migrate
+ Behind a proxy for CAS V2 :
+  - sudo pip install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
+  - sudo pip install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
+  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
+
+   INSTALLED_APPS = [
+    - ...
+    - 'django_cas_ng',
+
+   ]
+
+   AUTHENTICATION_BACKENDS = [
+    - 'django.contrib.auth.backends.ModelBackend',
+    - 'django_cas_ng.backends.CASBackend',
+
+   ]
+
+   CAS_SERVER_URL = 'https://account.example.com/cas/'
+   CAS_VERSION = '2'
+   CAS_EXTRA_LOGIN_KWARGS = {'proxies': {'https': 'http://proxy.com:3128'}, 'timeout': 5}
+
+  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
+
+   - import django_cas_ng.views
+   - url(r'^accounts/CASlogin/$', django_cas_ng.views.login, name='cas_ng_login'),
+   - url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
+   - url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
+
+ - sudo /var/www/pyscada/PyScadaServer/manage.py migrate
 
 To add a USB camera
 -------------------

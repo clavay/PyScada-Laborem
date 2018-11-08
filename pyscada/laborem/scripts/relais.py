@@ -18,16 +18,15 @@ def startup(self):
     os.environ["PIGPIO_ADDR"] = "10.3.205.173"
     try:
         from gpiozero import LED
+        # TODO: Keep the GPIO config in DB. Add gpiozero to the GPIO model
+        self.d = {0: LED(5),
+                  1: LED(6),
+                  2: LED(13),
+                  3: LED(19),
+                  4: LED(26)}  # in my opinion this is more reliable
+        self.d[4].on()
     except Exception as e:
         logger.error("Error importing gpiozero in script - Exception : %s" % e)
-
-    # TODO: Keep the GPIO config in DB. Add gpiozero to the GPIO model
-    self.d = {0: LED(5),
-              1: LED(6),
-              2: LED(13),
-              3: LED(19),
-              4: LED(26)}  # in my opinion this is more reliable
-    self.d[4].on()
 
 
 def shutdown(self):
@@ -45,12 +44,16 @@ def script(self):
     :return:
     """
 
-    device_laborem = Device.objects.get(pk=8)
-    plug_selected = int(device_laborem.laboremmotherboarddevice.plug)
-    if plug_selected:
-        plug_selected = plug_selected - 1
-        for i in range(0, 4):
-            if int(bin(plug_selected)[2:].zfill(4)[4 - i - 1:4 - i]):
-                self.d[i].on()
-            else:
-                self.d[i].off()
+    try:
+        from gpiozero import LED
+        device_laborem = Device.objects.get(pk=8)
+        plug_selected = int(device_laborem.laboremmotherboarddevice.plug)
+        if plug_selected:
+            plug_selected = plug_selected - 1
+            for i in range(0, 4):
+                if int(bin(plug_selected)[2:].zfill(4)[4 - i - 1:4 - i]):
+                    self.d[i].on()
+                else:
+                    self.d[i].off()
+    except:
+        pass
