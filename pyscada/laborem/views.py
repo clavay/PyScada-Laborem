@@ -42,13 +42,38 @@ def user_check(request):
         if LaboremUser.objects.filter(user=request.user).count() == 0:
             lu = LaboremUser(user=request.user)
             lu.save()
+        return False
+
+
+def index(request):
+    u = user_check(request)
+    if u:
+        return u
+
+    if LaboremUser.objects.get(user=request.user).laborem_group_input is None:
+        LaboremUser.objects.filter(user=request.user).exclude(laborem_group_input__hmi_group__name="teacher"). \
+            update(laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"))
+        time.sleep(3)
+        return redirect('/')
+    if GroupDisplayPermission.objects.count() == 0:
+        view_list = View.objects.all()
+    else:
+        view_list = View.objects.filter(groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).distinct()
+    c = {
+        'user': request.user,
+        'view_list': view_list,
+        'version_string': core_version
+    }
+    return TemplateResponse(request, 'view_overview.html', c)  # HttpResponse(t.render(c))
 
 
 @requires_csrf_token
 def view_laborem(request, link_title):
     # if not request.user.is_authenticated():
     #    return redirect('/accounts/choose_login/?next=%s' % request.path)
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
 
     page_template = get_template('content_page.html')
     widget_row_template = get_template('widget_row.html')
@@ -158,7 +183,10 @@ def view_laborem(request, link_title):
 
 
 def form_write_plug(request):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     if 'mb_id' in request.POST and 'plug_id' in request.POST:
         mb_id = int(request.POST['mb_id'])
         plug_id = int(request.POST['plug_id'])
@@ -178,7 +206,10 @@ def form_write_plug(request):
 
 
 def form_write_robot_base(request):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     if LaboremGroupInputPermission.objects.count() > 0:
         try:
             LaboremGroupInputPermission.objects.get(move_robot=True, hmi_group__in=request.user.groups.all())
@@ -194,7 +225,10 @@ def form_write_robot_base(request):
 
 
 def form_write_property(request):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     if 'variable_property_id' in request.POST and 'value' in request.POST:
         variable_property_id = int(request.POST['variable_property_id'])
         value = request.POST['value']
@@ -216,7 +250,10 @@ def form_write_property(request):
 
 
 def query_top10_question(request):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     if 'mb_id' not in request.POST:
         return HttpResponse(status=404)
     mb_id = int(request.POST['mb_id'])
@@ -285,7 +322,10 @@ def query_top10_question(request):
 
 
 def validate_top10_answers(request):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).top10_answer:
@@ -376,7 +416,10 @@ def calculate_note(level, answer, student_answer):
 
 
 def rank_top10(request):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     LaboremTOP10Ranking.objects.all().delete()
     for user in LaboremTOP10Score.objects.values_list('user').distinct():
         score_total = 0
@@ -393,7 +436,10 @@ def rank_top10(request):
 
 
 def query_previous_and_next_btn(request, **kwargs):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     data = {}
     if 'actual_hash' in request.POST and 'direction' in request.POST \
             and 'robot' in request.POST and 'expe' in request.POST:
@@ -450,7 +496,10 @@ def query_page(position, **kwargs):
 
 
 def reset_robot_bases(request):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
@@ -461,7 +510,10 @@ def reset_robot_bases(request):
 
 
 def move_robot(request):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
@@ -491,7 +543,10 @@ def move_robot(request):
 
 
 def check_users(request):
-    user_check(request)
+    u = user_check(request)
+    if u:
+        return u
+
     LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
     laborem_waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
         order_by('connection_time')

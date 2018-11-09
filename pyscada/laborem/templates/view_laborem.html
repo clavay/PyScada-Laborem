@@ -110,7 +110,7 @@
             </thead>
             <tbody></tbody>
         </table>
-    </div> <!-- end page-log -->	
+    </div> <!-- end page-log -->
     {% for panel in panel_list %}
         <div class="side-menu  {% if panel.position == 1 %}left{% elif panel.position == 2 %}right{% endif %}">
             <ul class="status-panel">
@@ -123,6 +123,12 @@
             </ul>
         </div>
     {% endfor %}
+    <div class="camera side-menu left">
+        <ul class="status-panel">
+            <li>Camera</li>
+            <img src="{% static 'tmp/picture.jpg' %}" alt="" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
+        </ul>
+    </div>
 {% endblock %}
 {% block include_bootom %}
 <script type="text/javascript" src="{% static "pyscada/js/jquery.mb.CSSAnimate.min.js" %}"></script>
@@ -188,6 +194,16 @@
                     // show only new content
                     $(window.location.hash).show();
                 };
+            });
+            var menu_pos = $('footer')[0].clientHeight + 6;
+            $.each($('.side-menu.left'),function(key,val){
+                $(val).attr("style","bottom: " + menu_pos + "px;");
+                menu_pos = menu_pos + val.clientHeight + 10;
+            });
+            var menu_pos = $('footer')[0].clientHeight + 6;
+            $.each($('.side-menu.right'),function(key,val){
+                $(val).attr("style","bottom: " + menu_pos + "px;");
+                menu_pos = menu_pos + val.clientHeight + 10;
             });
         });
 {% endblock %}

@@ -14,8 +14,8 @@ def startup(self):
     write your code startup code here, don't change the name of this function
     :return:
     """
-    os.environ["GPIOZERO_PIN_FACTORY"] = "pigpio"
-    os.environ["PIGPIO_ADDR"] = "10.3.205.173"
+    #os.environ["GPIOZERO_PIN_FACTORY"] = "pigpio"
+    #os.environ["PIGPIO_ADDR"] = "10.3.205.173"
     try:
         from gpiozero import LED
         # TODO: Keep the GPIO config in DB. Add gpiozero to the GPIO model

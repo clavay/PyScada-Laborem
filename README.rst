@@ -105,17 +105,28 @@ To use CAS auth
 To add a USB camera
 -------------------
 
- - Download : https://github.com/jacksonliam/mjpg-streamer
- - sudo apt-get install cmake libjpeg62-turbo-dev
- - unzip mjpg-streamer-master.zip
- - cd mjpg-streamer-experimental/
- - make
- - sudo make install
- - sudo usermod -a -G video pyscada
- - sudo wget https://raw.githubusercontent.com/clavay/PyScada-LaboREM/master/extras/service/systemd/laborem_camera.service -O /etc/systemd/system/laborem_camera.service
- - sudo systemctl enable laborem_camera
- - sudo systemctl start laborem_camera
- - add to a custom html : <img src="http://127.0.0.1:8090/?action=stream" width="320px" height="240px" />
+ Mount /var/tmp on RAM :
+     - sudo -u pyscada mkdir -p /var/www/pyscada/http/static/tmp
+     - sudo nano /etc/fstab
+     - Add the line : tmpfs /var/www/pyscada/http/static/tmp tmpfs nodev,nosuid,size=10M 0 0
+     - sudo mount -a
+     - Check if /var/www/pyscada/http/static/tmp is mounted : df
+
+ Install mjpg-streamer :
+     - Download : https://github.com/jacksonliam/mjpg-streamer
+     - sudo apt-get install cmake libjpeg62-turbo-dev
+     - unzip mjpg-streamer-master.zip
+     - cd mjpg-streamer-experimental/
+     - make
+     - sudo make install
+     - sudo usermod -a -G video pyscada
+     - sudo wget https://raw.githubusercontent.com/clavay/PyScada-LaboREM/master/extras/service/systemd/laborem_camera.service -O /etc/systemd/system/laborem_camera.service
+     - sudo systemctl enable laborem_camera
+     - sudo systemctl start laborem_camera
+     - add to a custom html :
+        <object data="{% static 'pyscada/laborem/img/webcam-offline.jpg' %}" type="image/jpg" width="320" height="240">
+        <img src="/tmp/picture.jpg" width="320px" height="240px" alt="Camera view"/>
+        </object>
 
 Contribute
 ----------
