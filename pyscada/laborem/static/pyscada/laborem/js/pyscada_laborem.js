@@ -61,68 +61,87 @@ function reload_top10_ranking() {
 };
 
 
-function query_previous_and_next_btn(actual_hash, direction, robot, expe) {
-    $.ajax({
-        type: 'post',
-        url: ROOT_URL+'json/query_previous_and_next_btn/',
-        data: {actual_hash:actual_hash, direction:direction, robot:robot, expe:expe},
-        success: function (data) {
-            previous = data['previous_page'];
-            next = data['next_page'];
-            if (previous === "") {
-                $(".btn-previous").hide();
-            }else if (previous === "=") {
-                $(".btn-previous").show();
-            }else {
-                $(".btn-previous").attr("href", '#' + previous);
-                $(".btn-previous").show();
-            }
-            if (next === "") {
-                $(".btn-next").hide();
-            }else {
-                $(".btn-next").attr("href", '#' + next);
-            }
-            if (direction === "start") {
-                $(".btn-next").show();
-            }else {
-                //$(".btn-next").hide();
-            }
-        },
-        error: function(data) {
-            add_notification('query previous and next btn failed',3);
+function query_previous_and_next_btn() {
+    actual_hash = window.location.hash.substr(1);
+    robot = ""
+    expe = ""
+
+    // finding if a plug is selected and if have ROBOT in the name
+    data_plug_name = $('.list-dut-item.active').attr('data-plug-name');
+    if (typeof data_plug_name != 'undefined') {
+        if (~data_plug_name.indexOf('ROBOT')) {
+            robot = '1';
+        }else {
+            robot = '0';
         }
-    });
+    }
+
+    // finding if an expe is selected
+    if (typeof $('.expe_list_item.active').attr('name') != 'undefined') {
+        expe = $('.expe_list_item.active').attr('name')
+    }
+
+    if (actual_hash === "start") {
+        $(".btn-previous").hide();
+        $(".btn-next").attr("href", '#plugs');
+        $(".btn-next").show();
+    }else if (actual_hash === "plugs") {
+        $(".btn-previous").attr("href", '#start');
+        $(".btn-previous").show();
+        if (robot ==='1') {$(".btn-next").attr("href", '#robot'); $(".btn-next").show();}
+        else if (robot ==='0') {$(".btn-next").attr("href", '#preconf'); $(".btn-next").show();}
+        else {$(".btn-next").hide();}
+    }else if (actual_hash === "preconf") {
+        $(".btn-previous").attr("href", '#plugs');
+        $(".btn-previous").show();
+        $(".btn-next").attr("href", '#expe_choice');
+        $(".btn-next").show();
+    }else if (actual_hash === "robot") {
+        $(".btn-previous").attr("href", '#plugs');
+        $(".btn-previous").show();
+        $(".btn-next").attr("href", '#expe_choice');
+        $(".btn-next").hide();
+    }else if (actual_hash === "expe_choice") {
+        if (robot ==='1') {$(".btn-previous").attr("href", '#robot'); $(".btn-previous").show();}
+        else if (robot ==='0') {$(".btn-previous").attr("href", '#preconf'); $(".btn-previous").show();}
+        else {$(".btn-previous").hide();}
+        if (expe !='') {$(".btn-next").attr("href", '#' + expe); $(".btn-next").show();}
+        else {$(".btn-next").hide();}
+    }else if (actual_hash === "bode") {
+        $(".btn-previous").attr("href", '#expe_choice');
+        $(".btn-previous").show();
+        $(".btn-next").hide();
+    }else if (actual_hash === "spectrum") {
+        $(".btn-previous").attr("href", '#expe_choice');
+        $(".btn-previous").show();
+        $(".btn-next").hide();
+    }else if (actual_hash === "viewer") {
+        $(".btn-previous").hide();
+        $(".btn-next").hide();
+    }
 };
 
 function reset_page(page_name) {
-    if (page_name === "robot") {
-        $('.dropdown-base').removeClass('active');
-        $('.dropdown-base').show();
-        $('.ui-dropdown-robot-bnt').text("------- ");
-        $(".btn-next").hide();
-        move_robot("drop");
-    }else if (page_name === "preconf") {
-        $(".btn-next").show();
+    if (page_name === "start") {
         reset_robot_bases();
-        move_robot("drop");
+        $('.list-dut-item.active').removeClass('active');
+        $('.expe_list_item.active').removeClass('active');
     }else if (page_name === "plugs") {
-        $('.list-dut-item').removeClass('active');
-        $(".btn-next").hide();
-        move_robot("drop");
-    }else if (page_name === "start") {
-        $(".btn-next").show();
-        move_robot("drop");
-    }else if (page_name === "bode") {
-        $(".btn-next").hide();
-    }else if (page_name === "spectrum") {
-        $(".btn-next").hide();
+        reset_robot_bases();
+        $('.list-dut-item.active').removeClass('active');
+        $('.expe_list_item.active').removeClass('active');
+    }else if (page_name === "preconf") {
+        reset_robot_bases();
+        $('.expe_list_item.active').removeClass('active');
+    }else if (page_name === "robot") {
+        //reset_robot_bases();
+        $('.expe_list_item.active').removeClass('active');
     }else if (page_name === "expe_choice") {
-        $('.expe_list_item').removeClass('active');
-        $(".btn-next").hide();
+        $('.expe_list_item.active').removeClass('active');
         move_robot("move");
+    }else if (page_name === "bode") {
+    }else if (page_name === "spectrum") {
     }else if (page_name === "viewer") {
-        $(".btn-next").hide();
-        $(".btn-previous").hide();
     }
 };
 
@@ -141,6 +160,9 @@ function move_robot(mov) {
 };
 
 function reset_robot_bases() {
+    $('.dropdown-base').removeClass('active');
+    $('.dropdown-base').show();
+    $('.ui-dropdown-robot-bnt').text("------- ");
     $.ajax({
         type: 'post',
         url: ROOT_URL+'form/reset_robot_bases/',
@@ -151,6 +173,7 @@ function reset_robot_bases() {
             add_notification('reset robot bases failed',3);
         }
     });
+    move_robot("drop");
 };
 
 function change_plug_img($this, $img) {
@@ -290,36 +313,35 @@ $( document ).ready(function() {
     $(".navbar-brand").prepend('<span class="glyphicon glyphicon-home"></span>');
     $(".btn-previous").hide();
 
+    //if not starting on #start page redirect to this hash
+    if (window.location.hash.substr(1) != "start"){window.location.href = "#start";}
+
     //Send info and actualize data
     setInterval(function() {check_users()}, 1000);
 
     //Load next and previous button at start
-    query_previous_and_next_btn("start", "start", "", "")
+    query_previous_and_next_btn()
+
+    //load top10 ranking at start
+    reload_top10_ranking();
+
+    //reset the pages settings at start
+    reset_page(window.location.hash.substr(1));
+
+    $(window).on('hashchange', function() {
+        //reset the pages settings to force the user to interact with
+        reset_page(window.location.hash.substr(1));
+
+        //refresh previous and next buttom
+        query_previous_and_next_btn()
+
+        // Check if we are on a page that need to show the TOP10QAs
+        refresh_top10_qa();
+    });
 
     //Change the link of btn next/previous on click
     $('.btn-next, .btn-previous').on('click', function() {
-        var classNames = this.className.split(/\s+/);
-        var cls = $.grep(classNames, function(c, i) {
-            return $.inArray(c, ['btn-next','btn-previous']) !== -1;
-        })[0];
-        data_plug_name = $('.list-dut-item.active').attr('data-plug-name');
-        actual_hash = window.location.hash.substr(1);
-        direction = cls;
-        if (typeof data_plug_name != 'undefined') {
-            if (~data_plug_name.indexOf('ROBOT')) {
-                robot = '1';
-            }else {
-                robot = '0';
-            }
-        }else {
-            robot = ""
-        }
-        if (typeof $('.expe_list_item.active').attr('name') != 'undefined') {
-            expe = $('.expe_list_item.active').attr('name')
-        }else {
-            expe = ""
-        }
-        query_previous_and_next_btn(actual_hash, direction, robot, expe)
+        //query_previous_and_next_btn()
     });
 
     // actualize the picture of the dut selector for LaboREM with the list selection
@@ -330,30 +352,19 @@ $( document ).ready(function() {
         var $plug_id = $this.data('plug-id');
         var $plug_name = $this.data('plug-name');
 
-        if (~$plug_name.indexOf('ROBOT')) {
-            robot = '1';
-        }else {
-            robot = '0';
-        }
-        query_previous_and_next_btn(window.location.hash.substr(1), "idle", robot,"")
-
         $('.list-dut-item.active').removeClass('active');
         $this.toggleClass('active');
 
         change_plug_img($this, $img)
         change_plug_selected_motherboard($mb_id, $plug_id, $plug_name)
+        query_previous_and_next_btn()
     });
 
     $('.expe_list_item').on('click', function() {
         var $this = $(this);
-        var expe_name = $this.attr('name');
-        robot = ""
-
-        query_previous_and_next_btn(window.location.hash.substr(1), "idle", robot, expe_name);
-
         $('.expe_list_item.active').removeClass('active');
         $this.addClass('active');
-        $(".btn-next").show();
+        query_previous_and_next_btn();
     });
 
     // For the robot : active the selected item in a listbox and disable it in others listboxes
@@ -377,10 +388,11 @@ $( document ).ready(function() {
             $(dropdown_item[i]).removeClass('active');
             }
         }
-        if (base_empty === 'no') {$(".btn-next").show();}
         $this.context.parentElement.parentElement.getElementsByClassName('ui-dropdown-robot-bnt')[0].textContent = $this.context.textContent;
         $this.addClass('active');
         change_base_selected_element($this.context.parentElement.parentElement.id, $this.context.id)
+        query_previous_and_next_btn();
+        if (base_empty === 'no') {$(".btn-next").show();}
     });
 
     // Active the selected item in a listbox and disable it in others listboxes
@@ -412,19 +424,5 @@ $( document ).ready(function() {
                 }
             });
         }
-    });
-
-    //load top10 ranking at start
-    reload_top10_ranking();
-
-    //reset the pages settings at start
-    reset_page(window.location.hash.substr(1));
-
-    $(window).on('hashchange', function() {
-        //reset the pages settings to force the user to interact with
-        reset_page(window.location.hash.substr(1));
-
-        // Check if we are on a page that need to show the TOP10QAs
-        refresh_top10_qa();
     });
 });

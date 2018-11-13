@@ -26,7 +26,9 @@ Installation
  - Install PyScada-LaboREM : sudo pip install https://github.com/clavay/PyScada-LaboREM/tarball/master
  - Install PyScada-GPIO : sudo pip install pyscada-gpio
  - Install PyScada-Scripting : sudo pip install pyscada-scripting
- - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py : url(r'^', include('pyscada.laborem.urls')),
+ - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py before url(r'^', include('pyscada.hmi.urls')), :
+    - url(r'^', include('pyscada.laborem.urls')),
+
  - Add pyscada and gpio apps in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
     INSTALLED_APPS = [
         ...
@@ -113,6 +115,8 @@ To add a USB camera
      - Check if /var/www/pyscada/http/static/tmp is mounted : df
 
  Install mjpg-streamer :
+     - sudo /var/www/pyscada/PyScadaServer/manage.py collectstatic
+     - sudo chmod +x /var/www/pyscada/http/static/pyscada/laborem/scripts/change_filename_camera.sh
      - Download : https://github.com/jacksonliam/mjpg-streamer
      - sudo apt-get install cmake libjpeg62-turbo-dev
      - unzip mjpg-streamer-master.zip

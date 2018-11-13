@@ -64,7 +64,7 @@ def index(request):
         'view_list': view_list,
         'version_string': core_version
     }
-    return TemplateResponse(request, 'view_overview.html', c)  # HttpResponse(t.render(c))
+    return TemplateResponse(request, 'view_laborem_overview.html', c)  # HttpResponse(t.render(c))
 
 
 @requires_csrf_token
@@ -254,6 +254,13 @@ def query_top10_question(request):
     if u:
         return u
 
+    group_ok = False
+    if LaboremGroupInputPermission.objects.count() > 0:
+        for group in request.user.groups.iterator():
+            if LaboremGroupInputPermission.objects.get(hmi_group=group).top10_answer:
+                group_ok = True
+    if not group_ok:
+        return HttpResponse(status=404)
     if 'mb_id' not in request.POST:
         return HttpResponse(status=404)
     mb_id = int(request.POST['mb_id'])
@@ -326,11 +333,13 @@ def validate_top10_answers(request):
     if u:
         return u
 
+    group_ok = False
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).top10_answer:
-                continue
-        return HttpResponse(status=200)
+                group_ok = True
+    if not group_ok:
+        return HttpResponse(status=404)
     if 'mb_id' not in request.POST:
         return HttpResponse(status=404)
     mb_id = int(request.POST['mb_id'])
@@ -433,39 +442,6 @@ def rank_top10(request):
         data += '<tr class="top10-item"><td>' + str(item.user.username) + \
                    '</td><td style="text-align: center">' + str(round(item.score, 2)) + '</td></tr>'
     return HttpResponse(json.dumps(data), content_type='application/json')
-
-
-def query_previous_and_next_btn(request, **kwargs):
-    u = user_check(request)
-    if u:
-        return u
-
-    data = {}
-    if 'actual_hash' in request.POST and 'direction' in request.POST \
-            and 'robot' in request.POST and 'expe' in request.POST:
-        actual_hash = request.POST['actual_hash']
-        direction = request.POST['direction']
-        kwargs['robot'] = request.POST['robot']
-        kwargs['expe'] = request.POST['expe']
-        position = Page.objects.get(link_title=actual_hash).position
-        next_page = ""
-        previous_page = ""
-        if direction == 'start':
-            next_page = query_page(position + 1, **kwargs)
-            previous_page = ""
-        elif direction == 'btn-next':
-            next_page = query_page(position + 2, **kwargs)
-            previous_page = actual_hash
-        elif direction == 'btn-previous':
-            next_page = actual_hash
-            previous_page = query_page(position - 2, **kwargs)
-        elif direction == 'idle':
-            next_page = query_page(position + 1, **kwargs)
-            previous_page = "="
-        data['next_page'] = next_page
-        data['previous_page'] = previous_page
-        return HttpResponse(json.dumps(data), content_type='application/json')
-    return HttpResponse(status=404)
 
 
 def query_page(position, **kwargs):

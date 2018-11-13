@@ -122,7 +122,7 @@ def rotation_base(self, robot, theta):
                                      value=deg_to_ascii(theta_base*180/np.pi, angle_max_base),
                                      value_class='INT32')
     except Exception as e:
-        logger.info("No old theta : %s" % e)
+        logger.warning("No old theta : %s" % e)
         time.sleep(3)
     return True
 
@@ -271,10 +271,10 @@ def script(self):
 
     :return:
     """
-    # logger.info("Script Bode running...")
+    # logger.debug("Script Bode running...")
     put_on_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_put_on'))
     if put_on_bode:
-        logger.info("Putting on Elements...")
+        logger.debug("Putting on Elements...")
         # Move the robot
         for base in LaboremRobotBase.objects.all():
             if base.element is None:
@@ -286,13 +286,13 @@ def script(self):
                 z_base = base.z
                 take_and_drop(self, self.inst_robot, r_element, theta_element, z_element, r_base, theta_base, z_base)
             else:
-                logger.warning("Base %s NOT empty" % base)
+                logger.debug("Base %s NOT empty" % base)
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
                                      value_class='BOOLEAN')
 
     take_off_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_take_off'))
     if take_off_bode:
-        logger.info("Taking off Elements...")
+        logger.debug("Taking off Elements...")
         for base in LaboremRobotBase.objects.all():
             if base.element is not None:
                 r_element = base.element.R
@@ -305,13 +305,13 @@ def script(self):
                 base.element = None
                 base.save()
             else:
-                logger.warning("Base %s empty" % base)
+                logger.debug("Base %s empty" % base)
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_take_off', value=0,
                                      value_class='BOOLEAN')
 
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
-        logger.info("Bode running...")
+        logger.debug("Bode running...")
         vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
                             'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
@@ -343,7 +343,7 @@ def script(self):
             vsmax = float(vseff)*float(np.sqrt(2))
             mdo_horiz_scale = str(round(float(4.0 / (10.0 * float(f))), 6))
             mdo_ch2_scale = str(1.4 * float(vsmax) / 4.0)
-            logger.info("Freq = %s - horiz scale = %s - ch2 scale = %s - vsmax = %s - vseff = %s"
+            logger.debug("Freq = %s - horiz scale = %s - ch2 scale = %s - vsmax = %s - vseff = %s"
                         % (int(f), mdo_horiz_scale, mdo_ch2_scale, vsmax, vseff))
 
             # Set the oscilloscope horizontal scale and vertical scale for the output
@@ -377,7 +377,7 @@ def script(self):
                     time.sleep(0.1)
                 mean_phase = np.mean(phase)
                 st_dev_phase = np.std(phase)
-                # logger.info("Phase : %s - Mean : %s - StDev : %s" % (phase, mean_phase, st_dev_phase))
+                # logger.debug("Phase : %s - Mean : %s - StDev : %s" % (phase, mean_phase, st_dev_phase))
                 if float(mean_phase < 200) and st_dev_phase < 3:
                     break
 
@@ -409,15 +409,15 @@ def script(self):
                 else:
                     time.sleep(0.1)
 
-            logger.info("Freq : %s - Gain : %s - Phase : %s" % (f, gain, mean_phase))
+            logger.debug("Freq : %s - Gain : %s - Phase : %s" % (f, gain, mean_phase))
             self.write_values_to_db(data={'Bode_Freq': [f], 'Bode_Gain': [gain], 'Bode_Phase': [mean_phase]})
-        logger.info("Bode end")
+        logger.debug("Bode end")
         self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
                                      value_class='BOOLEAN')
 
     waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_10_Waveform'))
     if waveform:
-        logger.info("Waveform running...")
+        logger.debug("Waveform running...")
 
         self.inst_mdo.timeout = 10000
 
@@ -524,7 +524,6 @@ def script(self):
         scaled_wave_ch2 = (unscaled_wave_ch2 - vpos_ch2) * vscale_ch2 + voff_ch2
         scaled_wave_ch2 = scaled_wave_ch2.tolist()
 
-        logger.info("time : %s" % time.time())
         timevalues = list()
         time_now = time.time()
         scaled_wave_ch1_mini = list()
@@ -543,8 +542,8 @@ def script(self):
         spectrum_hanning_1 = spectrum_hanning_1 * 2 * 2 / nfft1  # also correct for Hann filter
         frequencies1 = np.linspace(0, 1/tscale, nfft1, endpoint=False).tolist()
 
-        logger.info("tscale %s - f %s - Ech/s %s" % (tscale, f, f/tscale))
-        logger.info("length eta1 %s - hanning %s - hanning_1 %s - spectrum_hanning_1 %s - frequencies1 %s"
+        logger.debug("tscale %s - f %s - Ech/s %s" % (tscale, f, f/tscale))
+        logger.debug("length eta1 %s - hanning %s - hanning_1 %s - spectrum_hanning_1 %s - frequencies1 %s"
                     % (nfft1, len(np.hanning(nfft1)), len(hanning_1), len(spectrum_hanning_1), len(frequencies1)))
 
         # FFT CH2
