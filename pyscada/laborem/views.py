@@ -574,6 +574,6 @@ def check_users(request):
         data['user_type'] = 1
     elif request.user.groups.all().first() == Group.objects.get(name="worker"):
         data['user_type'] = 2
-    data['timeline_start'] = format(VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),
-                                                                          "viewer_start_timeline").timestamp, 'U')
+    data['timeline_start'] = int(format(VariableProperty.objects.get_property(Variable.objects.get(
+        name="LABOREM"), "viewer_start_timeline").timestamp, 'U'))*1000
     return HttpResponse(json.dumps(data), content_type='application/json')
