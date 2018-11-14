@@ -268,8 +268,6 @@ function change_base_selected_element(base_id, element_id) {
 };
 
 function check_users() {
-    console.log("timestamp")
-    console.log(DATA_FROM_TIMESTAMP)
     $.ajax({
         type: 'post',
         url: ROOT_URL+'form/check_users/',
