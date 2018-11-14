@@ -7,8 +7,8 @@
     {% for page in page_list %}
         <li class="hidden"><a href="#{{page.link_title}}">{{page.title}}</a></li>
     {% endfor %}
-    <li><a href="#" style="color: red" class="btn-previous">Previous <span class="glyphicon glyphicon-chevron-left"></span></a></li>
-    <li><a href="#" style="color: green" class="btn-next"><span class="glyphicon glyphicon-chevron-right"></span> Next</a></li>
+    <li><a href="#" style="color: lightcoral; font-size: 16px;" class="btn-previous">Previous <span class="glyphicon glyphicon-chevron-left"></span></a></li>
+    <li><a href="#" style="color: lightgreen; font-size: 16px;" class="btn-next"><span class="glyphicon glyphicon-chevron-right"></span> Next</a></li>
 {% endblock %}
 
 {% block top_menu_right %}
@@ -126,7 +126,7 @@
     <div class="camera side-menu left">
         <ul class="status-panel">
             <li>Camera</li>
-            <img src="{% static 'tmp/picture.jpg' %}" alt="" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
+            <img id="camera-img" src="{% static 'pyscada/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
         </ul>
     </div>
 {% endblock %}
@@ -142,6 +142,16 @@
 <script type="text/javascript" src="{% static "pyscada/laborem/js/pyscada_laborem.js" %}"></script>
 {% endblock %}
 {% block script_bottom %}
+window.onload = function() {
+    var image = document.getElementById("camera-img");
+
+    function updateImage() {
+        image.src = "http://" + window.location.hostname + ":8090/?action=stream"
+    }
+
+    setInterval(updateImage, 1000);
+}
+
         $( document ).ready(function() {
             // Handler for .ready() called.
             

@@ -268,6 +268,8 @@ function change_base_selected_element(base_id, element_id) {
 };
 
 function check_users() {
+    console.log("timestamp")
+    console.log(DATA_FROM_TIMESTAMP)
     $.ajax({
         type: 'post',
         url: ROOT_URL+'form/check_users/',
@@ -297,7 +299,12 @@ function check_users() {
                 $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                 $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
             }
-
+            if (data['timeline_start'] != DATA_FROM_TIMESTAMP) {
+                //console.log("DATA_FROM_TIMESTAMP : " + DATA_FROM_TIMESTAMP + " data['timeline_start'] : " + data['timeline_start'] + " servertime : " + SERVER_TIME)
+                DATA={}
+                DATA_FROM_TIMESTAMP = data['timeline_start']
+                DATA_DISPLAY_FROM_TIMESTAMP = data['timeline_start']
+            }
         },
         error: function(data) {
             add_notification('write plug selected failed',3);

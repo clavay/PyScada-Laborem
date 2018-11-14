@@ -8,6 +8,7 @@ from pyscada.laborem.models import LaboremUser, LaboremGroupInputPermission
 from django.utils.timezone import now, timedelta
 from django.contrib.auth.models import User, Group
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,8 @@ def script(self):
                 lu.laborem_group_input = LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").first()
                 lu.start_time = now()
                 lu.save()
+                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                             timestamp=datetime.utcnow())
         # move the without group in viewer if check < 12 sec
         LaboremUser.objects.filter(laborem_group_input=None, last_check__gte=now() - timedelta(seconds=12)).\
             exclude(laborem_group_input__hmi_group__name="teacher").\
@@ -74,4 +77,4 @@ def script(self):
             except AttributeError:
                 pass
     else:
-        logger.info("Please create the 3 groups for the user list")
+        logger.error("Please create the 3 groups for the user list")

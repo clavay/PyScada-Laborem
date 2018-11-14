@@ -37,7 +37,7 @@ def script(self):
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
                                                variable_property__variable__device__protocol=1)\
             .order_by('variable_property__name'):
-        logger.info('GenericDeviceWriteTask VP : %s' % task.__str__())
+        logger.debug('GenericDeviceWriteTask VP : %s' % task.__str__())
         if task.variable_property.variable.scaling is not None:
             task.value = task.variable_property.variable.scaling.scale_output_value(task.value)
         if task.variable_property:
@@ -56,7 +56,7 @@ def script(self):
 
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
                                                variable__device__protocol=1).order_by('variable__name'):
-        logger.info('GenericDeviceWriteTask Variable : %s' % task.__str__())
+        logger.debug('GenericDeviceWriteTask Variable : %s' % task.__str__())
         # if task.variable.scaling is not None:
         #    task.value = task.variable.scaling.scale_output_value(task.value)
         if task.variable:

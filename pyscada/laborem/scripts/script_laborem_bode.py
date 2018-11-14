@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from pyscada.models import Device, DeviceWriteTask
+from pyscada.models import Device
 from pyscada.laborem.models import LaboremRobotBase
 import logging
 import visa
 import time
+from datetime import datetime
 import numpy as np
 from django.conf import settings
 
@@ -262,6 +263,9 @@ def shutdown(self):
             self.inst_robot = None
     except AttributeError:
         pass
+    except visa.VisaIOError:
+        pass
+
     return True
 
 
@@ -312,6 +316,8 @@ def script(self):
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
         logger.debug("Bode running...")
+        self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                     timestamp=datetime.utcnow())
         vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
                             'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
@@ -344,7 +350,7 @@ def script(self):
             mdo_horiz_scale = str(round(float(4.0 / (10.0 * float(f))), 6))
             mdo_ch2_scale = str(1.4 * float(vsmax) / 4.0)
             logger.debug("Freq = %s - horiz scale = %s - ch2 scale = %s - vsmax = %s - vseff = %s"
-                        % (int(f), mdo_horiz_scale, mdo_ch2_scale, vsmax, vseff))
+                         % (int(f), mdo_horiz_scale, mdo_ch2_scale, vsmax, vseff))
 
             # Set the oscilloscope horizontal scale and vertical scale for the output
             self.inst_mdo.write(':HORIZONTAL:SCALE ' + mdo_horiz_scale + ';:CH2:SCALE ' + mdo_ch2_scale +
@@ -420,6 +426,8 @@ def script(self):
         logger.debug("Waveform running...")
 
         self.inst_mdo.timeout = 10000
+        self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                     timestamp=datetime.utcnow())
 
         vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
         funcshape1 = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_3_FUNCTION_SHAPE')
@@ -544,7 +552,7 @@ def script(self):
 
         logger.debug("tscale %s - f %s - Ech/s %s" % (tscale, f, f/tscale))
         logger.debug("length eta1 %s - hanning %s - hanning_1 %s - spectrum_hanning_1 %s - frequencies1 %s"
-                    % (nfft1, len(np.hanning(nfft1)), len(hanning_1), len(spectrum_hanning_1), len(frequencies1)))
+                     % (nfft1, len(np.hanning(nfft1)), len(hanning_1), len(spectrum_hanning_1), len(frequencies1)))
 
         # FFT CH2
         eta2 = scaled_wave_ch2

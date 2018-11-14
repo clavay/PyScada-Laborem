@@ -107,16 +107,8 @@ To use CAS auth
 To add a USB camera
 -------------------
 
- Mount /var/tmp on RAM :
-     - sudo -u pyscada mkdir -p /var/www/pyscada/http/static/tmp
-     - sudo nano /etc/fstab
-     - Add the line : tmpfs /var/www/pyscada/http/static/tmp tmpfs nodev,nosuid,size=10M 0 0
-     - sudo mount -a
-     - Check if /var/www/pyscada/http/static/tmp is mounted : df
 
  Install mjpg-streamer :
-     - sudo /var/www/pyscada/PyScadaServer/manage.py collectstatic
-     - sudo chmod +x /var/www/pyscada/http/static/pyscada/laborem/scripts/change_filename_camera.sh
      - Download : https://github.com/jacksonliam/mjpg-streamer
      - sudo apt-get install cmake libjpeg62-turbo-dev
      - unzip mjpg-streamer-master.zip
@@ -128,9 +120,7 @@ To add a USB camera
      - sudo systemctl enable laborem_camera
      - sudo systemctl start laborem_camera
      - add to a custom html :
-        <object data="{% static 'pyscada/laborem/img/webcam-offline.jpg' %}" type="image/jpg" width="320" height="240">
-        <img src="/tmp/picture.jpg" width="320px" height="240px" alt="Camera view"/>
-        </object>
+         <img id='camera-img' src="http://" + window.location.hostname + ":8090/?action=stream" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
 
 Contribute
 ----------

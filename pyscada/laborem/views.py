@@ -25,6 +25,7 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import requires_csrf_token
 from django.contrib.auth.models import User, Group
 from django.utils.timezone import now, timedelta
+from django.utils.dateformat import format
 
 import time
 import json
@@ -573,4 +574,6 @@ def check_users(request):
         data['user_type'] = 1
     elif request.user.groups.all().first() == Group.objects.get(name="worker"):
         data['user_type'] = 2
+    data['timeline_start'] = format(VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),
+                                                                          "viewer_start_timeline").timestamp, 'U')
     return HttpResponse(json.dumps(data), content_type='application/json')
