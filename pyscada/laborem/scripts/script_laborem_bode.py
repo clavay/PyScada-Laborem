@@ -318,7 +318,7 @@ def script(self):
         logger.debug("Bode running...")
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
-        vepp = max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP'), 0)
+        vepp = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP'), 0), 19)
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
                             'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
         self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
@@ -430,7 +430,7 @@ def script(self):
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
 
-        vepp = max(self.read_variable_property(variable_name='Bode_run', property_name='SPECTRE_2_VEPP'), 0)
+        vepp = min(max(self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP'), 0), 19)
         funcshape1 = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_3_FUNCTION_SHAPE')
 
         # Set the generator to freq f
@@ -551,7 +551,7 @@ def script(self):
         spectrum_hanning_1 = spectrum_hanning_1 * 2 * 2 / nfft1  # also correct for Hann filter
         frequencies1 = np.linspace(0, 1/tscale, nfft1, endpoint=False).tolist()
 
-        logger.debug("tscale %s - f %s - Ech/s %s" % (tscale, f, f/tscale))
+        logger.debug("tscale %s - f %s - Ech/s %s - Vepp %s" % (tscale, f, f/tscale, vepp))
         logger.debug("length eta1 %s - hanning %s - hanning_1 %s - spectrum_hanning_1 %s - frequencies1 %s"
                      % (nfft1, len(np.hanning(nfft1)), len(hanning_1), len(spectrum_hanning_1), len(frequencies1)))
 

@@ -429,7 +429,7 @@ def rank_top10(request):
     u = user_check(request)
     if u:
         return u
-
+    time.sleep(2)
     LaboremTOP10Ranking.objects.all().delete()
     for user in LaboremTOP10Score.objects.values_list('user').distinct():
         score_total = 0

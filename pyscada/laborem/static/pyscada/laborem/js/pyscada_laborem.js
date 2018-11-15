@@ -38,7 +38,8 @@ $('button.write-task-form-top10-set').click(function(){
 
             },
             error: function(data) {
-                add_notification('add new write task failed',3);
+                add_notification('validate_top10_answers error',3);
+                console.log('validate_top10_answers error');
             }
         });
     };
@@ -56,6 +57,7 @@ function reload_top10_ranking() {
         },
         error: function(data) {
             add_notification('rank top10 failed',3);
+            console.log('rank top10 failed');
         }
     });
 };
