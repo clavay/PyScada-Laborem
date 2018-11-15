@@ -318,7 +318,7 @@ def script(self):
         logger.debug("Bode running...")
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
-        vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
+        vepp = max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP'), 0)
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
                             'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
         self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
@@ -326,9 +326,10 @@ def script(self):
                             str(1.2 * float(vepp) / (2 * 4)) + ';:CH2:YUN "V";:CH2:BANdwidth 10000000;:'
                             ':CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;'
                             ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM')
-        fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
-        fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
-        nb_points = self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS')
+        fmin = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN'), 1), 200000)
+        fmax = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX'), 1), 200000)
+        nb_points = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS'),
+                            2), 20)
 
         for f in np.geomspace(fmin, fmax, nb_points):
             # Set the generator to freq f
@@ -429,11 +430,11 @@ def script(self):
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
 
-        vepp = self.read_variable_property(variable_name='Bode_run', property_name='SPECTRE_2_VEPP')
+        vepp = max(self.read_variable_property(variable_name='Bode_run', property_name='SPECTRE_2_VEPP'), 0)
         funcshape1 = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_3_FUNCTION_SHAPE')
 
         # Set the generator to freq f
-        f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
+        f = min(max(self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F'), 1), 200000)
         mdo_horiz_scale = str(round(float(4.0 / (10.0 * float(f))), 6))
 
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP ' + funcshape1
