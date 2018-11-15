@@ -421,7 +421,7 @@ def script(self):
         self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
                                      value_class='BOOLEAN')
 
-    waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_10_Waveform'))
+    waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
     if waveform:
         logger.debug("Waveform running...")
 
@@ -568,5 +568,5 @@ def script(self):
         self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})
-        self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_10_Waveform', value=0,
+        self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
                                      value_class='BOOLEAN')
