@@ -429,7 +429,7 @@ def script(self):
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
 
-        vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
+        vepp = self.read_variable_property(variable_name='Bode_run', property_name='SPECTRE_2_VEPP')
         funcshape1 = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_3_FUNCTION_SHAPE')
 
         # Set the generator to freq f

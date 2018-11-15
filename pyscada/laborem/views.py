@@ -52,8 +52,8 @@ def index(request):
         return u
 
     if LaboremUser.objects.get(user=request.user).laborem_group_input is None:
-        LaboremUser.objects.filter(user=request.user).exclude(laborem_group_input__hmi_group__name="teacher"). \
-            update(laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"))
+        LaboremUser.objects.filter(user=request.user).exclude(laborem_group_input__hmi_group__name="teacher").update(
+            laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"), last_check=now())
         time.sleep(3)
         return redirect('/')
     if GroupDisplayPermission.objects.count() == 0:

@@ -12,6 +12,10 @@
 {% endblock %}
 
 {% block top_menu_right %}
+    <li class="message-laborem hidden">
+        <p><img id="laborem-loadingAnimation" style="display: inline; height:15px;padding-bottom:3px;" src="{% static 'pyscada/img/load.gif' %}" alt="loading">
+         Nothing to say</p>
+    </li>
     <li class="dropdown dropdown-WaitingList">
         <a class="dropdown-toggle dropdown-WaitingList-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-time"></span> Waiting List <strong class="caret"></strong></a>
         <div class="dropdown-menu" style="padding: 15px;">
