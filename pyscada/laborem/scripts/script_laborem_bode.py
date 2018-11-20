@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from pyscada.models import Device
+from pyscada.models import Device, VariableProperty, Variable, DeviceProtocol, Unit
 from pyscada.laborem.models import LaboremRobotBase
 import logging
 import visa
@@ -46,11 +46,11 @@ def take_and_drop(self, robot, r1, theta1, z1, r2, theta2, z2):
 def format_ascii(rot_ascii, axe):
     if rot_ascii < 0:
         ret = axe + '-' + str(int(rot_ascii))[1:].zfill(3)
-        print(ret)
+        #print(ret)
         return ret
     else:
         ret = axe + '+' + str(int(rot_ascii)).zfill(3)
-        print(ret)
+        #print(ret)
         return ret
 
 
@@ -149,7 +149,17 @@ def startup(self):
     """
 
     # Wait for the instruments to wake up
+    if not Device.objects.filter(short_name="generic_device"):
+        Device.objects.create(short_name="generic_device", protocol=DeviceProtocol.objects.get(protocol="generic"),
+                              description="Laborem generic device to store generic variables")
+    if not Variable.objects.filter(name="LABOREM"):
+        Variable.objects.create(name="LABOREM", description="Var to store Varaible Properties used by Laborem",
+                                device=Device.objects.get(short_name="generic_device"), unit=Unit.objects.get(unit=""))
+    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                       "LaboREM is starting. Please Wait...", value_class='string')
     time.sleep(60)
+    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                       "", value_class='string')
 
     visa_backend = '@py'  # use PyVISA-py as backend
     if hasattr(settings, 'VISA_BACKEND'):
@@ -234,6 +244,8 @@ def shutdown(self):
     write your code shutdown code here, don't change the name of this function
     :return:
     """
+    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                       "LaboREM is down.", value_class='string')
     try:
         if self.inst_mdo is not None:
             self.inst_mdo.close()
@@ -279,6 +291,8 @@ def script(self):
     put_on_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_put_on'))
     if put_on_bode:
         logger.debug("Putting on Elements...")
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                           "Le robot place les éléments...", value_class='string')
         # Move the robot
         for base in LaboremRobotBase.objects.all():
             if base.element is None:
@@ -293,10 +307,14 @@ def script(self):
                 logger.debug("Base %s NOT empty" % base)
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
                                      value_class='BOOLEAN')
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                           "", value_class='string')
 
     take_off_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_take_off'))
     if take_off_bode:
         logger.debug("Taking off Elements...")
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                           "Le robot retire les éléments...", value_class='string')
         for base in LaboremRobotBase.objects.all():
             if base.element is not None:
                 r_element = base.element.R
@@ -312,10 +330,15 @@ def script(self):
                 logger.debug("Base %s empty" % base)
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_take_off', value=0,
                                      value_class='BOOLEAN')
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                           "", value_class='string')
 
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
         logger.debug("Bode running...")
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                           "Diagrammes de Bode en cours d'acquisition...",
+                                                           value_class='string')
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
         vepp = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP'), 0), 19)
@@ -419,12 +442,17 @@ def script(self):
             logger.debug("Freq : %s - Gain : %s - Phase : %s" % (f, gain, mean_phase))
             self.write_values_to_db(data={'Bode_Freq': [f], 'Bode_Gain': [gain], 'Bode_Phase': [mean_phase]})
         logger.debug("Bode end")
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                           "", value_class='string')
         self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
                                      value_class='BOOLEAN')
 
     waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
     if waveform:
         logger.debug("Waveform running...")
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                           "Analyse spectrale en cours d'acquisition...",
+                                                           value_class='string')
 
         self.inst_mdo.timeout = 10000
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
@@ -569,5 +597,7 @@ def script(self):
         self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                           "", value_class='string')
         self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
                                      value_class='BOOLEAN')

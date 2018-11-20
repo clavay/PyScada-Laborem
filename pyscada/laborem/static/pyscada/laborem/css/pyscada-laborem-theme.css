@@ -7,3 +7,12 @@
     color: red;
     padding-top: 15px;
 }
+
+.message-laborem h2 {
+    margin-bottom: 40px;
+}
+
+.side-menu.top {
+	top: -100px;
+    text-align: center;
+}

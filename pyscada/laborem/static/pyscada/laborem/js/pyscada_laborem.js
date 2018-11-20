@@ -305,6 +305,17 @@ function check_users() {
                 DATA_FROM_TIMESTAMP = data['timeline_start']
                 DATA_DISPLAY_FROM_TIMESTAMP = data['timeline_start']
             }
+            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '') {
+                $(".message-laborem h2").text(' ' + data['message_laborem']);
+                $(".message-laborem h2").prepend('<img id="laborem-loadingAnimation" style="height:30px;padding-bottom:3px;" src="/static/pyscada/img/load.gif" alt="loading">');
+                $(".message-laborem").stop().CSSAnimate({"top":51},500);
+                //console.log('ok ' + data['message_laborem']);
+            }else {
+                $(".message-laborem h2").text('');
+                oh = $(".message-laborem").outerHeight(true);
+                $(".message-laborem").stop().CSSAnimate({"top":-(oh - 51)},500);
+                //console.log("no data['message_laborem']");
+            }
         },
         error: function(data) {
             add_notification('write plug selected failed',3);

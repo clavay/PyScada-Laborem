@@ -568,12 +568,23 @@ def check_users(request):
                 data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
     data['activeuser'] = '<tr class="waitingusers-item"><td>' + str(laborem_working_user.user.username) + \
                          '</td><td style="text-align: center">' + time_left + '</td></tr>'
+
     data['user_type'] = 0
     if request.user.groups.all().first() == Group.objects.get(name="viewer") \
             or request.user.groups.all().first() is None:
         data['user_type'] = 1
     elif request.user.groups.all().first() == Group.objects.get(name="worker"):
         data['user_type'] = 2
-    data['timeline_start'] = int(format(VariableProperty.objects.get_property(Variable.objects.get(
-        name="LABOREM"), "viewer_start_timeline").timestamp, 'U'))*1000
+    try:
+        data['timeline_start'] = int(format(VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "viewer_start_timeline").timestamp, 'U'))*1000
+    except (Variable.DoesNotExist, AttributeError) as e:
+        # logger.warning("VP viewer_start_timeline error : %s" % e)
+        data['timeline_start'] = ''
+    try:
+        data['message_laborem'] = VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "message_laborem").value_string
+    except (Variable.DoesNotExist, AttributeError) as e:
+        # logger.warning("VP message_laborem error : %s" % e)
+        data['message_laborem'] = ''
     return HttpResponse(json.dumps(data), content_type='application/json')
