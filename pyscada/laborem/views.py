@@ -262,9 +262,11 @@ def query_top10_question(request):
                 group_ok = True
     if not group_ok:
         return HttpResponse(status=404)
-    if 'mb_id' not in request.POST:
+    if 'mb_id' not in request.POST or 'page' not in request.POST:
+        logger.debug("query top10 questions : mb_id or page is missing")
         return HttpResponse(status=404)
     mb_id = int(request.POST['mb_id'])
+    page = request.POST['page']
     if LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "1":
         plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug1
     elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "2":
@@ -303,7 +305,7 @@ def query_top10_question(request):
     data = {}
     if LaboremRobotBase.objects.get(name="base1").element is not None \
             and LaboremRobotBase.objects.get(name="base2").element is not None:
-        top10qa = LaboremTOP10.objects.filter(plug=plug,
+        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug,
                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").
                                               element.value,
                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").
@@ -314,18 +316,26 @@ def query_top10_question(request):
                                               element.unit).order_by('id').first()
     elif LaboremRobotBase.objects.get(name="base1").element is None \
             and LaboremRobotBase.objects.get(name="base2").element is None:
-        top10qa = LaboremTOP10.objects.filter(plug=plug, robot_base1__value=None, robot_base1__unit=None,
+        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, robot_base1__value=None,
+                                              robot_base1__unit=None,
                                               robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
     else:
-        logger.info("bases vide ou non vide not ok")
+        logger.debug("top10qa bases error")
         return HttpResponse(status=404)
     if top10qa is None:
-        logger.info("top10qa is None")
-        return HttpResponse(status=404)
+        logger.debug("top10qa is None")
+        return HttpResponse(json.dumps(data), content_type='application/json')
+    data['disable'] = 0
     data['question1'] = top10qa.question1
     data['question2'] = top10qa.question2
     data['question3'] = top10qa.question3
     data['question4'] = top10qa.question4
+    if LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).count() > 0:
+        data['answer1'] = top10qa.answer1
+        data['answer2'] = top10qa.answer2
+        data['answer3'] = top10qa.answer3
+        data['answer4'] = top10qa.answer4
+        data['disable'] = 1
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
@@ -341,9 +351,10 @@ def validate_top10_answers(request):
                 group_ok = True
     if not group_ok:
         return HttpResponse(status=404)
-    if 'mb_id' not in request.POST:
+    if 'mb_id' not in request.POST or 'page' not in request.POST:
         return HttpResponse(status=404)
     mb_id = int(request.POST['mb_id'])
+    page = request.POST['page']
     if LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "1":
         plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug1
     elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "2":
@@ -389,9 +400,10 @@ def validate_top10_answers(request):
     else:
         logger.error("Level plug error : %s" % plug.level)
     note = 0
+    note_max = 0
     if LaboremRobotBase.objects.get(name="base1").element is not None \
             and LaboremRobotBase.objects.get(name="base2").element is not None:
-        top10qa = LaboremTOP10.objects.filter(plug=plug,
+        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug,
                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.
                                               value,
                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.
@@ -402,7 +414,8 @@ def validate_top10_answers(request):
                                               unit).order_by('id').first()
     elif LaboremRobotBase.objects.get(name="base1").element is None \
             and LaboremRobotBase.objects.get(name="base2").element is None:
-        top10qa = LaboremTOP10.objects.filter(plug=plug, robot_base1__value=None, robot_base1__unit=None,
+        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, robot_base1__value=None,
+                                              robot_base1__unit=None,
                                               robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
     else:
         return HttpResponse(status=404)
@@ -416,8 +429,22 @@ def validate_top10_answers(request):
         note += calculate_note(level_plug, top10qa.answer3, request.POST['value3'])
     if top10qa.question4:
         note += calculate_note(level_plug, top10qa.answer4, request.POST['value4'])
-    score = LaboremTOP10Score(user=request.user, plug=plug, TOP10QA=top10qa, note=note)
+    score = LaboremTOP10Score(user=request.user, TOP10QA=top10qa, note=note)
     score.save()
+    if top10qa.question1:
+        note_max += calculate_note(level_plug, top10qa.answer1, top10qa.answer1)
+    if top10qa.question2:
+        note_max += calculate_note(level_plug, top10qa.answer2, top10qa.answer2)
+    if top10qa.question3:
+        note_max += calculate_note(level_plug, top10qa.answer3, top10qa.answer3)
+    if top10qa.question4:
+        note_max += calculate_note(level_plug, top10qa.answer4, top10qa.answer4)
+    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                       "Vous avez eu " + str(round(note, 2)) + "/" + str(note_max),
+                                                       value_class='string')
+    time.sleep(3)
+    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
+                                                       "", value_class='string')
     return HttpResponse(status=200)
 
 

@@ -198,6 +198,7 @@ class LaboremRobotBase(WidgetContentModel):
 class LaboremTOP10(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
+    page = models.ForeignKey(Page, default=1)
     plug = models.ForeignKey(LaboremPlugDevice)
     robot_base1 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base1')
     robot_base2 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base2')
@@ -222,7 +223,6 @@ class LaboremTOP10(models.Model):
 @python_2_unicode_compatible
 class LaboremTOP10Score(models.Model):
     user = models.ForeignKey(User)
-    plug = models.ForeignKey(LaboremPlugDevice)
     TOP10QA = models.ForeignKey(LaboremTOP10)
     note = models.FloatField(default=0)
     active = models.BooleanField(default=True, blank=True)

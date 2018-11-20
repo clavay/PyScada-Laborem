@@ -11,9 +11,13 @@ Licensed under the GPL.
 $('button.write-task-form-top10-set').click(function(){
     name_form = $(this.form).attr('name');
     tabinputs = document.forms[name_form].getElementsByTagName("input");
+    ok_button = document.forms[name_form].getElementsByTagName("button");
+    ok_button[0].disabled = true;
+    ok_button[0].textContent = "Réponse envoyée !"
     mb_id = $('.list-dut-item.active').data('motherboard-id');
     request_data = {}
     for (i=0;i<tabinputs.length;i++){
+        tabinputs[i].disabled = true;
         j=i+1;
         value = $(tabinputs[i]).val();
         var_name = $(tabinputs[i]).attr("name");
@@ -26,6 +30,7 @@ $('button.write-task-form-top10-set').click(function(){
         });
     };
     request_data['mb_id'] = mb_id;
+    request_data['page'] = window.location.hash.substr(1);
     if (request_data[0] === 'value1:' && request_data[1] === 'value2:' && request_data[2] === 'value3:' && request_data[3] === 'value4:'){
         add_notification('please provide a value',3);
         alert("Please answer something");
@@ -208,18 +213,27 @@ function refresh_top10_qa() {
             if (pages[i].getElementsByClassName("ShowTOP10QA").length) {
                 questions = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group-addon-label");
                 input_group = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group");
+                form_control = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("form-control");
+                ok_button = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("write-task-form-top10-set");
+                ok_button[0].disabled = false;
+                ok_button[0].textContent = "Répondre"
+                answers=[]
                 mb_id = $('.list-dut-item.active').data('motherboard-id');
                 //changes the number and value of the questions
                 $.ajax({
                     url: ROOT_URL+'json/query_top10_question/',
                     dataType: "json",
                     type: "POST",
-                    data: {mb_id:mb_id},
+                    data: {mb_id:mb_id, page:pages[i].id},
                     success: function (data) {
                         questions[0].textContent = data['question1'];
                         questions[1].textContent = data['question2'];
                         questions[2].textContent = data['question3'];
                         questions[3].textContent = data['question4'];
+                        answers[0] = data['answer1'];
+                        answers[1] = data['answer2'];
+                        answers[2] = data['answer3'];
+                        answers[3] = data['answer4'];
                         if ((questions[0].textContent != "Question1" && questions[0].textContent != "")
                         || (questions[1].textContent != "Question2" && questions[1].textContent != "")
                         || (questions[2].textContent != "Question3" && questions[2].textContent != "")
@@ -229,10 +243,18 @@ function refresh_top10_qa() {
                             for (i=0;i<questions.length;i++) {
                                 if (questions[i].textContent != "Question1" && questions[i].textContent != "") {
                                     input_group[i].classList.remove("hidden");
-
+                                    if (data['disable']) {
+                                        form_control[i].value = answers[i];
+                                        form_control[i].disabled = true;
+                                        ok_button[0].disabled = true
+                                        ok_button[0].textContent = "Déjà répondu !"
+                                    }else{
+                                        form_control[i].disabled = false;
+                                        form_control[i].textContent = "";
+                                    }
                                 }
                                 else {
-                                    input_group[i].className += " hidden"
+                                    input_group[i].className += " hidden";
                                 }
                             }
                         }else {

@@ -44,8 +44,8 @@ class LaboremMotherboardDeviceAdmin(DeviceAdmin):
 
 
 class LaboremTOP10ScoreAdmin(admin.ModelAdmin):
-    list_display = ('user', 'plug', 'TOP10QA', 'note', 'active')
-    list_display_links = ('user', 'plug')
+    list_display = ('user', 'TOP10QA', 'note', 'active')
+    list_display_links = ('user', 'TOP10QA')
 
 
 class LaboremTOP10RankingAdmin(admin.ModelAdmin):
