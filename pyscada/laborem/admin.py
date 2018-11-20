@@ -53,7 +53,7 @@ class LaboremTOP10RankingAdmin(admin.ModelAdmin):
 
 
 class LaboremTOP10Admin(admin.ModelAdmin):
-    list_display = ('name', 'plug', 'robot_base1', 'robot_base2')
+    list_display = ('name', 'page', 'plug', 'robot_base1', 'robot_base2')
 
 
 class LaboremPlugDeviceAdmin(admin.ModelAdmin):

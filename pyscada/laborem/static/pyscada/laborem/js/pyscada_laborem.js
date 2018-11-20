@@ -250,7 +250,7 @@ function refresh_top10_qa() {
                                         ok_button[0].textContent = "Déjà répondu !"
                                     }else{
                                         form_control[i].disabled = false;
-                                        form_control[i].textContent = "";
+                                        form_control[i].value = "";
                                     }
                                 }
                                 else {
