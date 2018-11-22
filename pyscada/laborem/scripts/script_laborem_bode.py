@@ -475,6 +475,8 @@ def script(self):
                                                            "", value_class='string')
         self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
                                      value_class='BOOLEAN')
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_max",
+                                                           0, value_class='int16')
 
     waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
     if waveform:
