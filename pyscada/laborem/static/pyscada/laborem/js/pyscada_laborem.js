@@ -364,6 +364,8 @@ function check_users() {
                 $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
                 $(".message-laborem h2").prepend('<img id="laborem-loadingAnimation" style="height:30px;padding-bottom:3px;" src="/static/pyscada/img/load.gif" alt="loading">');
                 $(".message-laborem").stop().CSSAnimate({"top":51},500);
+                $(".summary").stop().CSSAnimate({"right":0},500);
+                $(".camera").stop().CSSAnimate({"left":0},500);
             }else {
                 $(".message-laborem h2")[0].innerHTML = '';
                 oh = $(".message-laborem").outerHeight(true);
@@ -381,7 +383,7 @@ function check_users() {
                 $(".summary ul")[0].innerHTML = data['summary']
                 $($(".summary")[0]).removeClass("hidden");
             }else {
-                $($(".progress-bar")[0]).removeClass("hidden");
+                $($(".summary")[0]).removeClass("hidden");
                 $(".summary")[0].className += " hidden";
             }
         },
