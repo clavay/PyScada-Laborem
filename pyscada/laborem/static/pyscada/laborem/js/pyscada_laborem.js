@@ -369,7 +369,7 @@ function check_users() {
                 $(".message-laborem").stop().CSSAnimate({"top":-(oh - 51)},500);
             }
             if (typeof data['progress_bar'] != 'undefined' && data['progress_bar'] != '') {
-                $($(".progress-bar")[0]).css('min-width', '2em','width', data['progress_bar'] + '%');
+                $($(".progress-bar")[0]).css('width', data['progress_bar'] + '%');
                 $(".progress-bar")[0].innerHTML = data['progress_bar'] + '%';
                 $($(".progress-bar")[0]).removeClass("hidden");
             }else {
