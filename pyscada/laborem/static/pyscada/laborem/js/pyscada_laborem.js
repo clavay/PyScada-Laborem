@@ -324,7 +324,7 @@ function change_base_selected_element(base_id, element_id) {
 };
 
 function check_users() {
-    if(typeof $('.list-dut-item').data('motherboard-id') == 'undefined'){mb_id = 0}else{mb_id = $('.list-dut-item').data('motherboard-id')};
+    if(typeof $($('.list-dut-item')[0]).data('motherboard-id') == 'undefined'){mb_id = 0}else{mb_id = $($('.list-dut-item')[0]).data('motherboard-id')};
     $.ajax({
         type: 'post',
         url: ROOT_URL+'form/check_users/',
