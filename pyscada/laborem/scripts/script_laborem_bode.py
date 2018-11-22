@@ -162,6 +162,9 @@ def startup(self):
     VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_max",
                                                        0, value_class='int16')
 
+    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "EXPERIENCE",
+                                                       '', value_class='string')
+
     VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
                                                        "LaboREM is starting. Please Wait...", value_class='string')
     time.sleep(60)
