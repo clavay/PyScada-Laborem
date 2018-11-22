@@ -70,6 +70,22 @@ class LaboremMotherboardDevice(WidgetContentModel):
     def visible(self):
         return True
 
+    def get_selected_plug(self):
+        if self.plug == '1':
+            return self.plug1
+        elif self.plug == '2':
+            return self.plug2
+        elif self.plug == '3':
+            return self.plug3
+        elif self.plug == '4':
+            return self.plug4
+        elif self.plug == '5':
+            return self.plug5
+        elif self.plug == '6':
+            return self.plug6
+        elif self.plug == '7':
+            return self.plug7
+
     def gen_html(self, **kwargs):
         """
 
@@ -134,7 +150,7 @@ class LaboremPlugDevice(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
     plug_image = models.ImageField(upload_to="img/laborem/plugs/", verbose_name="plug image", blank=True)
-    motherboardIOConfig = models.ForeignKey('LaboremMotherboardIOConfig')
+    motherboardIOConfig = models.ForeignKey(LaboremMotherboardIOConfig)
     level_choices = (('1', 'Easy'), ('2', 'Medium'), ('3', 'Hard'))
     level = models.CharField(max_length=254, choices=level_choices)
 
@@ -224,6 +240,10 @@ class LaboremTOP10(models.Model):
 class LaboremTOP10Score(models.Model):
     user = models.ForeignKey(User)
     TOP10QA = models.ForeignKey(LaboremTOP10)
+    answer1 = models.CharField(default='', max_length=255, blank=True, null=True)
+    answer2 = models.CharField(default='', max_length=255, blank=True, null=True)
+    answer3 = models.CharField(default='', max_length=255, blank=True, null=True)
+    answer4 = models.CharField(default='', max_length=255, blank=True, null=True)
     note = models.FloatField(default=0)
     active = models.BooleanField(default=True, blank=True)
 

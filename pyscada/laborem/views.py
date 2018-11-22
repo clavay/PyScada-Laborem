@@ -215,6 +215,7 @@ def form_write_robot_base(request):
         try:
             LaboremGroupInputPermission.objects.get(move_robot=True, hmi_group__in=request.user.groups.all())
         except LaboremGroupInputPermission.DoesNotExist:
+            logger.error("write robot base LaboremGroupInputPermission.DoesNotExist for %s" % request.user)
             return HttpResponse(status=404)
     if 'base_id' in request.POST and 'element_id' in request.POST:
         base_id = int(request.POST['base_id'])
@@ -222,6 +223,7 @@ def form_write_robot_base(request):
         for base in LaboremRobotBase.objects.filter(pk=base_id):
             base.change_selected_element(element_id)
         return HttpResponse(status=200)
+    logger.error("base_id or element_id not un POST : %s" % request.POST)
     return HttpResponse(status=404)
 
 
@@ -230,22 +232,37 @@ def form_write_property(request):
     if u:
         return u
 
-    if 'variable_property_id' in request.POST and 'value' in request.POST:
-        variable_property_id = int(request.POST['variable_property_id'])
+    if 'variable_property' in request.POST and 'value' in request.POST:
         value = request.POST['value']
-        if LaboremGroupInputPermission.objects.count() == 0:
-            for vp in VariableProperty.objects.filter(pk=variable_property_id):
-                VariableProperty.objects.update_property(variable_property=VariableProperty.objects.get(name=vp.name),
-                                                         value=value)
-        else:
-            try:
-                for vp in VariableProperty.objects.filter(pk=variable_property_id):
-                    vpgetbyname = VariableProperty.objects.get(name=vp.name,
+        if isinstance(request.POST['variable_property'], (int, float)):
+            variable_property = int(request.POST['variable_property'])
+            if LaboremGroupInputPermission.objects.count() == 0:
+                VariableProperty.objects.update_property(variable_property=variable_property, value=value)
+            else:
+                try:
+                    vpgetbyname = VariableProperty.objects.get(pk=variable_property,
                                                                laboremgroupinputpermission__hmi_group__in=request.user.
                                                                groups.iterator())
                     VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
-            except VariableProperty.DoesNotExist:
-                return HttpResponse(status=200)
+                except VariableProperty.DoesNotExist:
+                    logger.debug("form_write_property - vp as int or float - "
+                                 "VariableProperty.DoesNotExist or group permission error")
+                    return HttpResponse(status=200)
+        else:
+            variable_property = str(request.POST['variable_property'])
+            if LaboremGroupInputPermission.objects.count() == 0:
+                VariableProperty.objects.update_property(variable_property=VariableProperty.objects.get(
+                    name=variable_property), value=value)
+            else:
+                try:
+                    vpgetbyname = VariableProperty.objects.get(name=variable_property,
+                                                               laboremgroupinputpermission__hmi_group__in=request.user.
+                                                               groups.iterator())
+                    VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
+                except VariableProperty.DoesNotExist:
+                    logger.debug("form_write_property - vp as str - "
+                                 "VariableProperty.DoesNotExist or group permission error")
+                    return HttpResponse(status=200)
         return HttpResponse(status=200)
     return HttpResponse(status=404)
 
@@ -331,10 +348,10 @@ def query_top10_question(request):
     data['question3'] = top10qa.question3
     data['question4'] = top10qa.question4
     if LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).count() > 0:
-        data['answer1'] = top10qa.answer1
-        data['answer2'] = top10qa.answer2
-        data['answer3'] = top10qa.answer3
-        data['answer4'] = top10qa.answer4
+        data['answer1'] = LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).first().answer1
+        data['answer2'] = LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).first().answer2
+        data['answer3'] = LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).first().answer3
+        data['answer4'] = LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).first().answer4
         data['disable'] = 1
     return HttpResponse(json.dumps(data), content_type='application/json')
 
@@ -429,7 +446,9 @@ def validate_top10_answers(request):
         note += calculate_note(level_plug, top10qa.answer3, request.POST['value3'])
     if top10qa.question4:
         note += calculate_note(level_plug, top10qa.answer4, request.POST['value4'])
-    score = LaboremTOP10Score(user=request.user, TOP10QA=top10qa, note=note)
+    score = LaboremTOP10Score(user=request.user, TOP10QA=top10qa, note=note,
+                              answer1=request.POST['value1'], answer2=request.POST['value2'],
+                              answer3=request.POST['value3'], answer4=request.POST['value4'])
     score.save()
     if top10qa.question1:
         note_max += calculate_note(level_plug, top10qa.answer1, top10qa.answer1)
@@ -513,6 +532,20 @@ def reset_robot_bases(request):
     return HttpResponse(status=200)
 
 
+def reset_selected_plug(request):
+    u = user_check(request)
+    if u:
+        return u
+
+    mb_id = int(request.POST['mb_id'])
+    if LaboremGroupInputPermission.objects.count() > 0:
+        for group in request.user.groups.iterator():
+            if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
+                LaboremMotherboardDevice.change_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id), 0)
+                return HttpResponse(status=200)
+    return HttpResponse(status=200)
+
+
 def move_robot(request):
     u = user_check(request)
     if u:
@@ -551,6 +584,7 @@ def check_users(request):
     if u:
         return u
 
+    mb_id = int(request.POST['mb_id'])
     LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
     laborem_waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
         order_by('connection_time')
@@ -562,6 +596,8 @@ def check_users(request):
     data['titletime'] = "unlimited"
     data['waitingusers'] = ""
     i = 0
+    j = 0
+    title_time = ""
     td = timedelta(minutes=5)
     for item in laborem_waiting_users_list:
         data['waitingusers'] += '<tr class="waitingusers-item"><td>' + str(item.user.username) + \
@@ -572,11 +608,13 @@ def check_users(request):
         data['waitingusers'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds
                                     % 60) + ' sec' + '</td></tr>'
         if current_user == item:
+            j = i + 1
             data['titletime'] = ""
             if (td - (now() - laborem_working_user.start_time) + i * td).seconds // 60 > 0:
-                data['titletime'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
+                title_time += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
                                      + ' min '
-            data['titletime'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds % 60) + ' sec'
+            title_time += str((td - (now() - laborem_working_user.start_time) + i * td).seconds % 60) + ' sec'
+            data['titletime'] += title_time
         i += 1
     time_left = ' unlimited '
     if i > 0:
@@ -605,13 +643,53 @@ def check_users(request):
     try:
         data['timeline_start'] = int(format(VariableProperty.objects.get_property(Variable.objects.get(
             name="LABOREM"), "viewer_start_timeline").timestamp, 'U'))*1000
-    except (Variable.DoesNotExist, AttributeError) as e:
-        # logger.warning("VP viewer_start_timeline error : %s" % e)
+    except (Variable.DoesNotExist, AttributeError):
         data['timeline_start'] = ''
     try:
         data['message_laborem'] = VariableProperty.objects.get_property(Variable.objects.get(
             name="LABOREM"), "message_laborem").value_string
-    except (Variable.DoesNotExist, AttributeError) as e:
-        # logger.warning("VP message_laborem error : %s" % e)
+    except (Variable.DoesNotExist, AttributeError):
         data['message_laborem'] = ''
+    try:
+        progress_bar_now = VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "progress_bar_now").value_int16
+        progress_bar_min = VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "progress_bar_min").value_int16
+        progress_bar_max = VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "progress_bar_max").value_int16
+        if progress_bar_max != progress_bar_min:
+            data['progress_bar'] = (progress_bar_now - progress_bar_min) / (progress_bar_max - progress_bar_min)
+        else:
+            data['progress_bar'] = ''
+    except (Variable.DoesNotExist, AttributeError):
+        data['progress_bar'] = ''
+    data['summary'] = ''
+    data['summary'] += '<h3>Résumé</h3>'
+    data['summary'] += '<li>En train de manipuler : ' + str(laborem_working_user) + '</li>'
+    if j > 0:
+        data['summary'] += "<li>File d'attente :<ul><li>Rang : " + str(j) + "</li>"
+        data['summary'] += "<li>Temps d'attente : " + str(title_time) + '</li></ul></li>'
+    try:
+        data['summary'] += "<li>Montage en cours : <ul><li>" \
+                           + LaboremMotherboardDevice.get_selected_plug(
+            LaboremMotherboardDevice.objects.get(pk=mb_id)).name \
+                           + "</li>"
+        if "ROBOT" in LaboremMotherboardDevice.get_selected_plug(
+                LaboremMotherboardDevice.objects.get(pk=mb_id)).name.upper():
+            data['summary'] += "<li>Modifiable via le robot</li>"
+            for base in LaboremRobotBase.objects.all():
+                if base.element is not None:
+                    data['summary'] += "<li>" + str(base) + " : " + str(base.element) + "</li>"
+            data['summary'] += "</ul>"
+        else:
+            data['summary'] += "<li>Précablé</li></ul>"
+        try:
+            vp = VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),
+                                                       "EXPERIENCE").value_string.capitalize()
+            if vp != "":
+                data['summary'] += "<li>Expérience en cours : " + vp + "</li>"
+        except (Variable.DoesNotExist, AttributeError):
+            pass
+    except (LaboremMotherboardDevice.DoesNotExist, AttributeError):
+        pass
     return HttpResponse(json.dumps(data), content_type='application/json')

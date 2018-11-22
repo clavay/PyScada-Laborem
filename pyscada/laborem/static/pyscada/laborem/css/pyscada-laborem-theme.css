@@ -16,3 +16,15 @@
 	top: -100px;
     text-align: center;
 }
+
+.summary.side-menu ul li,{
+	list-style: circle !important;
+	list-style-position:inside !important;
+	padding-left: 15px !important;
+}
+
+.summary.status-panel li {
+	list-style: circle !important;
+    list-style-position:inside !important;
+    padding-left: 15px !important;
+}

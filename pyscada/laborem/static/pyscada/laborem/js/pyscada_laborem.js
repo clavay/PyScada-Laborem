@@ -13,7 +13,7 @@ $('button.write-task-form-top10-set').click(function(){
     tabinputs = document.forms[name_form].getElementsByTagName("input");
     ok_button = document.forms[name_form].getElementsByTagName("button");
     ok_button[0].disabled = true;
-    ok_button[0].textContent = "Réponse envoyée !"
+    ok_button[0].innerHTML = "Réponse envoyée !"
     mb_id = $('.list-dut-item.active').data('motherboard-id');
     request_data = {}
     for (i=0;i<tabinputs.length;i++){
@@ -131,20 +131,20 @@ function query_previous_and_next_btn() {
 function reset_page(page_name) {
     if (page_name === "start") {
         reset_robot_bases();
-        $('.list-dut-item.active').removeClass('active');
-        $('.expe_list_item.active').removeClass('active');
+        reset_selected_plug()
+        reset_selected_expe()
     }else if (page_name === "plugs") {
         reset_robot_bases();
-        $('.list-dut-item.active').removeClass('active');
-        $('.expe_list_item.active').removeClass('active');
+        reset_selected_plug()
+        reset_selected_expe()
     }else if (page_name === "preconf") {
         reset_robot_bases();
-        $('.expe_list_item.active').removeClass('active');
+        reset_selected_expe()
     }else if (page_name === "robot") {
-        //reset_robot_bases();
-        $('.expe_list_item.active').removeClass('active');
+        reset_robot_bases();
+        reset_selected_expe()
     }else if (page_name === "expe_choice") {
-        $('.expe_list_item.active').removeClass('active');
+        reset_selected_expe()
         move_robot("move");
     }else if (page_name === "bode") {
     }else if (page_name === "spectrum") {
@@ -166,10 +166,42 @@ function move_robot(mov) {
     });
 };
 
+function reset_selected_plug() {
+    $('.list-dut-item.active').removeClass('active');
+    if(typeof $('.list-dut-item').data('motherboard-id') == 'undefined'){mb_id = 0}else{mb_id = $('.list-dut-item').data('motherboard-id')};
+    $.ajax({
+        type: 'post',
+        url: ROOT_URL+'form/reset_selected_plug/',
+        data: {mb_id:mb_id},
+        success: function (data) {
+        },
+        error: function(data) {
+            add_notification('reset selected plug failed',3);
+        }
+    });
+};
+
+function reset_selected_expe() {
+    $('.expe_list_item.active').removeClass('active');
+    $.ajax({
+        type: 'post',
+        url: ROOT_URL+'form/write_property/',
+        data: {variable_property:"EXPERIENCE",value:""},
+        success: function (data) {
+
+        },
+        error: function(data) {
+            add_notification('write expe failed',3);
+        }
+    });
+};
+
 function reset_robot_bases() {
     $('.dropdown-base').removeClass('active');
     $('.dropdown-base').show();
-    $('.ui-dropdown-robot-bnt').text("------- ");
+    $('.ui-dropdown-robot-bnt').each(function() {
+        $(this)[0].innerHTML = "------- ";
+    })
     $.ajax({
         type: 'post',
         url: ROOT_URL+'form/reset_robot_bases/',
@@ -216,7 +248,7 @@ function refresh_top10_qa() {
                 form_control = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("form-control");
                 ok_button = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("write-task-form-top10-set");
                 ok_button[0].disabled = false;
-                ok_button[0].textContent = "Répondre"
+                ok_button[0].innerHTML = "Répondre"
                 answers=[]
                 mb_id = $('.list-dut-item.active').data('motherboard-id');
                 //changes the number and value of the questions
@@ -226,28 +258,28 @@ function refresh_top10_qa() {
                     type: "POST",
                     data: {mb_id:mb_id, page:pages[i].id},
                     success: function (data) {
-                        questions[0].textContent = data['question1'];
-                        questions[1].textContent = data['question2'];
-                        questions[2].textContent = data['question3'];
-                        questions[3].textContent = data['question4'];
+                        questions[0].innerHTML = data['question1'];
+                        questions[1].innerHTML = data['question2'];
+                        questions[2].innerHTML = data['question3'];
+                        questions[3].innerHTML = data['question4'];
                         answers[0] = data['answer1'];
                         answers[1] = data['answer2'];
                         answers[2] = data['answer3'];
                         answers[3] = data['answer4'];
-                        if ((questions[0].textContent != "Question1" && questions[0].textContent != "")
-                        || (questions[1].textContent != "Question2" && questions[1].textContent != "")
-                        || (questions[2].textContent != "Question3" && questions[2].textContent != "")
-                        || (questions[3].textContent != "Question4" && questions[3].textContent != "")) {
+                        if ((questions[0].innerHTML != "Question1" && questions[0].innerHTML != "" && questions[0].innerHTML != "undefined")
+                        || (questions[1].innerHTML != "Question2" && questions[1].innerHTML != "" && questions[1].innerHTML != "undefined")
+                        || (questions[2].innerHTML != "Question3" && questions[2].innerHTML != "" && questions[2].innerHTML != "undefined")
+                        || (questions[3].innerHTML != "Question4" && questions[3].innerHTML != "" && questions[3].innerHTML != "undefined")) {
                             $(".dropdown-TOP10QA").removeClass("hidden");
                             $(".dropdown-TOP10QA").show();
                             for (i=0;i<questions.length;i++) {
-                                if (questions[i].textContent != "Question1" && questions[i].textContent != "") {
+                                if (questions[i].innerHTML != "Question1" && questions[i].innerHTML != "" && questions[i].innerHTML != "undefined") {
                                     input_group[i].classList.remove("hidden");
                                     if (data['disable']) {
                                         form_control[i].value = answers[i];
                                         form_control[i].disabled = true;
                                         ok_button[0].disabled = true
-                                        ok_button[0].textContent = "Déjà répondu !"
+                                        ok_button[0].innerHTML = "Déjà répondu !"
                                     }else{
                                         form_control[i].disabled = false;
                                         form_control[i].value = "";
@@ -292,10 +324,11 @@ function change_base_selected_element(base_id, element_id) {
 };
 
 function check_users() {
+    if(typeof $('.list-dut-item').data('motherboard-id') == 'undefined'){mb_id = 0}else{mb_id = $('.list-dut-item').data('motherboard-id')};
     $.ajax({
         type: 'post',
         url: ROOT_URL+'form/check_users/',
-        data: {},
+        data: {mb_id:mb_id},
         success: function (data) {
             $(".waitingusers-item").remove();
             $(".table-waitingusers tbody").append(data['waitingusers']);
@@ -307,36 +340,46 @@ function check_users() {
                 window.location.href = "#start";
             }
             if (data['user_type'] == 1) {
-                $(".dropdown-WaitingList-toggle").text(' Waiting : ');
+                $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting : ';
                 $(".dropdown-WaitingList-toggle").append(data['titletime']);
                 $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                 $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
             }else if (data['user_type'] == 2) {
-                $(".dropdown-WaitingList-toggle").text(' Working : ');
+                $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Working : ';
                 $(".dropdown-WaitingList-toggle").append(data['titletime']);
                 $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                 $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
             }else if (data['user_type'] == 0) {
-                $(".dropdown-WaitingList-toggle").text(' Waiting List ');
+                $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting List ';
                 $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                 $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
             }
             if (data['timeline_start'] != DATA_FROM_TIMESTAMP) {
-                //console.log("DATA_FROM_TIMESTAMP : " + DATA_FROM_TIMESTAMP + " data['timeline_start'] : " + data['timeline_start'] + " servertime : " + SERVER_TIME)
                 DATA={}
                 DATA_FROM_TIMESTAMP = data['timeline_start']
                 DATA_DISPLAY_FROM_TIMESTAMP = data['timeline_start']
             }
             if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '') {
-                $(".message-laborem h2").text(' ' + data['message_laborem']);
+                $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
                 $(".message-laborem h2").prepend('<img id="laborem-loadingAnimation" style="height:30px;padding-bottom:3px;" src="/static/pyscada/img/load.gif" alt="loading">');
                 $(".message-laborem").stop().CSSAnimate({"top":51},500);
-                //console.log('ok ' + data['message_laborem']);
             }else {
-                $(".message-laborem h2").text('');
+                $(".message-laborem h2")[0].innerHTML = '';
                 oh = $(".message-laborem").outerHeight(true);
                 $(".message-laborem").stop().CSSAnimate({"top":-(oh - 51)},500);
-                //console.log("no data['message_laborem']");
+            }
+            if (typeof data['progress_bar'] != 'undefined' && data['progress_bar'] != '') {
+                $(".progress-bar").css('min-width', '2em','width', data['progress_bar'] + '%');
+                $(".progress-bar").innerHTML = data['progress_bar'] + '%';
+                $(".progress-bar").removeClass("hidden");
+            }else {
+                $(".progress-bar").className += " hidden";
+            }
+            if (typeof data['summary'] != 'undefined' && data['summary'] != '') {
+                $(".summary ul")[0].innerHTML = data['summary']
+                $(".summary").removeClass("hidden");
+            }else {
+                $(".summary").className += " hidden";
             }
         },
         error: function(data) {
@@ -349,7 +392,7 @@ $( document ).ready(function() {
     //change text and link of PyScada in navbar
     $(".navbar-brand").attr("href", "");
     $(".navbar-brand").removeAttr("target");
-    $(".navbar-brand").text(' PyScada-LaboREM');
+    $(".navbar-brand")[0].innerHTML = ' PyScada-LaboREM';
     $(".navbar-brand").prepend('<span class="glyphicon glyphicon-home"></span>');
     $(".btn-previous").hide();
 
@@ -404,33 +447,47 @@ $( document ).ready(function() {
         var $this = $(this);
         $('.expe_list_item.active').removeClass('active');
         $this.addClass('active');
+        if (typeof $('.expe_list_item.active').attr('name') != 'undefined') {
+            expe = $('.expe_list_item.active').attr('name')
+            $.ajax({
+                type: 'post',
+                url: ROOT_URL+'form/write_property/',
+                data: {variable_property:"EXPERIENCE",value:expe},
+                success: function (data) {
+
+                },
+                error: function(data) {
+                    add_notification('write expe failed',3);
+                }
+            });
+        }
         query_previous_and_next_btn();
     });
 
     // For the robot : active the selected item in a listbox and disable it in others listboxes
     $('.dropdown-base').on('click', function() {
         var $this = $(this);
-        dropdown_item = document.getElementsByClassName("dropdown-base");
+        dropdown_item = $("#" + $($this[0]).parents(".sub-page")[0].id + " .dropdown-base");
         base_empty = 'no'
         for (i=0;i<dropdown_item.length;i++){
-            if ($(dropdown_item[i]).context.parentElement.parentElement.id !== $this.context.parentElement.parentElement.id) {
-                if ($(dropdown_item[i]).context.id === $this.context.id) {
+            if ($(dropdown_item[i]).parents(".dropdown-robot")[0].id !== $($this[0]).parents(".dropdown-robot")[0].id) {
+                if ($(dropdown_item[i])[0].id === $this[0].id) {
                     $(dropdown_item[i]).hide()
                 }
                 else {
                     $(dropdown_item[i]).show()
                 }
-                if ($(dropdown_item[i]).context.parentElement.parentElement.innerText.toString() === "------- ") {
+                if ($(dropdown_item[i]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt")[0].innerHTML === "------- ") {
                     base_empty = 'yes'
                 }
             }
             else {
-            $(dropdown_item[i]).removeClass('active');
+                $(dropdown_item[i]).removeClass('active');
             }
         }
-        $this.context.parentElement.parentElement.getElementsByClassName('ui-dropdown-robot-bnt')[0].textContent = $this.context.textContent;
+        $($this[0]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt")[0].innerHTML = $($this[0]).children()[0].innerHTML;
         $this.addClass('active');
-        change_base_selected_element($this.context.parentElement.parentElement.id, $this.context.id)
+        change_base_selected_element($($this[0]).parents(".dropdown-robot")[0].id, $this[0].id)
         query_previous_and_next_btn();
         if (base_empty === 'no') {$(".btn-next").show();}
     });
@@ -438,16 +495,15 @@ $( document ).ready(function() {
     // Active the selected item in a listbox and disable it in others listboxes
     $('.dropdown-afg-function').on('click', function() {
         var $this = $(this);
-        //$('.dropdown-afg-function').$('.active').removeClass('active');
-        dropdown_item = document.getElementsByClassName("dropdown-afg-function")
+        dropdown_item = $("#" + $($this[0]).parents(".sub-page")[0].id + " .dropdown-afg-function")
         for (i=0;i<dropdown_item.length;i++){
-            if ($(dropdown_item[i]).context.parentElement.parentElement.id === $this.context.parentElement.parentElement.id) {
-            $(dropdown_item[i]).removeClass('active');
+            if ($(dropdown_item[i]).parents(".dropdown-afgfunctions")[0].id === $($this[0]).parents(".dropdown-afgfunctions")[0].id) {
+                $(dropdown_item[i]).removeClass('active');
             }
         }
         $this.addClass('active');
-        $this.context.parentElement.parentElement.firstElementChild.firstChild.data = $this.context.textContent;
-        variable_property_id = $(this).data('key');
+        $($this[0]).parents(".dropdown-afgfunctions").children(".btn").children(".ui-dropdown-afgfunctions-btn")[0].innerHTML = $($this[0]).children()[0].innerHTML;
+        variable_property = $(this).data('name');
         value = $(this).data('value').toString();
         if (value === ""){
             add_notification('please provide a value',3);
@@ -455,7 +511,7 @@ $( document ).ready(function() {
             $.ajax({
                 type: 'post',
                 url: ROOT_URL+'form/write_property/',
-                data: {variable_property_id:variable_property_id, value:value},
+                data: {variable_property:variable_property, value:value},
                 success: function (data) {
 
                 },

@@ -46,11 +46,9 @@ def take_and_drop(self, robot, r1, theta1, z1, r2, theta2, z2):
 def format_ascii(rot_ascii, axe):
     if rot_ascii < 0:
         ret = axe + '-' + str(int(rot_ascii))[1:].zfill(3)
-        #print(ret)
         return ret
     else:
         ret = axe + '+' + str(int(rot_ascii)).zfill(3)
-        #print(ret)
         return ret
 
 
@@ -155,6 +153,15 @@ def startup(self):
     if not Variable.objects.filter(name="LABOREM"):
         Variable.objects.create(name="LABOREM", description="Var to store Varaible Properties used by Laborem",
                                 device=Device.objects.get(short_name="generic_device"), unit=Unit.objects.get(unit=""))
+
+    # Progress bar
+    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_now",
+                                                       0, value_class='int16')
+    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_min",
+                                                       0, value_class='int16')
+    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_max",
+                                                       0, value_class='int16')
+
     VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
                                                        "LaboREM is starting. Please Wait...", value_class='string')
     time.sleep(60)
@@ -336,6 +343,7 @@ def script(self):
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
         logger.debug("Bode running...")
+
         VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
                                                            "Diagrammes de Bode en cours d'acquisition...",
                                                            value_class='string')
@@ -354,7 +362,21 @@ def script(self):
         nb_points = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS'),
                             2), 20)
 
+        # Progress bar
+        n = 0
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_now",
+                                                           n, value_class='int16')
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_min",
+                                                           0, value_class='int16')
+        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_max",
+                                                           nb_points, value_class='int16')
+
         for f in np.geomspace(fmin, fmax, nb_points):
+
+            # Progress bar
+            n += 1
+            VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_now",
+                                                               n, value_class='int16')
             # Set the generator to freq f
             self.inst_afg.write('SOUR1:FREQ:FIX ' + str(f))
 
