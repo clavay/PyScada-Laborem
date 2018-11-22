@@ -286,7 +286,7 @@ function refresh_top10_qa() {
                                     }
                                 }
                                 else {
-                                    input_group[i].className -= " hidden";
+                                    input_group[i].classList.remove("hidden");
                                     input_group[i].className += " hidden";
                                 }
                             }
@@ -374,14 +374,14 @@ function check_users() {
                 $(".progress-bar")[0].innerHTML = data['progress_bar'] + '%';
                 $($(".progress-bar")[0]).removeClass("hidden");
             }else {
-                $(".progress-bar")[0].className -= " hidden";
+                $($(".progress-bar")[0]).removeClass("hidden");
                 $(".progress-bar")[0].className += " hidden";
             }
             if (typeof data['summary'] != 'undefined' && data['summary'] != '') {
                 $(".summary ul")[0].innerHTML = data['summary']
                 $($(".summary")[0]).removeClass("hidden");
             }else {
-                $(".summary")[0].className -= " hidden";
+                $($(".progress-bar")[0]).removeClass("hidden");
                 $(".summary")[0].className += " hidden";
             }
         },
