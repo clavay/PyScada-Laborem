@@ -658,8 +658,9 @@ def check_users(request):
         progress_bar_max = VariableProperty.objects.get_property(Variable.objects.get(
             name="LABOREM"), "progress_bar_max").value_int16
         if progress_bar_max != progress_bar_min:
-            data['progress_bar'] = (progress_bar_now - progress_bar_min) / (progress_bar_max - progress_bar_min)
+            data['progress_bar'] = int(100 * float(progress_bar_now - progress_bar_min) / float(progress_bar_max - progress_bar_min))
         else:
+            logger.debug('progress bar min = max')
             data['progress_bar'] = ''
     except (Variable.DoesNotExist, AttributeError):
         data['progress_bar'] = ''

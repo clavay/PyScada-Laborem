@@ -301,11 +301,13 @@ def script(self):
     put_on_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_put_on'))
     if put_on_bode:
         logger.debug("Putting on Elements...")
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                           "Le robot place les éléments...", value_class='string')
         # Move the robot
         for base in LaboremRobotBase.objects.all():
             if base.element is None:
+                VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
+                                                                   "message_laborem",
+                                                                   "Le robot place les éléments...",
+                                                                   value_class='string')
                 r_element = base.element.R
                 theta_element = base.element.theta
                 z_element = base.element.z
@@ -323,10 +325,12 @@ def script(self):
     take_off_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_take_off'))
     if take_off_bode:
         logger.debug("Taking off Elements...")
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                           "Le robot retire les éléments...", value_class='string')
         for base in LaboremRobotBase.objects.all():
             if base.element is not None:
+                VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
+                                                                   "message_laborem",
+                                                                   "Le robot retire les éléments...",
+                                                                   value_class='string')
                 r_element = base.element.R
                 theta_element = base.element.theta
                 z_element = base.element.z
