@@ -8,49 +8,6 @@ Licensed under the GPL.
 */
 
 
-$('button.write-task-form-top10-set').click(function(){
-    name_form = $(this.form).attr('name');
-    tabinputs = document.forms[name_form].getElementsByTagName("input");
-    ok_button = document.forms[name_form].getElementsByTagName("button");
-    ok_button[0].disabled = true;
-    ok_button[0].innerHTML = "Réponse envoyée !"
-    mb_id = $('.list-dut-item.active').data('motherboard-id');
-    request_data = {}
-    for (i=0;i<tabinputs.length;i++){
-        tabinputs[i].disabled = true;
-        j=i+1;
-        value = $(tabinputs[i]).val();
-        var_name = $(tabinputs[i]).attr("name");
-        $.each($('.variable-config'),function(kkey,val){
-            name_var = $(val).data('name');
-            if (name_var==var_name){
-                //key = parseInt($(val).data('key'));
-                request_data['value'+j] = value;
-            }
-        });
-    };
-    request_data['mb_id'] = mb_id;
-    request_data['page'] = window.location.hash.substr(1);
-    if (request_data[0] === 'value1:' && request_data[1] === 'value2:' && request_data[2] === 'value3:' && request_data[3] === 'value4:'){
-        add_notification('please provide a value',3);
-        alert("Please answer something");
-    }else{
-        $.ajax({
-            type: 'post',
-            url: ROOT_URL+'form/validate_top10_answers/',
-            data:request_data,
-            success: function (data) {
-
-            },
-            error: function(data) {
-                add_notification('validate_top10_answers error',3);
-                console.log('validate_top10_answers error');
-            }
-        });
-    };
-    reload_top10_ranking();
-});
-
 function reload_top10_ranking() {
     $.ajax({
         type: 'post',
@@ -386,6 +343,7 @@ function check_users() {
                 $($(".summary")[0]).removeClass("hidden");
                 $(".summary")[0].className += " hidden";
             }
+            $($(".camera")[0]).removeClass("hidden");
         },
         error: function(data) {
             add_notification('write plug selected failed',3);
@@ -394,45 +352,40 @@ function check_users() {
 }
 
 $( document ).ready(function() {
-    //change text and link of PyScada in navbar
+    // Change text and link of PyScada in navbar
     $(".navbar-brand").attr("href", "");
     $(".navbar-brand").removeAttr("target");
     $(".navbar-brand")[0].innerHTML = ' PyScada-LaboREM';
     $(".navbar-brand").prepend('<span class="glyphicon glyphicon-home"></span>');
     $(".btn-previous").hide();
 
-    //if not starting on #start page redirect to this hash
+    // If not starting on #start page redirect to this hash
     if (window.location.hash.substr(1) != "start"){window.location.href = "#start";}
 
-    //Send info and actualize data
+    // Send info and actualize data
     setInterval(function() {check_users()}, 1000);
 
-    //Load next and previous button at start
+    // Load next and previous button at start
     query_previous_and_next_btn()
 
-    //load top10 ranking at start
+    // Load top10 ranking at start
     reload_top10_ranking();
 
-    //reset the pages settings at start
+    // Reset the pages settings at start
     reset_page(window.location.hash.substr(1));
 
     $(window).on('hashchange', function() {
-        //reset the pages settings to force the user to interact with
+        // Reset the pages settings to force the user to interact with
         reset_page(window.location.hash.substr(1));
 
-        //refresh previous and next buttom
+        // Refresh previous and next buttom
         query_previous_and_next_btn()
 
         // Check if we are on a page that need to show the TOP10QAs
         refresh_top10_qa();
     });
 
-    //Change the link of btn next/previous on click
-    $('.btn-next, .btn-previous').on('click', function() {
-        //query_previous_and_next_btn()
-    });
-
-    // actualize the picture of the dut selector for LaboREM with the list selection
+    // Actualize the picture of the dut selector for LaboREM with the list selection
     $('.list-dut-item').on('click', function() {
         var $this = $(this);
         var $img = $this.data('img');
@@ -448,6 +401,7 @@ $( document ).ready(function() {
         query_previous_and_next_btn()
     });
 
+    // Change next button and save experience in Variable Property
     $('.expe_list_item').on('click', function() {
         var $this = $(this);
         $('.expe_list_item.active').removeClass('active');
@@ -525,5 +479,49 @@ $( document ).ready(function() {
                 }
             });
         }
+    });
+
+    // Send answer for TOP10
+    $('button.write-task-form-top10-set').click(function(){
+        name_form = $(this.form).attr('name');
+        tabinputs = document.forms[name_form].getElementsByTagName("input");
+        ok_button = document.forms[name_form].getElementsByTagName("button");
+        ok_button[0].disabled = true;
+        ok_button[0].innerHTML = "Réponse envoyée !"
+        mb_id = $('.list-dut-item.active').data('motherboard-id');
+        request_data = {}
+        for (i=0;i<tabinputs.length;i++){
+            tabinputs[i].disabled = true;
+            j=i+1;
+            value = $(tabinputs[i]).val();
+            var_name = $(tabinputs[i]).attr("name");
+            $.each($('.variable-config'),function(kkey,val){
+                name_var = $(val).data('name');
+                if (name_var==var_name){
+                    //key = parseInt($(val).data('key'));
+                    request_data['value'+j] = value;
+                }
+            });
+        };
+        request_data['mb_id'] = mb_id;
+        request_data['page'] = window.location.hash.substr(1);
+        if (request_data[0] === 'value1:' && request_data[1] === 'value2:' && request_data[2] === 'value3:' && request_data[3] === 'value4:'){
+            add_notification('please provide a value',3);
+            alert("Please answer something");
+        }else{
+            $.ajax({
+                type: 'post',
+                url: ROOT_URL+'form/validate_top10_answers/',
+                data:request_data,
+                success: function (data) {
+
+                },
+                error: function(data) {
+                    add_notification('validate_top10_answers error',3);
+                    console.log('validate_top10_answers error');
+                }
+            });
+        };
+        reload_top10_ranking();
     });
 });
