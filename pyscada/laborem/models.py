@@ -85,6 +85,24 @@ class LaboremMotherboardDevice(WidgetContentModel):
             return self.plug6
         elif self.plug == '7':
             return self.plug7
+        elif self.plug == '8':
+            return self.plug8
+        elif self.plug == '9':
+            return self.plug9
+        elif self.plug == '10':
+            return self.plug10
+        elif self.plug == '11':
+            return self.plug11
+        elif self.plug == '12':
+            return self.plug12
+        elif self.plug == '13':
+            return self.plug13
+        elif self.plug == '14':
+            return self.plug14
+        elif self.plug == '15':
+            return self.plug15
+        elif self.plug == '16':
+            return self.plug16
 
     def gen_html(self, **kwargs):
         """
