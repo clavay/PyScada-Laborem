@@ -319,25 +319,39 @@ function check_users() {
             }
             if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '') {
                 $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
-                $(".message-laborem h2").prepend('<img id="laborem-loadingAnimation" style="height:30px;padding-bottom:3px;" src="/static/pyscada/img/load.gif" alt="loading">');
-                $(".message-laborem").stop().CSSAnimate({"top":51},500);
+                //$(".message-laborem h2").prepend('<img id="laborem-loadingAnimation" style="height:30px;padding-bottom:3px;" src="/static/pyscada/img/load.gif" alt="loading">');
+                $('#MessageModal').modal('show')
+                //$(".message-laborem").stop().CSSAnimate({"top":51},500);
                 $(".summary").stop().CSSAnimate({"right":0},500);
                 $(".camera").stop().CSSAnimate({"left":0},500);
             }else {
+                $('#MessageModal').modal('hide')
                 $(".message-laborem h2")[0].innerHTML = '';
-                oh = $(".message-laborem").outerHeight(true);
-                $(".message-laborem").stop().CSSAnimate({"top":-(oh - 51)},500);
+                //oh = $(".message-laborem").outerHeight(true);
+                //$(".message-laborem").stop().CSSAnimate({"top":-(oh - 51)},500);
             }
             if (typeof data['progress_bar'] != 'undefined' && data['progress_bar'] != '') {
                 $($(".progress-bar")[0]).css('width', data['progress_bar'] + '%');
                 $(".progress-bar")[0].innerHTML = data['progress_bar'] + '%';
-                $($(".progress-bar")[0]).removeClass("hidden");
+                $($(".progress-bar")[0]).removeClass("progress-bar-striped active");
             }else {
-                $($(".progress-bar")[0]).removeClass("hidden");
-                $(".progress-bar")[0].className += " hidden";
+                $($(".progress-bar")[0]).css('width', '100%');
+                $(".progress-bar")[0].innerHTML ='';
+                $($(".progress-bar")[0]).removeClass("progress-bar-striped active");
+                $(".progress-bar")[0].className += " progress-bar-striped active";
             }
             if (typeof data['summary'] != 'undefined' && data['summary'] != '') {
                 $(".summary ul")[0].innerHTML = data['summary']
+                if (data['user_type'] == 1) {
+                    $($(".modal-footer")[0]).removeClass("hidden");
+                    $(".summary-modal")[0].innerHTML = "Waiting time left : " + data['titletime']
+                }else if (data['user_type'] == 2) {
+                    $($(".modal-footer")[0]).removeClass("hidden");
+                    $(".summary-modal")[0].innerHTML = "Working time left : " + data['titletime']
+                }else {
+                    $($(".modal-footer")[0]).removeClass("hidden");
+                    $(".modal-footer")[0].className += " hidden";
+                }
                 $($(".summary")[0]).removeClass("hidden");
             }else {
                 $($(".summary")[0]).removeClass("hidden");
