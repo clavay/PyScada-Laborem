@@ -178,6 +178,7 @@ def startup(self):
     device_afg = Device.objects.get(pk=5)
     device_dmm = Device.objects.get(pk=4)
     device_robot = Device.objects.get(pk=1)
+    device_alim_dc = Device.objects.get(pk=10)
 
     try:
         self.rm = visa.ResourceManager(visa_backend)
@@ -245,6 +246,22 @@ def startup(self):
     except Exception as e:
         logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_robot.__str__(), e))
         pass
+    try:
+        resource_prefix = device_alim_dc.visadevice.resource_name.split('::')[0]
+        extras = {}
+        if hasattr(settings, 'VISA_DEVICE_SETTINGS'):
+            if resource_prefix in settings.VISA_DEVICE_SETTINGS:
+                extras = settings.VISA_DEVICE_SETTINGS[resource_prefix]
+        logger.debug('VISA_DEVICE_SETTINGS for %s: %r' % (resource_prefix, extras))
+        self.inst_alim_dc = self.rm.open_resource(device_alim_dc.visadevice.resource_name, **extras)
+        if self.inst_alim_dc is not None:
+            logger.debug('Connected visa device : %s' % device_alim_dc.__str__())
+            self.inst_alim_dc.write('OUT1')
+        else:
+            logger.debug('NOT connected visa device : %s' % device_alim_dc.__str__())
+    except Exception as e:
+        logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_alim_dc.__str__(), e))
+        pass
 
     return True
 
@@ -283,6 +300,14 @@ def shutdown(self):
         if self.inst_robot is not None:
             self.inst_robot.close()
             self.inst_robot = None
+    except AttributeError:
+        pass
+    except visa.VisaIOError:
+        pass
+    try:
+        if self.inst_alim_dc is not None:
+            self.inst_alim_dc.close()
+            self.inst_alim_dc = None
     except AttributeError:
         pass
     except visa.VisaIOError:
