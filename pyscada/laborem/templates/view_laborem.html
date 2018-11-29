@@ -148,7 +148,7 @@
         </ul>
     </div>
     <div class="summary side-menu right hidden col-md-3" style="width: 300px; list-style: circle;">
-        <ul class="summary status-panel">
+        <ul class="status-panel">
             <li>Summary</li>
         </ul>
     </div>
@@ -164,7 +164,7 @@
     -->
     <!-- Modal -->
     <div class="modal fade" id="MessageModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static">
-      <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close hidden" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -180,11 +180,22 @@
                 </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <ul class="summary-modal status-panel">
-                <li>Summary Modal</li>
-            </ul>
-            <button type="button" class="btn btn-default hidden" data-dismiss="modal">Close</button>
+          <div class="modal-footer" style="text-align:left;">
+            <div class="row">
+                <div class="camera col-md-6">
+                    <ul class="status-panel">
+                        <li class="col-md-2">Camera</li>
+                        <br>
+                        <img class="col-md-12" id="camera-img-modal" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
+                    </ul>
+                </div>
+                <div class="summary-modal col-md-6">
+                    <ul>
+                        <li>Summary Modal</li>
+                    </ul>
+                </div>
+                <button type="button" class="btn btn-default hidden" data-dismiss="modal">Close</button>
+              </div>
           </div>
         </div>
       </div>
