@@ -379,6 +379,7 @@ def script(self):
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
         logger.debug("Bode running...")
+        time.sleep(0.5)
 
         VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
                                                            "Diagrammes de Bode en cours d'acquisition...",
@@ -510,6 +511,7 @@ def script(self):
     waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
     if waveform:
         logger.debug("Waveform running...")
+        time.sleep(0.5)
         VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
                                                            "Analyse spectrale en cours d'acquisition...",
                                                            value_class='string')
@@ -564,7 +566,7 @@ def script(self):
 
         # create scaled vectors
         # horizontal (time)
-        # total_time = tscale * record
+        total_time = tscale * record
         # tstop = tstart + total_time
         # scaled_time = np.linspace(tstart, tstop, num=record, endpoint=False)
         # vertical (voltage)
@@ -622,12 +624,14 @@ def script(self):
         scaled_wave_ch2 = scaled_wave_ch2.tolist()
 
         timevalues = list()
+        timevalues_to_show = list()
         time_now = time.time()
         scaled_wave_ch1_mini = list()
         scaled_wave_ch2_mini = list()
         save_duration = 1000  # in ms
         for i in range(0, save_duration):
             timevalues.append(time_now + 0.001 * i)
+            timevalues_to_show.append(0.001 * i * total_time)
             scaled_wave_ch1_mini.append(scaled_wave_ch1[i*len(scaled_wave_ch1)/save_duration])
             scaled_wave_ch2_mini.append(scaled_wave_ch2[i*len(scaled_wave_ch2)/save_duration])
 
@@ -653,7 +657,7 @@ def script(self):
 
         self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': timevalues})
         self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': timevalues})
-        self.write_values_to_db(data={'Wave_time': timevalues, 'timevalues': timevalues})
+        self.write_values_to_db(data={'Wave_time': timevalues_to_show, 'timevalues': timevalues})
         self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})
