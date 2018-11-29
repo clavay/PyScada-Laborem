@@ -583,8 +583,11 @@ def check_users(request):
     u = user_check(request)
     if u:
         return u
-
-    mb_id = int(request.POST['mb_id'])
+    if 'mb_id' in request.POST:
+        mb_id = int(request.POST['mb_id'])
+    else:
+        logger.debug("mb_id not un request.POST for check_user fonction. Request : %s" % request)
+        return HttpResponse(status=404)
     LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
     laborem_waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
         order_by('connection_time')

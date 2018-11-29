@@ -174,11 +174,15 @@ def startup(self):
     visa_backend = '@py'  # use PyVISA-py as backend
     if hasattr(settings, 'VISA_BACKEND'):
         visa_backend = settings.VISA_BACKEND
-    device_mdo = Device.objects.get(pk=6)
-    device_afg = Device.objects.get(pk=5)
-    device_dmm = Device.objects.get(pk=4)
-    device_robot = Device.objects.get(pk=1)
-    device_alim_dc = Device.objects.get(pk=10)
+    try:
+        device_mdo = Device.objects.get(pk=6)
+        device_afg = Device.objects.get(pk=5)
+        device_dmm = Device.objects.get(pk=4)
+        device_robot = Device.objects.get(pk=1)
+        device_alim_dc = Device.objects.get(pk=10)
+    except Device.DoesNotExist:
+        logger.error("Script Laborem - Device(s) does not exist, please create all the devices first.")
+        return False
 
     try:
         self.rm = visa.ResourceManager(visa_backend)

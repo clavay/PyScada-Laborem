@@ -327,6 +327,10 @@ function check_users() {
             }else {
                 $('#MessageModal').modal('hide')
                 $(".message-laborem h2")[0].innerHTML = '';
+                ows = $(".summary").outerWidth()
+                $(".summary").stop().CSSAnimate({"right":-(ows - 11)},500)
+                owc = $(".camera").outerWidth()
+                $(".camera").stop().CSSAnimate({"left":-(owc - 11)},500)
                 //oh = $(".message-laborem").outerHeight(true);
                 //$(".message-laborem").stop().CSSAnimate({"top":-(oh - 51)},500);
             }
