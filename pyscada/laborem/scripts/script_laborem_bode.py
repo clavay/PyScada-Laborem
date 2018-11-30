@@ -379,7 +379,7 @@ def script(self):
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
         logger.debug("Bode running...")
-        time.sleep(0.5)
+        time.sleep(2)
 
         VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
                                                            "Diagrammes de Bode en cours d'acquisition...",
@@ -511,7 +511,7 @@ def script(self):
     waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
     if waveform:
         logger.debug("Waveform running...")
-        time.sleep(0.5)
+        time.sleep(2)
         VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
                                                            "Analyse spectrale en cours d'acquisition...",
                                                            value_class='string')
