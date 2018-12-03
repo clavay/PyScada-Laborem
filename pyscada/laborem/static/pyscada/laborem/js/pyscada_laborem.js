@@ -312,10 +312,25 @@ function check_users() {
                 $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                 $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
             }
-            if (data['timeline_start'] != DATA_FROM_TIMESTAMP) {
-                DATA={}
-                DATA_FROM_TIMESTAMP = data['timeline_start']
-                DATA_DISPLAY_FROM_TIMESTAMP = data['timeline_start']
+            if (data['timeline_start'] != DATA_FROM_TIMESTAMP && data['timeline_start'] != '' && typeof data['timeline_start'] != 'undefined') {
+                //DATA={}
+                DATA_FROM_TIMESTAMP = data['timeline_start'];
+                DATA_DISPLAY_FROM_TIMESTAMP = data['timeline_start'];
+                if (data['timeline_stop'] != DATA_FROM_TIMESTAMP && data['timeline_stop'] != '' && typeof data['timeline_stop'] != 'undefined') {
+                    DATA_TO_TIMESTAMP = data['timeline_stop'];
+                    DATA_DISPLAY_TO_TIMESTAMP = data['timeline_stop'];
+                    DATA_DISPLAY_WINDOW = DATA_DISPLAY_TO_TIMESTAMP-DATA_DISPLAY_FROM_TIMESTAMP;
+                }else {
+                    DATA_TO_TIMESTAMP = SERVER_TIME;
+                    DATA_DISPLAY_TO_TIMESTAMP = SERVER_TIME;
+                    DATA_DISPLAY_WINDOW = DATA_DISPLAY_TO_TIMESTAMP-DATA_DISPLAY_FROM_TIMESTAMP;
+                }
+            }else {
+                DATA_FROM_TIMESTAMP = SERVER_TIME;
+                DATA_DISPLAY_FROM_TIMESTAMP = SERVER_TIME;
+                DATA_TO_TIMESTAMP = SERVER_TIME;
+                DATA_DISPLAY_TO_TIMESTAMP = SERVER_TIME;
+                DATA_DISPLAY_WINDOW = DATA_DISPLAY_TO_TIMESTAMP-DATA_DISPLAY_FROM_TIMESTAMP;
             }
             if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '') {
                 $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];

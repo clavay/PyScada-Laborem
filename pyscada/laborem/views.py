@@ -649,6 +649,11 @@ def check_users(request):
     except (Variable.DoesNotExist, AttributeError):
         data['timeline_start'] = ''
     try:
+        data['timeline_stop'] = int(format(VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "viewer_stop_timeline").timestamp, 'U'))*1000
+    except (Variable.DoesNotExist, AttributeError):
+        data['timeline_stop'] = ''
+    try:
         data['message_laborem'] = VariableProperty.objects.get_property(Variable.objects.get(
             name="LABOREM"), "message_laborem").value_string
     except (Variable.DoesNotExist, AttributeError):

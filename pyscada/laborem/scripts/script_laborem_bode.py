@@ -155,21 +155,23 @@ def startup(self):
                                 device=Device.objects.get(short_name="generic_device"), unit=Unit.objects.get(unit=""))
 
     # Progress bar
-    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_now",
-                                                       0, value_class='int16')
-    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_min",
-                                                       0, value_class='int16')
-    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_max",
-                                                       0, value_class='int16')
+    self.write_variable_property("LABOREM", "progress_bar_now", 0, value_class='int16')
+    self.write_variable_property("LABOREM", "progress_bar_min", 0, value_class='int16')
+    self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
-    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "EXPERIENCE",
-                                                       '', value_class='string')
+    # Timeline
+    self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                 timestamp=datetime.utcnow())
+    self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
+                                 timestamp=datetime.utcnow())
 
-    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                       "LaboREM is starting. Please Wait...", value_class='string')
+    # Worker experience
+    self.write_variable_property("LABOREM", "EXPERIENCE", '', value_class='string')
+
+    self.write_variable_property("LABOREM", "message_laborem", "LaboREM is starting. Please Wait...",
+                                 value_class='string')
     time.sleep(60)
-    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                       "", value_class='string')
+    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
     visa_backend = '@py'  # use PyVISA-py as backend
     if hasattr(settings, 'VISA_BACKEND'):
@@ -275,8 +277,11 @@ def shutdown(self):
     write your code shutdown code here, don't change the name of this function
     :return:
     """
-    VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                       "LaboREM is down.", value_class='string')
+    self.write_variable_property("LABOREM", "message_laborem", "LaboREM is down.", value_class='string')
+    self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                 timestamp=datetime.utcnow())
+    self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
+                                 timestamp=datetime.utcnow())
     try:
         if self.inst_mdo is not None:
             self.inst_mdo.close()
@@ -333,10 +338,8 @@ def script(self):
         # Move the robot
         for base in LaboremRobotBase.objects.all():
             if base.element is None:
-                VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
-                                                                   "message_laborem",
-                                                                   "Le robot place les éléments...",
-                                                                   value_class='string')
+                self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
+                                             value_class='string')
                 r_element = base.element.R
                 theta_element = base.element.theta
                 z_element = base.element.z
@@ -348,18 +351,15 @@ def script(self):
                 logger.debug("Base %s NOT empty" % base)
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
                                      value_class='BOOLEAN')
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                           "", value_class='string')
+        self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
     take_off_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_take_off'))
     if take_off_bode:
         logger.debug("Taking off Elements...")
         for base in LaboremRobotBase.objects.all():
             if base.element is not None:
-                VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
-                                                                   "message_laborem",
-                                                                   "Le robot retire les éléments...",
-                                                                   value_class='string')
+                self.write_variable_property("LABOREM", "message_laborem", "Le robot retire les éléments...",
+                                             value_class='string')
                 r_element = base.element.R
                 theta_element = base.element.theta
                 z_element = base.element.z
@@ -373,19 +373,18 @@ def script(self):
                 logger.debug("Base %s empty" % base)
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_take_off', value=0,
                                      value_class='BOOLEAN')
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                           "", value_class='string')
+        self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
     bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
     if bode:
         logger.debug("Bode running...")
-        time.sleep(2)
-
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                           "Diagrammes de Bode en cours d'acquisition...",
-                                                           value_class='string')
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
+        time.sleep(2)
+
+        self.write_variable_property("LABOREM", "message_laborem", "Diagrammes de Bode en cours d'acquisition...",
+                                     value_class='string')
+
         vepp = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP'), 0), 19)
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
                             'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
@@ -401,19 +400,15 @@ def script(self):
 
         # Progress bar
         n = 0
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_now",
-                                                           n, value_class='int16')
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_min",
-                                                           0, value_class='int16')
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_max",
-                                                           nb_points, value_class='int16')
+        self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
+        self.write_variable_property("LABOREM", "progress_bar_min", 0, value_class='int16')
+        self.write_variable_property("LABOREM", "progress_bar_max", nb_points, value_class='int16')
 
         for f in np.geomspace(fmin, fmax, nb_points):
 
             # Progress bar
             n += 1
-            VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_now",
-                                                               n, value_class='int16')
+            self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
             # Set the generator to freq f
             self.inst_afg.write('SOUR1:FREQ:FIX ' + str(f))
 
@@ -501,24 +496,23 @@ def script(self):
             logger.debug("Freq : %s - Gain : %s - Phase : %s" % (f, gain, mean_phase))
             self.write_values_to_db(data={'Bode_Freq': [f], 'Bode_Gain': [gain], 'Bode_Phase': [mean_phase]})
         logger.debug("Bode end")
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                           "", value_class='string')
+        self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
+                                     timestamp=datetime.utcnow())
+        self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
         self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
                                      value_class='BOOLEAN')
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "progress_bar_max",
-                                                           0, value_class='int16')
+        self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
     waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
     if waveform:
         logger.debug("Waveform running...")
-        time.sleep(2)
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                           "Analyse spectrale en cours d'acquisition...",
-                                                           value_class='string')
-
-        self.inst_mdo.timeout = 10000
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
+        time.sleep(2)
+        self.write_variable_property("LABOREM", "message_laborem", "Analyse spectrale en cours d'acquisition...",
+                                     value_class='string')
+
+        self.inst_mdo.timeout = 10000
 
         vepp = min(max(self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP'), 0), 19)
         funcshape1 = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_3_FUNCTION_SHAPE')
@@ -661,7 +655,8 @@ def script(self):
         self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': timevalues})
         self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})
-        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                           "", value_class='string')
+        self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
+                                     timestamp=datetime.utcnow())
+        self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
         self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
                                      value_class='BOOLEAN')

@@ -18,14 +18,15 @@ What is not Working/Missing
 Installation
 ------------
 
+ - If behind a proxy pre-install dependencies : sudo pip3 install cffi Cython numpy lxml
  - Install PyScada : https://pyscada.readthedocs.io/en/dev-0.7.x/installation.html
- - Change : sudo pip install https://github.com/trombastic/PyScada/archive/dev/0.7.x.zip
-    to : sudo pip install https://github.com/clavay/PyScada/tarball/hmi
- - Install pyusb : sudo pip install pyusb
- - Install gpiozero : sudo pip install gpiozero
- - Install PyScada-LaboREM : sudo pip install https://github.com/clavay/PyScada-LaboREM/tarball/master
- - Install PyScada-GPIO : sudo pip install pyscada-gpio
- - Install PyScada-Scripting : sudo pip install pyscada-scripting
+ - Change : sudo pip3 install https://github.com/trombastic/PyScada/archive/dev/0.7.x.zip
+    to : sudo pip3 install https://github.com/clavay/PyScada/tarball/hmi
+ - Install pyusb : sudo pip3 install pyusb
+ - Install gpiozero : sudo pip3 install gpiozero
+ - Install PyScada-LaboREM : sudo pip3 install https://github.com/clavay/PyScada-LaboREM/tarball/master
+ - Install PyScada-GPIO : sudo pip3 install pyscada-gpio
+ - Install PyScada-Scripting : sudo pip3 install pyscada-scripting
  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py before url(r'^', include('pyscada.hmi.urls')), :
     - url(r'^', include('pyscada.laborem.urls')),
 
@@ -51,7 +52,7 @@ To use CAS auth
  - sudo apt-get install libxml2-dev libxslt-dev python-dev
 
  Without proxy :
-  - sudo pip install django_cas_ng
+  - sudo pip3 install django_cas_ng
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
 
    INSTALLED_APPS = [
@@ -75,8 +76,8 @@ To use CAS auth
    url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
 
  Behind a proxy for CAS V2 :
-  - sudo pip install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
-  - sudo pip install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
+  - sudo pip3 install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
+  - sudo pip3 install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
 
    INSTALLED_APPS = [
