@@ -626,8 +626,12 @@ def script(self):
         for i in range(0, save_duration):
             timevalues.append(time_now + 0.001 * i)
             timevalues_to_show.append(0.001 * i * total_time)
-            scaled_wave_ch1_mini.append(scaled_wave_ch1[i*len(scaled_wave_ch1)/save_duration])
-            scaled_wave_ch2_mini.append(scaled_wave_ch2[i*len(scaled_wave_ch2)/save_duration])
+            scaled_wave_ch1_mini.append(scaled_wave_ch1[i*int(len(scaled_wave_ch1)/save_duration)])
+            scaled_wave_ch2_mini.append(scaled_wave_ch2[i*int(len(scaled_wave_ch2)/save_duration)])
+            # if not isinstance(len(scaled_wave_ch1)/save_duration, int):
+            #    logger.debug("Waweform 1 length is not a multiple of 1000 : %s" % len(scaled_wave_ch1))
+            # if not isinstance(len(scaled_wave_ch2)/save_duration, int):
+            #    logger.debug("Waweform 2 length is not a multiple of 1000 : %s" % len(scaled_wave_ch2))
 
         # FFT CH1
         eta1 = scaled_wave_ch1

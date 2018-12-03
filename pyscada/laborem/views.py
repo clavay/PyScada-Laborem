@@ -644,13 +644,13 @@ def check_users(request):
     elif request.user.groups.all().first() == Group.objects.get(name="worker"):
         data['user_type'] = 2
     try:
-        data['timeline_start'] = int(format(VariableProperty.objects.get_property(Variable.objects.get(
-            name="LABOREM"), "viewer_start_timeline").timestamp, 'U'))*1000
+        data['timeline_start'] = (int(format(VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "viewer_start_timeline").timestamp, 'U')) - 1)*1000
     except (Variable.DoesNotExist, AttributeError):
         data['timeline_start'] = ''
     try:
-        data['timeline_stop'] = int(format(VariableProperty.objects.get_property(Variable.objects.get(
-            name="LABOREM"), "viewer_stop_timeline").timestamp, 'U'))*1000
+        data['timeline_stop'] = (int(format(VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "viewer_stop_timeline").timestamp, 'U')) + 1)*1000
     except (Variable.DoesNotExist, AttributeError):
         data['timeline_stop'] = ''
     try:

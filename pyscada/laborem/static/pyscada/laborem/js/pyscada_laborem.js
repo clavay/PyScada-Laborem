@@ -314,21 +314,21 @@ function check_users() {
             }
             if (data['timeline_start'] != DATA_FROM_TIMESTAMP && data['timeline_start'] != '' && typeof data['timeline_start'] != 'undefined') {
                 //DATA={}
-                DATA_FROM_TIMESTAMP = data['timeline_start'];
+                //DATA_FROM_TIMESTAMP = data['timeline_start'];
                 DATA_DISPLAY_FROM_TIMESTAMP = data['timeline_start'];
                 if (data['timeline_stop'] != DATA_FROM_TIMESTAMP && data['timeline_stop'] != '' && typeof data['timeline_stop'] != 'undefined') {
-                    DATA_TO_TIMESTAMP = data['timeline_stop'];
+                    //DATA_TO_TIMESTAMP = data['timeline_stop'];
                     DATA_DISPLAY_TO_TIMESTAMP = data['timeline_stop'];
-                    DATA_DISPLAY_WINDOW = DATA_DISPLAY_TO_TIMESTAMP-DATA_DISPLAY_FROM_TIMESTAMP;
+                    DATA_DISPLAY_WINDOW = data['timeline_stop'] - data['timeline_start'];
                 }else {
-                    DATA_TO_TIMESTAMP = SERVER_TIME;
+                    //DATA_TO_TIMESTAMP = SERVER_TIME;
                     DATA_DISPLAY_TO_TIMESTAMP = SERVER_TIME;
                     DATA_DISPLAY_WINDOW = DATA_DISPLAY_TO_TIMESTAMP-DATA_DISPLAY_FROM_TIMESTAMP;
                 }
             }else {
-                DATA_FROM_TIMESTAMP = SERVER_TIME;
+                //DATA_FROM_TIMESTAMP = SERVER_TIME;
                 DATA_DISPLAY_FROM_TIMESTAMP = SERVER_TIME;
-                DATA_TO_TIMESTAMP = SERVER_TIME;
+                //DATA_TO_TIMESTAMP = SERVER_TIME;
                 DATA_DISPLAY_TO_TIMESTAMP = SERVER_TIME;
                 DATA_DISPLAY_WINDOW = DATA_DISPLAY_TO_TIMESTAMP-DATA_DISPLAY_FROM_TIMESTAMP;
             }
