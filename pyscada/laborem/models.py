@@ -171,6 +171,9 @@ class LaboremPlugDevice(models.Model):
     motherboardIOConfig = models.ForeignKey(LaboremMotherboardIOConfig)
     level_choices = (('1', 'Easy'), ('2', 'Medium'), ('3', 'Hard'))
     level = models.CharField(max_length=254, choices=level_choices)
+    robot = models.ForeignKey(VISADevice, blank=True, null=True,
+                              help_text='If the PCB Plug is modifiable with the robot choose the Robot device. '
+                                        'If not let it blank')
 
     def __str__(self):
         return self.name

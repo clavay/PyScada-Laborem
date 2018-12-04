@@ -33,7 +33,7 @@ function query_previous_and_next_btn() {
     // finding if a plug is selected and if have ROBOT in the name
     data_plug_name = $('.list-dut-item.active').attr('data-plug-name');
     if (typeof data_plug_name != 'undefined') {
-        if (~data_plug_name.indexOf('ROBOT')) {
+        if ($('.list-dut-item.active .badge').length) {
             robot = '1';
         }else {
             robot = '0';

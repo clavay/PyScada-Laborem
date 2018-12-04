@@ -220,7 +220,7 @@
             window.onload = function() {
                 function updateImage() {
                     $(".camera-img").each(function(){
-                        $(this)[0].src = "http://" + window.location.hostname + ":8090/?action=stream"
+                        $(this)[0].src = "http://" + window.location.hostname + "/camera/?action=stream"
                     });
                 }
                 setInterval(updateImage, 3000);

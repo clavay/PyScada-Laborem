@@ -4,7 +4,7 @@
 {% else %}
     <a href="javascript:;" class="list-group-item list-dut-item" data-img="{% static 'pyscada/laborem/img/no_img.jpg' %}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-plug-name="{{ plug.name|upper }}">{{ plug.description }}
 {% endif %}
-{% if "ROBOT" in plug.name|upper %}
+{% if plug.robot %}
     <span class="badge">Robot</span>
 {% endif %}
 </a>

@@ -110,6 +110,10 @@ To add a USB camera
 
 
  Install mjpg-streamer :
+     - Edit /etc/nginx/sites-available/pyscada.conf and add before "location /" :
+         location /camera/ {
+             proxy_pass http://127.0.0.1:8090/;
+         }
      - Download : https://github.com/jacksonliam/mjpg-streamer
      - sudo apt-get install cmake libjpeg62-turbo-dev
      - unzip mjpg-streamer-master.zip
@@ -121,7 +125,7 @@ To add a USB camera
      - sudo systemctl enable laborem_camera
      - sudo systemctl start laborem_camera
      - add to a custom html :
-         <img id='camera-img' src="http://" + window.location.hostname + ":8090/?action=stream" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
+         <img id='camera-img' src="http://" + window.location.hostname + "/camera/?action=stream" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
 
 Contribute
 ----------
