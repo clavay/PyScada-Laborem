@@ -234,7 +234,8 @@ def form_write_property(request):
 
     if 'variable_property' in request.POST and 'value' in request.POST:
         value = request.POST['value']
-        if isinstance(request.POST['variable_property'], (int, float)):
+        try:
+            int(request.POST['variable_property'])
             variable_property = int(request.POST['variable_property'])
             if LaboremGroupInputPermission.objects.count() == 0:
                 VariableProperty.objects.update_property(variable_property=variable_property, value=value)
@@ -248,7 +249,7 @@ def form_write_property(request):
                     logger.debug("form_write_property - vp as int or float - "
                                  "VariableProperty.DoesNotExist or group permission error")
                     return HttpResponse(status=200)
-        else:
+        except ValueError:
             variable_property = str(request.POST['variable_property'])
             if LaboremGroupInputPermission.objects.count() == 0:
                 VariableProperty.objects.update_property(variable_property=VariableProperty.objects.get(

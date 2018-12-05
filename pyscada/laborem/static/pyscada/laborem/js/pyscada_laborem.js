@@ -466,36 +466,6 @@ $( document ).ready(function() {
         if (base_empty === 'no') {$(".btn-next").show();}
     });
 
-    // Active the selected item in a listbox and disable it in others listboxes
-    $('.dropdown-afg-function').on('click', function() {
-        var $this = $(this);
-        dropdown_item = $("#" + $($this[0]).parents(".sub-page")[0].id + " .dropdown-afg-function")
-        for (i=0;i<dropdown_item.length;i++){
-            if ($(dropdown_item[i]).parents(".dropdown-afgfunctions")[0].id === $($this[0]).parents(".dropdown-afgfunctions")[0].id) {
-                $(dropdown_item[i]).removeClass('active');
-            }
-        }
-        $this.addClass('active');
-        $($this[0]).parents(".dropdown-afgfunctions").children(".btn").children(".ui-dropdown-afgfunctions-btn")[0].innerHTML = $($this[0]).children()[0].innerHTML;
-        variable_property = $(this).data('name');
-        value = $(this).data('value').toString();
-        if (value === ""){
-            add_notification('please provide a value',3);
-        }else {
-            $.ajax({
-                type: 'post',
-                url: ROOT_URL+'form/write_property/',
-                data: {variable_property:variable_property, value:value},
-                success: function (data) {
-
-                },
-                error: function(data) {
-                    add_notification('write plug selected failed',3);
-                }
-            });
-        }
-    });
-
     // Send answer for TOP10
     $('button.write-task-form-top10-set').click(function(){
         name_form = $(this.form).attr('name');
