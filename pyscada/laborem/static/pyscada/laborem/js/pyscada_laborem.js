@@ -468,13 +468,32 @@ $( document ).ready(function() {
 
     // Send answer for TOP10
     $('button.write-task-form-top10-set').click(function(){
+        err = false;
         name_form = $(this.form).attr('name');
-        tabinputs = document.forms[name_form].getElementsByTagName("input");
-        ok_button = document.forms[name_form].getElementsByTagName("button");
-        ok_button[0].disabled = true;
-        ok_button[0].innerHTML = "Réponse envoyée !"
+        id_form = $(this.form).attr('id');
+        //tabinputs = document.forms[name_form].getElementsByTagName("input");
+        tabinputs = $.merge($('#'+id_form+ ' :text'),$('#'+id_form+ ' :input:hidden'));
+        ok_button = $('#'+id_form+ ' :button')
+        //ok_button = document.forms[name_form].getElementsByTagName("button");
         mb_id = $('.list-dut-item.active').data('motherboard-id');
         request_data = {}
+        for (i=0;i<tabinputs.length;i++){
+            value = $(tabinputs[i]).val();
+            if (!$(tabinputs[i]).parents(".input-group").hasClass("hidden")) {
+                if (value == "" || value == null){
+                    $(tabinputs[i]).parents(".input-group").addClass("has-error");
+                    $(tabinputs[i]).parents(".input-group").find('.help-block').remove()
+                    $(tabinputs[i]).parents(".input-group").append('<span id="helpBlock-' + id + '" class="help-block">Please provide a value !</span>');
+                    err = true;
+                }else {
+                    $(tabinputs[i]).parents(".input-group").find('.help-block').remove()
+                    $(tabinputs[i]).parents(".input-group").removeClass("has-error")
+                }
+            }
+        }
+        if (err) {return;}
+        ok_button[0].disabled = true;
+        ok_button[0].innerHTML = "Réponse envoyée !"
         for (i=0;i<tabinputs.length;i++){
             tabinputs[i].disabled = true;
             j=i+1;
