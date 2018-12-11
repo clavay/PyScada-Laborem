@@ -1,10 +1,17 @@
 {% load i18n staticfiles %}
 {% if plug.plug_image %}
-    <a href="javascript:;" class="list-group-item list-dut-item" data-img="{{ plug.plug_image.url }}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-plug-name="{{ plug.name|upper }}">{{ plug.description }}
+    <a href="javascript:;" class="list-group-item list-dut-item" data-img="{{ plug.plug_image.url }}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-plug-name="{{ plug.name|upper }}">{{ plug.name }}
 {% else %}
-    <a href="javascript:;" class="list-group-item list-dut-item" data-img="{% static 'pyscada/laborem/img/no_img.jpg' %}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-plug-name="{{ plug.name|upper }}">{{ plug.description }}
+    <a href="javascript:;" class="list-group-item list-dut-item" data-img="{% static 'pyscada/laborem/img/no_img.jpg' %}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-plug-name="{{ plug.name|upper }}">{{ plug.name }}
+{% endif %}
+{% if plug.get_level_display == "Easy" %}
+    <span class="badge level" style="background-color: #34D942">{{ plug.get_level_display }}</span>
+{% elif plug.get_level_display == "Medium" %}
+    <span class="badge level" style="background-color: orange">{{ plug.get_level_display }}</span>
+{% elif plug.get_level_display == "Hard" %}
+    <span class="badge level" style="background-color: #EE4646">{{ plug.get_level_display }}</span>
 {% endif %}
 {% if plug.robot %}
-    <span class="badge">Robot</span>
+    <span class="badge robot">Robot</span>
 {% endif %}
 </a>

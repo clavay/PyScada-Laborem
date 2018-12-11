@@ -686,6 +686,10 @@ def check_users(request):
                            + LaboremMotherboardDevice.get_selected_plug(
             LaboremMotherboardDevice.objects.get(pk=mb_id)).name \
                            + "</li>"
+        data['plug_name'] = LaboremMotherboardDevice.get_selected_plug(
+            LaboremMotherboardDevice.objects.get(pk=mb_id)).name
+        data['plug_description'] = LaboremMotherboardDevice.get_selected_plug(
+            LaboremMotherboardDevice.objects.get(pk=mb_id)).description
         if "ROBOT" in LaboremMotherboardDevice.get_selected_plug(
                 LaboremMotherboardDevice.objects.get(pk=mb_id)).name.upper():
             data['summary'] += "<li>Modifiable via le robot</li>"

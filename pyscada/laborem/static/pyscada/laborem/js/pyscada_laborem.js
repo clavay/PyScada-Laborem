@@ -33,7 +33,7 @@ function query_previous_and_next_btn() {
     // finding if a plug is selected and if have ROBOT in the name
     data_plug_name = $('.list-dut-item.active').attr('data-plug-name');
     if (typeof data_plug_name != 'undefined') {
-        if ($('.list-dut-item.active .badge').length) {
+        if ($('.list-dut-item.active .badge.robot').length) {
             robot = '1';
         }else {
             robot = '0';
@@ -102,7 +102,7 @@ function reset_page(page_name) {
         reset_selected_expe()
     }else if (page_name === "expe_choice") {
         reset_selected_expe()
-        move_robot("move");
+        move_robot("put");
     }else if (page_name === "bode") {
     }else if (page_name === "spectrum") {
     }else if (page_name === "viewer") {
@@ -170,10 +170,6 @@ function reset_robot_bases() {
         }
     });
     move_robot("drop");
-};
-
-function change_plug_img($this, $img) {
-    $(".img-plug").attr("src",$img);
 };
 
 function change_plug_selected_motherboard(mb_id, plug_id, plug_name) {
@@ -359,6 +355,11 @@ function check_users() {
                 $(".summary")[0].className += " hidden";
             }
             $($(".camera")[0]).removeClass("hidden");
+
+            //Change text for plug details :
+            $(".plug_details.plug_name").html(data['plug_name'])
+            $(".plug_details.plug_description").html(data['plug_description'])
+            $(".plug_details.plug_level").html($('.list-dut-item.active .badge.level')[0].innerHTML)
         },
         error: function(data) {
             add_notification('write plug selected failed',3);
@@ -411,7 +412,7 @@ $( document ).ready(function() {
         $('.list-dut-item.active').removeClass('active');
         $this.toggleClass('active');
 
-        change_plug_img($this, $img)
+        $(".img-plug").attr("src",$img);
         change_plug_selected_motherboard($mb_id, $plug_id, $plug_name)
         query_previous_and_next_btn()
     });

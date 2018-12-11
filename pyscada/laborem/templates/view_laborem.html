@@ -225,7 +225,7 @@
             window.onload = function() {
                 function updateImage() {
                     $(".camera-img").each(function(){
-                        $(this)[0].src = "https://" + window.location.hostname + "/camera/?action=stream"
+                        $(this)[0].src = window.location.origin + "/camera/?action=stream"
                     });
                 }
                 setInterval(updateImage, 3000);

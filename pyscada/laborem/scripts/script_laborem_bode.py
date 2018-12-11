@@ -337,7 +337,7 @@ def script(self):
         logger.debug("Putting on Elements...")
         # Move the robot
         for base in LaboremRobotBase.objects.all():
-            if base.element is None:
+            if base.element is not None:
                 self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
                                              value_class='string')
                 r_element = base.element.R
@@ -348,7 +348,7 @@ def script(self):
                 z_base = base.z
                 take_and_drop(self, self.inst_robot, r_element, theta_element, z_element, r_base, theta_base, z_base)
             else:
-                logger.debug("Base %s NOT empty" % base)
+                logger.debug("Base %s empty" % base)
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
                                      value_class='BOOLEAN')
         self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
@@ -380,10 +380,9 @@ def script(self):
         logger.debug("Bode running...")
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
-        time.sleep(2)
-
         self.write_variable_property("LABOREM", "message_laborem", "Diagrammes de Bode en cours d'acquisition...",
                                      value_class='string')
+        time.sleep(2)
 
         vepp = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP'), 0), 19)
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
@@ -508,10 +507,9 @@ def script(self):
         logger.debug("Waveform running...")
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
-        time.sleep(2)
         self.write_variable_property("LABOREM", "message_laborem", "Analyse spectrale en cours d'acquisition...",
                                      value_class='string')
-
+        time.sleep(2)
         self.inst_mdo.timeout = 10000
 
         vepp = min(max(self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP'), 0), 19)
