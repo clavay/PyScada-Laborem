@@ -337,7 +337,7 @@ def script(self):
         logger.debug("Putting on Elements...")
         # Move the robot
         for base in LaboremRobotBase.objects.all():
-            if base.element is not None:
+            if base.element is not None and base.element.active == 0:
                 self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
                                              value_class='string')
                 r_element = base.element.R
@@ -347,8 +347,9 @@ def script(self):
                 theta_base = base.theta
                 z_base = base.z
                 take_and_drop(self, self.inst_robot, r_element, theta_element, z_element, r_base, theta_base, z_base)
+                base.element.change_active_to_base_id(base.pk)
             else:
-                logger.debug("Base %s empty" % base)
+                logger.debug("Base.element is %s and base.element.active is %s " % (base.element, base.element.active))
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
                                      value_class='BOOLEAN')
         self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
@@ -357,7 +358,7 @@ def script(self):
     if take_off_bode:
         logger.debug("Taking off Elements...")
         for base in LaboremRobotBase.objects.all():
-            if base.element is not None:
+            if base.element is not None and base.element.active != 0:
                 self.write_variable_property("LABOREM", "message_laborem", "Le robot retire les éléments...",
                                              value_class='string')
                 r_element = base.element.R
@@ -369,8 +370,9 @@ def script(self):
                 take_and_drop(self, self.inst_robot, r_base, theta_base, z_base, r_element, theta_element, z_element)
                 base.element = None
                 base.save()
+                base.element.change_active_to_base_id(0)
             else:
-                logger.debug("Base %s empty" % base)
+                logger.debug("Base.element is %s and base.element.active is %s " % (base.element, base.element.active))
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_take_off', value=0,
                                      value_class='BOOLEAN')
         self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')

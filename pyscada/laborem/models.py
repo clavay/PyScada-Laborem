@@ -194,6 +194,11 @@ class LaboremRobotElement(models.Model):
     def __str__(self):
         return self.name
 
+    def change_active_to_base_id(self, base_id):
+        self.active = base_id
+        self.save()
+        return True
+
 
 @python_2_unicode_compatible
 class LaboremRobotBase(WidgetContentModel):

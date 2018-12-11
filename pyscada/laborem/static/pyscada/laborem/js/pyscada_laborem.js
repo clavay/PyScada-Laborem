@@ -356,10 +356,14 @@ function check_users() {
             }
             $($(".camera")[0]).removeClass("hidden");
 
-            //Change text for plug details :
-            $(".plug_details.plug_name").html(data['plug_name'])
-            $(".plug_details.plug_description").html(data['plug_description'])
-            $(".plug_details.plug_level").html($('.list-dut-item.active .badge.level')[0].innerHTML)
+            if (typeof data['plug_name'] != 'undefined' && data['plug_name'] != '' && typeof data['plug_description'] != 'undefined' && data['plug_description'] != '') {
+                //Change text for plug details :
+                $(".plug_details.plug_name").html(data['plug_name'])
+                $(".plug_details.plug_description").html(data['plug_description'])
+            }
+            if ($('.list-dut-item.active .badge.level').length) {
+                $(".plug_details.plug_level").html($('.list-dut-item.active .badge.level')[0].innerHTML)
+            }
         },
         error: function(data) {
             add_notification('write plug selected failed',3);
