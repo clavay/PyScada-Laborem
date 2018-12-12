@@ -223,7 +223,7 @@ def form_write_robot_base(request):
         for base in LaboremRobotBase.objects.filter(pk=base_id):
             base.change_selected_element(element_id)
         return HttpResponse(status=200)
-    logger.error("base_id or element_id not un POST : %s" % request.POST)
+    logger.error("base_id or element_id not in POST : %s" % request.POST)
     return HttpResponse(status=404)
 
 

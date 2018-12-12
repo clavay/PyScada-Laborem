@@ -88,23 +88,25 @@ function query_previous_and_next_btn() {
 function reset_page(page_name) {
     if (page_name === "start") {
         reset_robot_bases();
-        reset_selected_plug()
-        reset_selected_expe()
+        reset_selected_plug();
+        reset_selected_expe();
     }else if (page_name === "plugs") {
         reset_robot_bases();
-        reset_selected_plug()
-        reset_selected_expe()
+        reset_selected_plug();
+        reset_selected_expe();
     }else if (page_name === "preconf") {
         reset_robot_bases();
         reset_selected_expe()
     }else if (page_name === "robot") {
         reset_robot_bases();
-        reset_selected_expe()
+        reset_selected_expe();
     }else if (page_name === "expe_choice") {
         reset_selected_expe()
         move_robot("put");
     }else if (page_name === "bode") {
+        move_robot("put");
     }else if (page_name === "spectrum") {
+        move_robot("put");
     }else if (page_name === "viewer") {
     }
 };
@@ -125,6 +127,7 @@ function move_robot(mov) {
 
 function reset_selected_plug() {
     $('.list-dut-item.active').removeClass('active');
+    $(".img-plug").attr("src",$(".img-plug").data("img"));
     if(typeof $('.list-dut-item').data('motherboard-id') == 'undefined'){mb_id = 0}else{mb_id = $('.list-dut-item').data('motherboard-id')};
     $.ajax({
         type: 'post',
@@ -154,22 +157,12 @@ function reset_selected_expe() {
 };
 
 function reset_robot_bases() {
+    move_robot("drop");
     $('.dropdown-base').removeClass('active');
     $('.dropdown-base').show();
     $('.ui-dropdown-robot-bnt').each(function() {
         $(this)[0].innerHTML = "------- ";
     })
-    $.ajax({
-        type: 'post',
-        url: ROOT_URL+'form/reset_robot_bases/',
-        data: {},
-        success: function (data) {
-        },
-        error: function(data) {
-            add_notification('reset robot bases failed',3);
-        }
-    });
-    move_robot("drop");
 };
 
 function change_plug_selected_motherboard(mb_id, plug_id, plug_name) {
