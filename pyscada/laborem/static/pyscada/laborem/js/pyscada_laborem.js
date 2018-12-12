@@ -96,16 +96,19 @@ function reset_page(page_name) {
         reset_selected_expe();
     }else if (page_name === "preconf") {
         reset_robot_bases();
-        reset_selected_expe()
+        reset_selected_expe();
     }else if (page_name === "robot") {
         reset_robot_bases();
         reset_selected_expe();
     }else if (page_name === "expe_choice") {
-        reset_selected_expe()
+        change_bases();
+        reset_selected_expe();
         move_robot("put");
     }else if (page_name === "bode") {
+        change_bases();
         move_robot("put");
     }else if (page_name === "spectrum") {
+        change_bases();
         move_robot("put");
     }else if (page_name === "viewer") {
     }
@@ -182,6 +185,13 @@ function change_plug_selected_motherboard(mb_id, plug_id, plug_name) {
         });
     };
 };
+
+function change_bases() {
+    dropdown_item_active = $(".sub-page#robot .dropdown-base.active");
+    for (i=0;i<dropdown_item_active.length;i++){
+        change_base_selected_element($(dropdown_item_active[0]).parents(".dropdown-robot")[0].id, dropdown_item_active[i].id)
+    }
+}
 
 function refresh_top10_qa() {
     dropdown_TOP10QA = document.getElementsByClassName("dropdown-TOP10QA");
@@ -459,7 +469,7 @@ $( document ).ready(function() {
         }
         $($this[0]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt")[0].innerHTML = $($this[0]).children()[0].innerHTML;
         $this.addClass('active');
-        change_base_selected_element($($this[0]).parents(".dropdown-robot")[0].id, $this[0].id)
+        //change_base_selected_element($($this[0]).parents(".dropdown-robot")[0].id, $this[0].id)
         query_previous_and_next_btn();
         if (base_empty === 'no') {$(".btn-next").show();}
     });
