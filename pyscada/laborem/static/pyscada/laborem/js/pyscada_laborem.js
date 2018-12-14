@@ -189,7 +189,7 @@ function change_plug_selected_motherboard(mb_id, plug_id, plug_name) {
 function change_bases() {
     dropdown_item_active = $(".sub-page#robot .dropdown-base.active");
     for (i=0;i<dropdown_item_active.length;i++){
-        change_base_selected_element($(dropdown_item_active[0]).parents(".dropdown-robot")[0].id, dropdown_item_active[i].id)
+        change_base_selected_element($(dropdown_item_active[i]).parents(".dropdown-robot")[0].id, dropdown_item_active[i].id)
     }
 }
 

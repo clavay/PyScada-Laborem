@@ -373,13 +373,13 @@ def script(self):
                 z_base = base.z
                 take_and_drop(self, self.inst_robot, r_base, theta_base, z_base, r_element, theta_element, z_element)
                 base.element.change_active_to_base_id('0')
-                base.change_selected_element(None)
             else:
                 if base.element is None:
                     logger.debug("Base : %s  - Element : %s" % (base, base.element))
                 else:
                     logger.debug("Base : %s  - Element : %s - base.element.active : %s " %
                                  (base, base.element, base.element.active))
+            base.change_selected_element(None)
         self.write_variable_property(variable_name='Bode_run', property_name='Bode_take_off', value=0,
                                      value_class='BOOLEAN')
         self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')

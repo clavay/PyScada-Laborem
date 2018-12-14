@@ -65,7 +65,7 @@ class LaboremRobotBaseAdmin(admin.ModelAdmin):
 
 
 class LaboremRobotElementAdmin(admin.ModelAdmin):
-    list_display = ('name', 'value', 'unit', 'R', 'theta', 'z')
+    list_display = ('name', 'active', 'value', 'unit', 'R', 'theta', 'z')
 
 
 class GroupDisplayPermissionAdmin(admin.ModelAdmin):
