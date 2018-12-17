@@ -506,6 +506,7 @@ def script(self):
         logger.debug("Bode end")
         self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
+        time.sleep(2)
         self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
         self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
                                      value_class='BOOLEAN')
@@ -668,6 +669,7 @@ def script(self):
         self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})
         self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
+        time.sleep(2)
         self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
         self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
                                      value_class='BOOLEAN')

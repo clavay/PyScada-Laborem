@@ -10,7 +10,7 @@ from pyscada.hmi.models import View
 from pyscada.hmi.models import Page
 
 
-from pyscada.models import Variable, VariableProperty, DeviceWriteTask
+from pyscada.models import Variable, VariableProperty, DeviceWriteTask, VariablePropertyManager
 from .models import LaboremRobotElement
 from .models import LaboremRobotBase
 from .models import LaboremMotherboardDevice
@@ -218,6 +218,16 @@ def form_write_robot_base(request):
             logger.error("write robot base LaboremGroupInputPermission.DoesNotExist for %s" % request.user)
             return HttpResponse(status=404)
     if 'base_id' in request.POST and 'element_id' in request.POST:
+        # try:
+        #    vpgetbyname = VariableProperty.objects.get(name="message_laborem",
+        #                                               laboremgroupinputpermission__hmi_group__in=request.user.
+        #                                               groups.iterator())
+        #    VariableProperty.objects.update_property(variable_property=vpgetbyname,
+        #                                             value="Le robot place les éléments...", value_class='string')
+        # except VariableProperty.DoesNotExist:
+        #    logger.debug("form_write_property - vp as int or float - "
+        #                 "VariableProperty.DoesNotExist or group permission error")
+        #    return HttpResponse(status=200)
         base_id = int(request.POST['base_id'])
         element_id = int(request.POST['element_id'])
         for base in LaboremRobotBase.objects.filter(pk=base_id):
@@ -257,8 +267,8 @@ def form_write_property(request):
                 else:
                     try:
                         vpgetbyname = VariableProperty.objects.get(name=variable_property,
-                                                                   laboremgroupinputpermission__hmi_group__in=request.user.
-                                                                   groups.iterator())
+                                                                   laboremgroupinputpermission__hmi_group__in=request.
+                                                                   user.groups.iterator())
                         VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
                     except VariableProperty.DoesNotExist:
                         logger.debug("form_write_property - vp as str - "
@@ -591,54 +601,7 @@ def check_users(request):
     else:
         logger.debug("mb_id not un request.POST for check_user fonction. Request : %s" % request)
         return HttpResponse(status=404)
-    LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
-    laborem_waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
-        order_by('connection_time')
-    laborem_working_user = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").first()
-    if laborem_working_user is None:
-        return HttpResponse(status=200)
-    data = {}
-    current_user = LaboremUser.objects.filter(user=request.user).first()
-    data['titletime'] = "unlimited"
-    data['waitingusers'] = ""
-    i = 0
-    j = 0
-    title_time = ""
-    td = timedelta(minutes=5)
-    for item in laborem_waiting_users_list:
-        data['waitingusers'] += '<tr class="waitingusers-item"><td>' + str(item.user.username) + \
-                                '</td><td style="text-align: center">'
-        if (td - (now() - laborem_working_user.start_time) + i * td).seconds // 60 > 0:
-            data['waitingusers'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
-                                    + ' min '
-        data['waitingusers'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds
-                                    % 60) + ' sec' + '</td></tr>'
-        if current_user == item:
-            j = i + 1
-            data['titletime'] = ""
-            if (td - (now() - laborem_working_user.start_time) + i * td).seconds // 60 > 0:
-                title_time += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
-                                     + ' min '
-            title_time += str((td - (now() - laborem_working_user.start_time) + i * td).seconds % 60) + ' sec'
-            data['titletime'] += title_time
-        i += 1
-    time_left = ' unlimited '
-    if i > 0:
-        if (td - (now() - laborem_working_user.start_time)).seconds // 60 > 0:
-            time_left = str((td - (now() - laborem_working_user.start_time)).seconds // 60) + ' min ' \
-                        + str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
-            if current_user == laborem_working_user:
-                data['titletime'] = ""
-                data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds
-                                         // 60) + ' min ' + str((td - (now() - laborem_working_user.start_time)).seconds
-                                                                % 60) + ' sec'
-        else:
-            time_left = str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
-            if current_user == laborem_working_user:
-                data['titletime'] = ""
-                data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
-    data['activeuser'] = '<tr class="waitingusers-item"><td>' + str(laborem_working_user.user.username) + \
-                         '</td><td style="text-align: center">' + time_left + '</td></tr>'
+    data = dict()
 
     data['user_type'] = 0
     if request.user.groups.all().first() == Group.objects.get(name="viewer") \
@@ -675,37 +638,84 @@ def check_users(request):
             data['progress_bar'] = ''
     except (Variable.DoesNotExist, AttributeError):
         data['progress_bar'] = ''
-    data['summary'] = ''
-    data['summary'] += '<h3>Résumé</h3>'
-    data['summary'] += '<li>En train de manipuler : ' + str(laborem_working_user) + '</li>'
-    if j > 0:
-        data['summary'] += "<li>File d'attente :<ul><li>Rang : " + str(j) + "</li>"
-        data['summary'] += "<li>Temps d'attente : " + str(title_time) + '</li></ul></li>'
-    try:
-        data['summary'] += "<li>Montage en cours : <ul><li>" \
-                           + LaboremMotherboardDevice.get_selected_plug(
-            LaboremMotherboardDevice.objects.get(pk=mb_id)).name \
-                           + "</li>"
-        data['plug_name'] = LaboremMotherboardDevice.get_selected_plug(
-            LaboremMotherboardDevice.objects.get(pk=mb_id)).name
-        data['plug_description'] = LaboremMotherboardDevice.get_selected_plug(
-            LaboremMotherboardDevice.objects.get(pk=mb_id)).description
-        if "ROBOT" in LaboremMotherboardDevice.get_selected_plug(
-                LaboremMotherboardDevice.objects.get(pk=mb_id)).name.upper():
-            data['summary'] += "<li>Modifiable via le robot</li>"
-            for base in LaboremRobotBase.objects.all():
-                if base.element is not None:
-                    data['summary'] += "<li>" + str(base) + " : " + str(base.element) + "</li>"
-            data['summary'] += "</ul>"
-        else:
-            data['summary'] += "<li>Précablé</li></ul>"
+
+    LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
+    laborem_waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
+        order_by('connection_time')
+    laborem_working_user = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").first()
+    if laborem_working_user is not None:
+        current_user = LaboremUser.objects.filter(user=request.user).first()
+        data['titletime'] = "unlimited"
+        data['waitingusers'] = ""
+        i = 0
+        j = 0
+        title_time = ""
+        td = timedelta(minutes=5)
+        for item in laborem_waiting_users_list:
+            data['waitingusers'] += '<tr class="waitingusers-item"><td>' + str(item.user.username) + \
+                                    '</td><td style="text-align: center">'
+            if (td - (now() - laborem_working_user.start_time) + i * td).seconds // 60 > 0:
+                data['waitingusers'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
+                                        + ' min '
+            data['waitingusers'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds
+                                        % 60) + ' sec' + '</td></tr>'
+            if current_user == item:
+                j = i + 1
+                data['titletime'] = ""
+                if (td - (now() - laborem_working_user.start_time) + i * td).seconds // 60 > 0:
+                    title_time += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
+                                         + ' min '
+                title_time += str((td - (now() - laborem_working_user.start_time) + i * td).seconds % 60) + ' sec'
+                data['titletime'] += title_time
+            i += 1
+        time_left = ' unlimited '
+        if i > 0:
+            if (td - (now() - laborem_working_user.start_time)).seconds // 60 > 0:
+                time_left = str((td - (now() - laborem_working_user.start_time)).seconds // 60) + ' min ' \
+                            + str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
+                if current_user == laborem_working_user:
+                    data['titletime'] = ""
+                    data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds
+                                             // 60) + ' min ' + \
+                        str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
+            else:
+                time_left = str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
+                if current_user == laborem_working_user:
+                    data['titletime'] = ""
+                    data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
+        data['activeuser'] = '<tr class="waitingusers-item"><td>' + str(laborem_working_user.user.username) + \
+                             '</td><td style="text-align: center">' + time_left + '</td></tr>'
+
+        data['summary'] = ''
+        data['summary'] += '<h3>Résumé</h3>'
+        data['summary'] += '<li>En train de manipuler : ' + str(laborem_working_user) + '</li>'
+        if j > 0:
+            data['summary'] += "<li>File d'attente :<ul><li>Rang : " + str(j) + "</li>"
+            data['summary'] += "<li>Temps d'attente : " + str(title_time) + '</li></ul></li>'
         try:
-            vp = VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),
-                                                       "EXPERIENCE").value_string.capitalize()
-            if vp != "":
-                data['summary'] += "<li>Expérience en cours : " + vp + "</li>"
-        except (Variable.DoesNotExist, AttributeError):
+            data['summary'] += "<li>Montage en cours : <ul><li>" \
+                               + LaboremMotherboardDevice.get_selected_plug(
+                LaboremMotherboardDevice.objects.get(pk=mb_id)).name \
+                               + "</li>"
+            data['plug_name'] = LaboremMotherboardDevice.get_selected_plug(
+                LaboremMotherboardDevice.objects.get(pk=mb_id)).name
+            data['plug_description'] = LaboremMotherboardDevice.get_selected_plug(
+                LaboremMotherboardDevice.objects.get(pk=mb_id)).description
+            if LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id)).robot:
+                data['summary'] += "<li>Modifiable via le robot</li>"
+                for base in LaboremRobotBase.objects.all():
+                    if base.element is not None:
+                        data['summary'] += "<li>" + str(base) + " : " + str(base.element) + "</li>"
+                data['summary'] += "</ul>"
+            else:
+                data['summary'] += "<li>Précablé</li></ul>"
+            try:
+                vp = VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),
+                                                           "EXPERIENCE").value_string.capitalize()
+                if vp != "":
+                    data['summary'] += "<li>Expérience en cours : " + vp + "</li>"
+            except (Variable.DoesNotExist, AttributeError):
+                pass
+        except (LaboremMotherboardDevice.DoesNotExist, AttributeError):
             pass
-    except (LaboremMotherboardDevice.DoesNotExist, AttributeError):
-        pass
     return HttpResponse(json.dumps(data), content_type='application/json')

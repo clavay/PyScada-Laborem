@@ -90,20 +90,25 @@ function reset_page(page_name) {
         reset_robot_bases();
         reset_selected_plug();
         reset_selected_expe();
+        $("#tooltip").hide();
     }else if (page_name === "plugs") {
         reset_robot_bases();
         reset_selected_plug();
         reset_selected_expe();
+        $("#tooltip").hide();
     }else if (page_name === "preconf") {
         reset_robot_bases();
         reset_selected_expe();
+        $("#tooltip").hide();
     }else if (page_name === "robot") {
         reset_robot_bases();
         reset_selected_expe();
+        $("#tooltip").hide();
     }else if (page_name === "expe_choice") {
         change_bases();
         reset_selected_expe();
         move_robot("put");
+        $("#tooltip").hide();
     }else if (page_name === "bode") {
         change_bases();
         move_robot("put");
@@ -333,9 +338,9 @@ function check_users() {
             }
             if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '') {
                 $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
-                $('#MessageModal').modal('show')
+                $('#MessageModal').modal('show');
             }else {
-                $('#MessageModal').modal('hide')
+                $('#MessageModal').modal('hide');
                 $(".message-laborem h2")[0].innerHTML = '';
             }
             if (typeof data['progress_bar'] != 'undefined' && data['progress_bar'] != '') {
