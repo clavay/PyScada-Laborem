@@ -87,6 +87,7 @@ function query_previous_and_next_btn() {
 
 function reset_page(page_name) {
     if (page_name === "start") {
+        $('#ViewerModal').modal('hide');
         reset_robot_bases();
         reset_selected_plug();
         reset_selected_expe();
@@ -116,6 +117,7 @@ function reset_page(page_name) {
         change_bases();
         move_robot("put");
     }else if (page_name === "viewer") {
+        $('#ViewerModal').modal('show');
     }
 };
 
@@ -354,8 +356,8 @@ function check_users() {
                 $(".progress-bar")[0].className += " progress-bar-striped active";
             }
             if (typeof data['summary'] != 'undefined' && data['summary'] != '') {
-                $(".summary ul")[0].innerHTML = data['summary']
-                $(".summary-modal ul")[0].innerHTML = data['summary']
+                $(".summary ul").html(data['summary']);
+                $(".summary-modal ul").html(data['summary']);
                 $(".modal-footer").removeClass("hidden");
                 $(".summary").removeClass("hidden");
             }else {
