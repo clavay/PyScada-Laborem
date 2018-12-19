@@ -398,9 +398,9 @@ def script(self):
                             'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
         self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
         self.inst_mdo.write('*RST;:SEL:CH1 1;:SEL:CH2 1;:HORIZONTAL:POSITION 0;:CH1:YUN "V";:CH1:SCALE ' +
-                            str(1.2 * float(vepp) / (2 * 4)) + ';:CH2:YUN "V";:CH2:BANdwidth 10000000;:'
+                            str(1.2 * float(vepp) / (2 * 4)) + ';:CH2:YUN "V";:CH2:BANdwidth 10000000;'
                             ':CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;'
-                            ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM')
+                            ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM;')
         fmin = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN'), 1), 200000)
         fmax = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX'), 1), 200000)
         nb_points = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS'),

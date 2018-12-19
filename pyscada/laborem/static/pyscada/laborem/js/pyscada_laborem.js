@@ -356,11 +356,11 @@ function check_users() {
             if (typeof data['summary'] != 'undefined' && data['summary'] != '') {
                 $(".summary ul")[0].innerHTML = data['summary']
                 $(".summary-modal ul")[0].innerHTML = data['summary']
-                $($(".modal-footer")[0]).removeClass("hidden");
-                $($(".summary")[0]).removeClass("hidden");
+                $(".modal-footer").removeClass("hidden");
+                $(".summary").removeClass("hidden");
             }else {
-                $($(".summary")[0]).removeClass("hidden");
-                $(".summary")[0].className += " hidden";
+                $(".summary").removeClass("hidden");
+                $(".summary").addClass("hidden");
             }
             $($(".camera")[0]).removeClass("hidden");
 

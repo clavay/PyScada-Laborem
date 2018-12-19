@@ -6,10 +6,9 @@ from __future__ import unicode_literals
 from pyscada.utils.scheduler import Process as BaseDAQProcess
 from pyscada.models import BackgroundProcess
 from pyscada.laborem.models import LaboremMotherboardDevice
-from pyscada.laborem import PROTOCOL_ID
-
 
 import json
+import traceback
 import logging
 
 logger = logging.getLogger(__name__)
@@ -36,9 +35,9 @@ class Process(BaseDAQProcess):
                                        {'device_id': item.laboremmotherboard_device.pk}))
             bp.save()
             self.LABOREM_PROCESSES.append({'id': bp.id,
-                                        'key': item.id,
-                                        'device_id': item.laboremmotherboard_device.pk,
-                                        'failed': 0})
+                                           'key': item.id,
+                                           'device_id': item.laboremmotherboard_device.pk,
+                                           'failed': 0})
 
     def loop(self):
         """

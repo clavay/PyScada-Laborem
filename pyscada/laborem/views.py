@@ -272,7 +272,7 @@ def form_write_property(request):
                         VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
                     except VariableProperty.DoesNotExist:
                         logger.debug("form_write_property - vp as str - "
-                                     "VariableProperty.DoesNotExist or group permission error")
+                                     "VariableProperty.DoesNotExist or group permission error : %s" % variable_property)
                         return HttpResponse(status=200)
             else:
                 return HttpResponse(status=404)
