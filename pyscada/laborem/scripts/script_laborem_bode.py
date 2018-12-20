@@ -153,6 +153,8 @@ def startup(self):
     if not Variable.objects.filter(name="LABOREM"):
         Variable.objects.create(name="LABOREM", description="Var to store Varaible Properties used by Laborem",
                                 device=Device.objects.get(short_name="generic_device"), unit=Unit.objects.get(unit=""))
+    # User stop button
+    self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
 
     # Progress bar
     self.write_variable_property("LABOREM", "progress_bar_now", 0, value_class='int16')
@@ -393,7 +395,7 @@ def script(self):
                                      value_class='string')
         time.sleep(2)
 
-        vepp = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP'), 0), 19)
+        vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
                             'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
         self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
@@ -401,10 +403,9 @@ def script(self):
                             str(1.2 * float(vepp) / (2 * 4)) + ';:CH2:YUN "V";:CH2:BANdwidth 10000000;'
                             ':CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;'
                             ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM;')
-        fmin = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN'), 1), 200000)
-        fmax = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX'), 1), 200000)
-        nb_points = min(max(self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS'),
-                            2), 20)
+        fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
+        fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
+        nb_points = self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS')
 
         # Progress bar
         n = 0
@@ -413,7 +414,15 @@ def script(self):
         self.write_variable_property("LABOREM", "progress_bar_max", nb_points, value_class='int16')
 
         for f in np.geomspace(fmin, fmax, nb_points):
-
+            if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                             timestamp=datetime.utcnow())
+                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+                self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
+                                             value_class='BOOLEAN')
+                self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
+                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                return
             # Progress bar
             n += 1
             self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
@@ -522,11 +531,11 @@ def script(self):
         time.sleep(2)
         self.inst_mdo.timeout = 10000
 
-        vepp = min(max(self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP'), 0), 19)
+        vepp = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP')
         funcshape1 = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_3_FUNCTION_SHAPE')
 
         # Set the generator to freq f
-        f = min(max(self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F'), 1), 200000)
+        f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
         mdo_horiz_scale = str(round(float(4.0 / (10.0 * float(f))), 6))
 
         self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP ' + funcshape1
@@ -661,6 +670,15 @@ def script(self):
         spectrum_hanning_2 = spectrum_hanning_2 * 2 * 2 / nfft2  # also correct for Hann filter
         # frequencies2 = np.linspace(0, 1/tscale, nfft2, endpoint=False).tolist()
 
+        if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+            self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                         timestamp=datetime.utcnow())
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
+                                         value_class='BOOLEAN')
+            self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+            return
+
         self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': timevalues})
         self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': timevalues})
         self.write_values_to_db(data={'Wave_time': timevalues_to_show, 'timevalues': timevalues})
@@ -669,7 +687,9 @@ def script(self):
         self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})
         self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                      timestamp=datetime.utcnow())
-        time.sleep(2)
+        time.sleep(4)
         self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
         self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
                                      value_class='BOOLEAN')
+
+    self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')

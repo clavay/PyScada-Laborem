@@ -186,7 +186,7 @@
             </div>
           </div>
           <div class="modal-footer" style="text-align:left;">
-            <div class="row">
+              <div class="row">
                 <div class="camera col-md-6">
                     <ul class="status-panel">
                         <li class="col-md-2">Camera</li>
@@ -199,26 +199,30 @@
                         <li>Summary Modal</li>
                     </ul>
                 </div>
-                <button type="button" class="btn btn-default hidden" data-dismiss="modal">Close</button>
+              </div>
+              <div class="row">
+                  <div class="col-md-3 col-md-offset-9">
+                    <button type="button" class="user_stop_btn btn btn-danger" data-dismiss="modal">Arrêter</button>
+                  </div>
               </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="modal fade" id="ViewerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static">
+    <div class="modal fade" id="ViewerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
       <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="ViewerModalLabel">En attente...</h4>
+            <h4 class="modal-title" id="ViewerModalLabel">PyScada-Laborem</h4>
           </div>
           <div class="modal-body">
             <div class="row">
                 <div class="col-md-offset-1">
                     <h2>Vous êtes dans la file d'attente de Laborem.</h2>
                     <p>Vous pouvez fermer ce panneau et voir les tracés de l'élève qui manipule.</p>
-                    <ul>Vous avez accès à différentes informations :
+                    <ul>Après avoir fermé ce panneau, vous aurez accès à différentes informations :
                         <li>En haut :
                             <ul>
                                 <li>File d'attente</li>
@@ -247,7 +251,7 @@
                 </div>
               </div>
               <div class="row">
-                  <div class=" col-md-3 col-md-offset-9">
+                  <div class="col-md-3 col-md-offset-9">
                     <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
                   </div>
               </div>

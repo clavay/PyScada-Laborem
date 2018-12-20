@@ -111,15 +111,24 @@ function reset_page(page_name) {
         move_robot("put");
         $("#tooltip").hide();
     }else if (page_name === "bode") {
+        update_plots();
         change_bases();
         move_robot("put");
     }else if (page_name === "spectrum") {
+        update_plots();
         change_bases();
         move_robot("put");
     }else if (page_name === "viewer") {
+        update_plots();
         $('#ViewerModal').modal('show');
     }
 };
+
+function update_plots() {
+    $.each(PyScadaPlots,function(plot_id){
+        PyScadaPlots[plot_id].update();
+    });
+}
 
 function move_robot(mov) {
     $.ajax({
@@ -322,7 +331,7 @@ function check_users() {
                 //DATA={}
                 //DATA_FROM_TIMESTAMP = data['timeline_start'];
                 DATA_DISPLAY_FROM_TIMESTAMP = data['timeline_start'];
-                if (data['timeline_stop'] != DATA_FROM_TIMESTAMP && data['timeline_stop'] != '' && typeof data['timeline_stop'] != 'undefined') {
+                if (data['timeline_stop'] > DATA_FROM_TIMESTAMP && data['timeline_stop'] != '' && typeof data['timeline_stop'] != 'undefined') {
                     //DATA_TO_TIMESTAMP = data['timeline_stop'];
                     DATA_DISPLAY_TO_TIMESTAMP = data['timeline_stop'];
                     DATA_DISPLAY_WINDOW = data['timeline_stop'] - data['timeline_start'];
@@ -414,6 +423,21 @@ $( document ).ready(function() {
         // Check if we are on a page that need to show the TOP10QAs
         refresh_top10_qa();
     });
+
+    // Stop experience on stop user btn click
+    $('.user_stop_btn').on('click', function() {
+        $.ajax({
+            type: 'post',
+            url: ROOT_URL+'form/write_property/',
+            data: {variable_property:"USER_STOP",value:1},
+            success: function (data) {
+
+            },
+            error: function(data) {
+                add_notification('write expe failed',3);
+            }
+        });
+    }
 
     // Actualize the picture of the dut selector for LaboREM with the list selection
     $('.list-dut-item').on('click', function() {
