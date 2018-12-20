@@ -87,38 +87,50 @@ function query_previous_and_next_btn() {
 
 function reset_page(page_name) {
     if (page_name === "start") {
+        $(".user_stop_btn").hide()
         $('#ViewerModal').modal('hide');
         reset_robot_bases();
         reset_selected_plug();
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "plugs") {
+        $(".user_stop_btn").hide()
         reset_robot_bases();
         reset_selected_plug();
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "preconf") {
+        $(".user_stop_btn").hide()
         reset_robot_bases();
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "robot") {
+        $(".user_stop_btn").hide()
         reset_robot_bases();
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "expe_choice") {
+        $(".user_stop_btn").hide()
         change_bases();
         reset_selected_expe();
         move_robot("put");
         $("#tooltip").hide();
     }else if (page_name === "bode") {
+        $(".user_stop_btn").show()
+        $(".user_stop_btn").removeClass("disabled")
+        $(".user_stop_btn").html("Arrẽter")
         update_plots();
         change_bases();
         move_robot("put");
     }else if (page_name === "spectrum") {
+        $(".user_stop_btn").show()
+        $(".user_stop_btn").removeClass("disabled")
+        $(".user_stop_btn").html("Arrẽter")
         update_plots();
         change_bases();
         move_robot("put");
     }else if (page_name === "viewer") {
+        $(".user_stop_btn").hide()
         update_plots();
         $('#ViewerModal').modal('show');
     }
@@ -426,10 +438,12 @@ $( document ).ready(function() {
 
     // Stop experience on stop user btn click
     $('.user_stop_btn').on('click', function() {
+    $(this).addClass("disabled")
+    $(this).html("Patienter...")
         $.ajax({
             type: 'post',
             url: ROOT_URL+'form/write_property/',
-            data: {variable_property:"USER_STOP",value:1},
+            data: {variable_property:"USER_STOP",value:"1"},
             success: function (data) {
 
             },
@@ -437,7 +451,7 @@ $( document ).ready(function() {
                 add_notification('write expe failed',3);
             }
         });
-    }
+    });
 
     // Actualize the picture of the dut selector for LaboREM with the list selection
     $('.list-dut-item').on('click', function() {

@@ -60,7 +60,7 @@ def script(self):
                 lu.save()
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=datetime.utcnow())
-                self.write_variable_property("LABOREM", "STOP_USER", 1, value_class="BOOLEAN")
+                self.write_variable_property("LABOREM", "USER_STOP", 1, value_class="BOOLEAN")
         # move the without group in viewer if check < 12 sec
         LaboremUser.objects.filter(laborem_group_input=None, last_check__gte=now() - timedelta(seconds=12)).\
             exclude(laborem_group_input__hmi_group__name="teacher").\

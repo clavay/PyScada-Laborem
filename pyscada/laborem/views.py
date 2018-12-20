@@ -260,22 +260,22 @@ def form_write_property(request):
                     return HttpResponse(status=200)
         except ValueError:
             variable_property = str(request.POST['variable_property'])
-            if VariableProperty.objects.get(name=variable_property).value_class.upper() in ['STRING']:
-                if LaboremGroupInputPermission.objects.count() == 0:
-                    VariableProperty.objects.update_property(variable_property=VariableProperty.objects.get(
-                        name=variable_property), value=value)
-                else:
-                    try:
-                        vpgetbyname = VariableProperty.objects.get(name=variable_property,
-                                                                   laboremgroupinputpermission__hmi_group__in=request.
-                                                                   user.groups.iterator())
-                        VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
-                    except VariableProperty.DoesNotExist:
-                        logger.debug("form_write_property - vp as str - "
-                                     "VariableProperty.DoesNotExist or group permission error : %s" % variable_property)
-                        return HttpResponse(status=200)
+            # if VariableProperty.objects.get(name=variable_property).value_class.upper() in ['STRING']:
+            if LaboremGroupInputPermission.objects.count() == 0:
+                VariableProperty.objects.update_property(variable_property=VariableProperty.objects.get(
+                    name=variable_property), value=value)
             else:
-                return HttpResponse(status=404)
+                try:
+                    vpgetbyname = VariableProperty.objects.get(name=variable_property,
+                                                               laboremgroupinputpermission__hmi_group__in=request.
+                                                               user.groups.iterator())
+                    VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
+                except VariableProperty.DoesNotExist:
+                    logger.debug("form_write_property - vp as str - "
+                                 "VariableProperty.DoesNotExist or group permission error : %s" % variable_property)
+                    return HttpResponse(status=200)
+            # else:
+            #    return HttpResponse(status=404)
         return HttpResponse(status=200)
     return HttpResponse(status=404)
 
