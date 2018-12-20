@@ -118,14 +118,14 @@ function reset_page(page_name) {
     }else if (page_name === "bode") {
         $(".user_stop_btn").show()
         $(".user_stop_btn").removeClass("disabled")
-        $(".user_stop_btn").html("Arrẽter")
+        $(".user_stop_btn").html("Arrêter")
         update_plots();
         change_bases();
         move_robot("put");
     }else if (page_name === "spectrum") {
         $(".user_stop_btn").show()
         $(".user_stop_btn").removeClass("disabled")
-        $(".user_stop_btn").html("Arrẽter")
+        $(".user_stop_btn").html("Arrêter")
         update_plots();
         change_bases();
         move_robot("put");
@@ -364,6 +364,8 @@ function check_users() {
                 $('#MessageModal').modal('show');
             }else {
                 $('#MessageModal').modal('hide');
+                $(".user_stop_btn").removeClass("disabled")
+                $(".user_stop_btn").html("Arrêter")
                 $(".message-laborem h2")[0].innerHTML = '';
             }
             if (typeof data['progress_bar'] != 'undefined' && data['progress_bar'] != '') {
@@ -438,8 +440,8 @@ $( document ).ready(function() {
 
     // Stop experience on stop user btn click
     $('.user_stop_btn').on('click', function() {
-    $(this).addClass("disabled")
-    $(this).html("Patienter...")
+        $(this).addClass("disabled")
+        $(this).html("Patienter...")
         $.ajax({
             type: 'post',
             url: ROOT_URL+'form/write_property/',
