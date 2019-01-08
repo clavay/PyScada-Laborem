@@ -169,7 +169,7 @@ class LaboremPlugDevice(models.Model):
     description = models.TextField(default='', verbose_name="Description", null=True)
     plug_image = models.ImageField(upload_to="img/laborem/plugs/", verbose_name="plug image", blank=True)
     motherboardIOConfig = models.ForeignKey(LaboremMotherboardIOConfig)
-    level_choices = (('1', 'Easy'), ('2', 'Medium'), ('3', 'Hard'))
+    level_choices = (('1', 'beginner'), ('2', 'intermediate'), ('3', 'advanced'))
     level = models.CharField(max_length=254, choices=level_choices)
     robot = models.ForeignKey(VISADevice, blank=True, null=True,
                               help_text='If the PCB Plug is modifiable with the robot choose the Robot device. '

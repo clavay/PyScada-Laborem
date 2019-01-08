@@ -170,7 +170,7 @@ def startup(self):
     # Worker experience
     self.write_variable_property("LABOREM", "EXPERIENCE", '', value_class='string')
 
-    self.write_variable_property("LABOREM", "message_laborem", "LaboREM is starting. Please Wait...",
+    self.write_variable_property("LABOREM", "message_laborem", "Laborem is starting. Please Wait...",
                                  value_class='string')
     time.sleep(60)
     self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
@@ -279,7 +279,7 @@ def shutdown(self):
     write your code shutdown code here, don't change the name of this function
     :return:
     """
-    self.write_variable_property("LABOREM", "message_laborem", "LaboREM is down.", value_class='string')
+    self.write_variable_property("LABOREM", "message_laborem", "Laborem is down.", value_class='string')
     self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                  timestamp=datetime.utcnow())
     self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",

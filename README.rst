@@ -1,7 +1,7 @@
-PyScada-LaboREM
+PyScada-Laborem
 ==================================
 
-LaboREM extension to PyScada
+Laborem extension to PyScada
 
 What is Working
 ---------------
@@ -24,7 +24,7 @@ Installation
     to : sudo pip3 install https://github.com/clavay/PyScada/tarball/hmi
  - Install pyusb : sudo pip3 install pyusb
  - Install gpiozero : sudo pip3 install gpiozero
- - Install PyScada-LaboREM : sudo pip3 install https://github.com/clavay/PyScada-LaboREM/tarball/master
+ - Install PyScada-Laborem : sudo pip3 install https://github.com/clavay/PyScada-Laborem/tarball/master
  - Install PyScada-GPIO : sudo pip3 install pyscada-gpio
  - Install PyScada-Scripting : sudo pip3 install pyscada-scripting
  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py before url(r'^', include('pyscada.hmi.urls')), :
@@ -121,7 +121,7 @@ To add a USB camera
      - make
      - sudo make install
      - sudo usermod -a -G video pyscada
-     - sudo wget https://raw.githubusercontent.com/clavay/PyScada-LaboREM/master/extras/service/systemd/laborem_camera.service -O /etc/systemd/system/laborem_camera.service
+     - sudo wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/service/systemd/laborem_camera.service -O /etc/systemd/system/laborem_camera.service
      - sudo systemctl enable laborem_camera
      - sudo systemctl start laborem_camera
      - add to a custom html :
@@ -130,8 +130,8 @@ To add a USB camera
 Contribute
 ----------
 
- - Issue Tracker: https://github.com/clavay/PyScada-LaboREM/issues
- - Source Code: https://github.com/clavay/PyScada-laboREM
+ - Issue Tracker: https://github.com/clavay/PyScada-Laborem/issues
+ - Source Code: https://github.com/clavay/PyScada-Laborem
 
 
 License

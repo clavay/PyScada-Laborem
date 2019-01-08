@@ -9,7 +9,7 @@ from pyscada.hmi.models import Widget
 from pyscada.hmi.models import View
 from pyscada.hmi.models import Page
 
-
+from pyscada.laborem import version as laborem_version
 from pyscada.models import Variable, VariableProperty, DeviceWriteTask, VariablePropertyManager
 from .models import LaboremRobotElement
 from .models import LaboremRobotBase
@@ -53,7 +53,8 @@ def index(request):
 
     if LaboremUser.objects.get(user=request.user).laborem_group_input is None:
         LaboremUser.objects.filter(user=request.user).exclude(laborem_group_input__hmi_group__name="teacher").update(
-            laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"), last_check=now())
+            laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"),
+            last_check=now(), connection_time=now())
         time.sleep(3)
         return redirect('/')
     if GroupDisplayPermission.objects.count() == 0:
@@ -63,7 +64,8 @@ def index(request):
     c = {
         'user': request.user,
         'view_list': view_list,
-        'version_string': core_version
+        'version_string': core_version,
+        'laborem_version_string': laborem_version
     }
     return TemplateResponse(request, 'view_laborem_overview.html', c)  # HttpResponse(t.render(c))
 
@@ -177,6 +179,7 @@ def view_laborem(request, link_title):
         'view_title': v.title,
         'view_show_timeline': v.show_timeline,
         'version_string': core_version,
+        'laborem_version_string': laborem_version,
         'form_top10qa': form_top10qa
     }
 
@@ -550,7 +553,11 @@ def reset_selected_plug(request):
     if u:
         return u
 
-    mb_id = int(request.POST['mb_id'])
+    if 'mb_id' in request.POST:
+        mb_id = int(request.POST['mb_id'])
+    else:
+        logger.debug("mb_id not in request.POST for reset_selected_plug fonction. Request : %s" % request)
+        return HttpResponse(status=404)
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
@@ -564,6 +571,7 @@ def move_robot(request):
     if u:
         return u
 
+    data = dict()
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
@@ -578,17 +586,31 @@ def move_robot(request):
                         if vp is None:
                             return HttpResponse(status=200)
                         key = vp.id
+                        for base in LaboremRobotBase.objects.all():
+                            if base.element is not None and str(base.element.active) == '0':
+                                VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
+                                                                                   "message_laborem",
+                                                                                   "Le robot place les éléments...",
+                                                                                   value_class='string')
+                                data['message_laborem'] = "Le robot place les éléments..."
                         cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
                         cwt.save()
-                        return HttpResponse(status=200)
+                        return HttpResponse(json.dumps(data), content_type='application/json')
                     if move == 'drop':
                         vp = VariableProperty.objects.get_property(variable=variable, name="Bode_take_off")
                         if vp is None:
                             return HttpResponse(status=200)
                         key = vp.id
+                        for base in LaboremRobotBase.objects.all():
+                            if base.element is not None and str(base.element.active) != '0':
+                                VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
+                                                                                   "message_laborem",
+                                                                                   "Le robot retire les éléments...",
+                                                                                   value_class='string')
+                                data['message_laborem'] = "Le robot retire les éléments..."
                         cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
                         cwt.save()
-                        return HttpResponse(status=200)
+                        return HttpResponse(json.dumps(data), content_type='application/json')
     return HttpResponse(status=200)
 
 
@@ -599,16 +621,20 @@ def check_users(request):
     if 'mb_id' in request.POST:
         mb_id = int(request.POST['mb_id'])
     else:
-        logger.debug("mb_id not un request.POST for check_user fonction. Request : %s" % request)
+        logger.debug("mb_id not in request.POST for check_user fonction. Request : %s" % request)
         return HttpResponse(status=404)
     data = dict()
+
+    data['setTimeout'] = 10000
 
     data['user_type'] = 0
     if request.user.groups.all().first() == Group.objects.get(name="viewer") \
             or request.user.groups.all().first() is None:
         data['user_type'] = 1
+        data['setTimeout'] = 10000
     elif request.user.groups.all().first() == Group.objects.get(name="worker"):
         data['user_type'] = 2
+        data['setTimeout'] = 1000
     try:
         data['timeline_start'] = (int(format(VariableProperty.objects.get_property(Variable.objects.get(
             name="LABOREM"), "viewer_start_timeline").timestamp, 'U')) - 1)*1000

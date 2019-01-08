@@ -1,4 +1,4 @@
-/* Javascript library for the PyScada-LaboREM web client based on jquery,
+/* Javascript library for the PyScada-Laborem web client based on jquery,
 
 version 0.7.2
 
@@ -85,6 +85,74 @@ function query_previous_and_next_btn() {
     }
 };
 
+function redirect_to_page(page_name) {
+    if (page_name === "preconf") {
+        if ($('.list-dut-item.active .badge.robot').length || !$('.list-dut-item.active').length) { window.location.href = "#plugs";}
+    }else if (page_name === "robot") {
+        if (!$('.list-dut-item.active .badge.robot').length || !$('.list-dut-item.active').length) { window.location.href = "#plugs";}
+    }else if (page_name === "expe_choice") {
+        if (!$('.list-dut-item.active').length) {
+            window.location.href = "#plugs";
+            return 1
+        }else {
+            if ($('.list-dut-item.active .badge.robot').length) {
+                // Finding if all robot bases are selected
+                base_empty = 'no'
+                $('.ui-dropdown-robot-bnt').each(function() {
+                    if ($(this)[0].innerHTML === "------- ") {
+                        base_empty = 'yes'
+                    }
+                })
+                if (base_empty === 'yes') {
+                    window.location.href = "#robot";
+                    return 1
+                }
+            }
+        }
+    }else if (page_name === "bode" || page_name === "spectrum") {
+        if (!$('.list-dut-item.active').length) {
+            window.location.href = "#plugs";
+            return 1
+        }else {
+            if ($('.list-dut-item.active .badge.robot').length) {
+                // Finding if all robot bases are selected
+                base_empty = 'no'
+                $('.ui-dropdown-robot-bnt').each(function() {
+                    if ($(this)[0].innerHTML === "------- ") {
+                        base_empty = 'yes'
+                    }
+                })
+                if (base_empty === 'yes') {
+                    window.location.href = "#robot";
+                    return 1
+                }else {
+                    // finding if an expe is selected
+                    if (typeof $('.expe_list_item.active').attr('name') == 'undefined') {
+                        window.location.href = "#expe_choice";
+                        return 1
+                    }else {
+                        if (page_name !== $('.expe_list_item.active').attr('name')) {
+                            window.location.href = "#" + $('.expe_list_item.active').attr('name');
+                            return 1
+                        }
+                    }
+                }
+            }else {
+                // finding if an expe is selected
+                if (typeof $('.expe_list_item.active').attr('name') == 'undefined') {
+                    window.location.href = "#expe_choice";
+                    return 1
+                }else {
+                    if (page_name !== $('.expe_list_item.active').attr('name')) {
+                        window.location.href = "#" + $('.expe_list_item.active').attr('name');
+                        return 1
+                    }
+                }
+            }
+        }
+    }
+}
+
 function reset_page(page_name) {
     if (page_name === "start") {
         $(".user_stop_btn").hide()
@@ -100,45 +168,51 @@ function reset_page(page_name) {
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "preconf") {
+        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").hide()
         reset_robot_bases();
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "robot") {
+        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").hide()
         reset_robot_bases();
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "expe_choice") {
+        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").hide()
         change_bases();
+        update_plots(true);
         reset_selected_expe();
         move_robot("put");
         $("#tooltip").hide();
     }else if (page_name === "bode") {
+        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").show()
         $(".user_stop_btn").removeClass("disabled")
         $(".user_stop_btn").html("Arrêter")
-        update_plots();
+        update_plots(false);
         change_bases();
         move_robot("put");
     }else if (page_name === "spectrum") {
+        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").show()
         $(".user_stop_btn").removeClass("disabled")
         $(".user_stop_btn").html("Arrêter")
-        update_plots();
+        update_plots(false);
         change_bases();
         move_robot("put");
     }else if (page_name === "viewer") {
         $(".user_stop_btn").hide()
-        update_plots();
+        update_plots(false);
         $('#ViewerModal').modal('show');
     }
 };
 
-function update_plots() {
+function update_plots(force) {
     $.each(PyScadaPlots,function(plot_id){
-        PyScadaPlots[plot_id].update();
+        PyScadaPlots[plot_id].update(force);
     });
 }
 
@@ -148,7 +222,15 @@ function move_robot(mov) {
         url: ROOT_URL+'form/move_robot/',
         data: {move:mov},
         success: function (data) {
-
+            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '') {
+                $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
+                $('#MessageModal').modal('show');
+            }else {
+                $('#MessageModal').modal('hide');
+                $(".user_stop_btn").removeClass("disabled")
+                $(".user_stop_btn").html("Arrêter")
+                $(".message-laborem h2")[0].innerHTML = '';
+            }
         },
         error: function(data) {
             add_notification('move robot failed',3);
@@ -402,13 +484,14 @@ function check_users() {
             add_notification('write plug selected failed',3);
         }
     });
+    setTimeout(function() {check_users()}, data['setTimeout']);
 }
 
 $( document ).ready(function() {
     // Change text and link of PyScada in navbar
     $(".navbar-brand").attr("href", "");
     $(".navbar-brand").removeAttr("target");
-    $(".navbar-brand")[0].innerHTML = ' PyScada-LaboREM';
+    $(".navbar-brand")[0].innerHTML = ' PyScada-Laborem';
     $(".navbar-brand").prepend('<span class="glyphicon glyphicon-home"></span>');
     $(".btn-previous").hide();
 
@@ -416,7 +499,7 @@ $( document ).ready(function() {
     if (window.location.hash.substr(1) != "start"){window.location.href = "#start";}
 
     // Send info and actualize data
-    setInterval(function() {check_users()}, 1000);
+    setTimeout(function() {check_users()}, 1000);
 
     // Load next and previous button at start
     query_previous_and_next_btn()
@@ -455,7 +538,7 @@ $( document ).ready(function() {
         });
     });
 
-    // Actualize the picture of the dut selector for LaboREM with the list selection
+    // Actualize the picture of the dut selector for Laborem with the list selection
     $('.list-dut-item').on('click', function() {
         var $this = $(this);
         var $img = $this.data('img');

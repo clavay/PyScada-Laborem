@@ -5,7 +5,8 @@ import os
 from django.apps import AppConfig
 from django.utils.translation import ugettext_lazy as _
 
-class PyScadaLaboREMConfig(AppConfig):
+
+class PyScadaLaboremConfig(AppConfig):
     name = 'pyscada.laborem'
-    verbose_name = _("PyScada LaboREM")
+    verbose_name = _("PyScada Laborem")
     path = os.path.dirname(os.path.realpath(__file__))

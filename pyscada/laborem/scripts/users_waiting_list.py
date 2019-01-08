@@ -40,6 +40,11 @@ def script(self):
             LaboremGroupInputPermission.objects.filter(hmi_group__name="teacher").count():
         # do not touch the teachers
         # remove group from users with check > 12 sec
+        if LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).exclude(
+                laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
+            logger.debug("users with check > 12 sec : %s" %
+                         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).
+                         exclude(laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None))
         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).\
             exclude(laborem_group_input__hmi_group__name="teacher").update(laborem_group_input=None, start_time=None)
         # move worker to viewer if start > 5 min and viewer list count > 0
@@ -58,13 +63,15 @@ def script(self):
                 lu.laborem_group_input = LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").first()
                 lu.start_time = now()
                 lu.save()
+                logger.debug("New worker : %s" % lu.user)
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=datetime.utcnow())
                 self.write_variable_property("LABOREM", "USER_STOP", 1, value_class="BOOLEAN")
         # move the without group in viewer if check < 12 sec
         LaboremUser.objects.filter(laborem_group_input=None, last_check__gte=now() - timedelta(seconds=12)).\
             exclude(laborem_group_input__hmi_group__name="teacher").\
-            update(laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"))
+            update(laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"),
+                   connection_time=now())
 
         # update the user group to the group selected in LaboremUser
         for U in User.objects.all():
