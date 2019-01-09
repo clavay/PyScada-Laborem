@@ -79,7 +79,7 @@ function query_previous_and_next_btn() {
         $(".btn-previous").attr("href", '#expe_choice');
         $(".btn-previous").show();
         $(".btn-next").hide();
-    }else if (actual_hash === "viewer") {
+    }else if (actual_hash === "viewer" || actual_hash === "waiting") {
         $(".btn-previous").hide();
         $(".btn-next").hide();
     }
@@ -155,6 +155,7 @@ function redirect_to_page(page_name) {
 
 function reset_page(page_name) {
     if (page_name === "start") {
+        $(".camera").show()
         $(".user_stop_btn").hide()
         $('#ViewerModal').modal('hide');
         reset_robot_bases();
@@ -207,9 +208,13 @@ function reset_page(page_name) {
         change_bases();
         move_robot("put");
     }else if (page_name === "viewer") {
+        $(".camera").show()
         $(".user_stop_btn").hide()
         update_plots(false);
         $('#ViewerModal').modal('show');
+    }else if (page_name === "waiting") {
+        $('#ViewerModal').modal('hide');
+        $(".camera").hide()
     }
 };
 
@@ -225,7 +230,7 @@ function move_robot(mov) {
         url: ROOT_URL+'form/move_robot/',
         data: {move:mov},
         success: function (data) {
-            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '') {
+            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '' && window.location.hash.substr(1) != "waiting") {
                 $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
                 $('#MessageModal').modal('show');
             }else {
@@ -282,7 +287,7 @@ function reset_robot_bases() {
 };
 
 function change_plug_selected_motherboard() {
-    plug_active = $(".sub-page#plugs .list-dut-item");
+    plug_active = $(".sub-page#plugs .list-dut-item.active");
     mb_id = plug_active.data('motherboard-id');
     plug_id = plug_active.data('plug-id');
     if (mb_id === "" || plug_id === ""){
@@ -407,9 +412,13 @@ function check_users() {
             $(".table-waitingusers tbody").append(data['waitingusers']);
             $(".activeuser-item").remove();
             $(".table-activeuser tbody").append(data['activeuser']);
-            if (data['user_type'] == 1 && window.location.hash.substr(1) != "viewer") {
-                window.location.href = "#viewer";
-            }else if (data['user_type'] == 2 && window.location.hash.substr(1) == "viewer") {
+            if (data['user_type'] == 1) {
+                if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6 && window.location.hash.substr(1) != "viewer") {
+                    window.location.href = "#viewer";
+                }else if (window.location.hash.substr(1) != "waiting") {
+                    window.location.href = "#waiting";
+                }
+            }else if (data['user_type'] == 2 && (window.location.hash.substr(1) == "viewer" || window.location.hash.substr(1) == "waiting")) {
                 window.location.href = "#start";
             }
             if (data['user_type'] == 1) {
@@ -447,7 +456,7 @@ function check_users() {
                 DATA_DISPLAY_TO_TIMESTAMP = SERVER_TIME;
                 DATA_DISPLAY_WINDOW = DATA_DISPLAY_TO_TIMESTAMP-DATA_DISPLAY_FROM_TIMESTAMP;
             }
-            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '') {
+            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '' && window.location.hash.substr(1) != "waiting") {
                 $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
                 $('#MessageModal').modal('show');
             }else {

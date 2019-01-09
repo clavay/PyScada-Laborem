@@ -723,6 +723,7 @@ def check_users(request):
         if j > 0:
             data['summary'] += "<li>File d'attente :<ul><li>Rang : " + str(j) + "</li>"
             data['summary'] += "<li>Temps d'attente : " + str(title_time) + '</li></ul></li>'
+            data['viewer_rank'] = str(j)
         try:
             data['summary'] += "<li>Montage en cours : <ul><li>" \
                                + LaboremMotherboardDevice.get_selected_plug(
