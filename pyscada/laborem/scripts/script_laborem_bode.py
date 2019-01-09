@@ -334,8 +334,8 @@ def script(self):
     :return:
     """
     # logger.debug("Script Bode running...")
-    put_on_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_put_on'))
-    if put_on_bode:
+    put_on_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON'))
+    if put_on_robot:
         logger.debug("Putting on Elements...")
         # Move the robot
         for base in LaboremRobotBase.objects.all():
@@ -356,12 +356,12 @@ def script(self):
                 else:
                     logger.debug("Base : %s  - Element : %s - base.element.active : %s " %
                                  (base, base.element, base.element.active))
-        self.write_variable_property(variable_name='Bode_run', property_name='Bode_put_on', value=0,
+        self.write_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON', value=0,
                                      value_class='BOOLEAN')
         self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
-    take_off_bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='Bode_take_off'))
-    if take_off_bode:
+    take_off_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_TAKE_OFF'))
+    if take_off_robot:
         logger.debug("Taking off Elements...")
         for base in LaboremRobotBase.objects.all():
             if base.element is not None and str(base.element.active) != '0':
@@ -382,7 +382,7 @@ def script(self):
                     logger.debug("Base : %s  - Element : %s - base.element.active : %s " %
                                  (base, base.element, base.element.active))
             base.change_selected_element(None)
-        self.write_variable_property(variable_name='Bode_run', property_name='Bode_take_off', value=0,
+        self.write_variable_property(variable_name='LABOREM', property_name='ROBOT_TAKE_OFF', value=0,
                                      value_class='BOOLEAN')
         self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 

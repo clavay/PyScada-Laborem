@@ -4,7 +4,7 @@
 handles write tasks for variables attached to the generic devices
 """
 
-from pyscada.laborem.models import LaboremUser, LaboremGroupInputPermission
+from pyscada.laborem.models import LaboremUser, LaboremGroupInputPermission, LaboremRobotBase
 from django.utils.timezone import now, timedelta
 from django.contrib.auth.models import User, Group
 import logging
@@ -70,11 +70,15 @@ def script(self):
                     order_by("connection_time").first()
                 lu.laborem_group_input = LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").first()
                 lu.start_time = now()
+                for base in LaboremRobotBase.objects.all():
+                    if base.element is not None and str(base.element.active) != '0':
+                        lu.start_time += timedelta(second=20)
                 lu.save()
                 logger.debug("New worker : %s" % lu.user)
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=datetime.utcnow())
                 self.write_variable_property("LABOREM", "USER_STOP", 1, value_class="BOOLEAN")
+                self.write_variable_property("LABOREM", "ROBOT_TAKE_OFF", 1, value_class="BOOLEAN")
 
         # update the user group to the group selected in LaboremUser
         for U in User.objects.all():

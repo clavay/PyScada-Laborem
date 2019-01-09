@@ -583,11 +583,11 @@ def move_robot(request):
                 if 'move' in request.POST:
                     move = request.POST['move']
                     try:
-                        variable = Variable.objects.get(name="Bode_run")
+                        variable = Variable.objects.get(name="LABOREM")
                     except Variable.DoesNotExist:
                         return HttpResponse(status=200)
                     if move == 'put':
-                        vp = VariableProperty.objects.get_property(variable=variable, name="Bode_put_on")
+                        vp = VariableProperty.objects.get_property(variable=variable, name="ROBOT_PUT_ON")
                         if vp is None:
                             return HttpResponse(status=200)
                         key = vp.id
@@ -602,7 +602,7 @@ def move_robot(request):
                         cwt.save()
                         return HttpResponse(json.dumps(data), content_type='application/json')
                     if move == 'drop':
-                        vp = VariableProperty.objects.get_property(variable=variable, name="Bode_take_off")
+                        vp = VariableProperty.objects.get_property(variable=variable, name="LABOREM")
                         if vp is None:
                             return HttpResponse(status=200)
                         key = vp.id
