@@ -170,12 +170,14 @@ function reset_page(page_name) {
     }else if (page_name === "preconf") {
         if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").hide()
+        change_plug_selected_motherboard();
         reset_robot_bases();
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "robot") {
         if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").hide()
+        change_plug_selected_motherboard();
         reset_robot_bases();
         reset_selected_expe();
         $("#tooltip").hide();
@@ -183,6 +185,7 @@ function reset_page(page_name) {
         if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").hide()
         change_bases();
+        change_plug_selected_motherboard();
         update_plots(true);
         reset_selected_expe();
         move_robot("put");
@@ -278,7 +281,10 @@ function reset_robot_bases() {
     })
 };
 
-function change_plug_selected_motherboard(mb_id, plug_id, plug_name) {
+function change_plug_selected_motherboard() {
+    plug_active = $(".sub-page#plugs .list-dut-item");
+    mb_id = plug_active.data('motherboard-id');
+    plug_id = plug_active.data('plug-id');
     if (mb_id === "" || plug_id === ""){
         add_notification('mb_id or plug_id empty',3);
     }else{
@@ -479,12 +485,12 @@ function check_users() {
             if ($('.list-dut-item.active .badge.level').length) {
                 $(".plug_details.plug_level").html($('.list-dut-item.active .badge.level')[0].innerHTML)
             }
+            setTimeout(function() {check_users()}, data['setTimeout']);
         },
         error: function(data) {
-            add_notification('write plug selected failed',3);
+            console.log('check user selected failed');
         }
     });
-    setTimeout(function() {check_users()}, data['setTimeout']);
 }
 
 $( document ).ready(function() {
@@ -542,15 +548,15 @@ $( document ).ready(function() {
     $('.list-dut-item').on('click', function() {
         var $this = $(this);
         var $img = $this.data('img');
-        var $mb_id = $this.data('motherboard-id');
-        var $plug_id = $this.data('plug-id');
-        var $plug_name = $this.data('plug-name');
+        //var $mb_id = $this.data('motherboard-id');
+        //var $plug_id = $this.data('plug-id');
+        //var $plug_name = $this.data('plug-name');
 
         $('.list-dut-item.active').removeClass('active');
         $this.toggleClass('active');
 
         $(".img-plug").attr("src",$img);
-        change_plug_selected_motherboard($mb_id, $plug_id, $plug_name)
+        //change_plug_selected_motherboard($mb_id, $plug_id, $plug_name)
         query_previous_and_next_btn()
     });
 

@@ -45,6 +45,9 @@ def script(self):
             logger.debug("users with check > 12 sec : %s" %
                          LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).
                          exclude(laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None))
+            for u in LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).exclude(
+                    laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
+                logger.debug("user %s - timedelta %s" % (u.user, now() - u.last_check))
         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).\
             exclude(laborem_group_input__hmi_group__name="teacher").update(laborem_group_input=None, start_time=None)
         # move worker to viewer if start > 5 min and viewer list count > 0

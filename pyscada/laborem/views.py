@@ -205,6 +205,7 @@ def form_write_plug(request):
                 return HttpResponse(status=200)
         if mb is not None:
             mb.change_selected_plug(plug_id)
+            logger.debug("Change selected plug_id %s - user %s - mb_id %s" % (plug_id, request.user, mb_id))
             return HttpResponse(status=200)
     return HttpResponse(status=404)
 
@@ -333,7 +334,7 @@ def query_top10_question(request):
     elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "16":
         plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug16
     else:
-        logger.error("Cannot select plug un query_top10_question")
+        logger.error("Cannot select plug in query_top10_question")
         return HttpResponse(status=404)
     data = {}
     if LaboremRobotBase.objects.get(name="base1").element is not None \
@@ -421,7 +422,7 @@ def validate_top10_answers(request):
     elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "16":
         plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug16
     else:
-        logger.error("Cannot select plug un validate_top10_answers")
+        logger.error("Cannot select plug in validate_top10_answers")
         return HttpResponse(status=404)
     level_plug = 0
     if plug.level == "1":
@@ -561,7 +562,11 @@ def reset_selected_plug(request):
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
-                LaboremMotherboardDevice.change_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id), 0)
+                try:
+                    LaboremMotherboardDevice.change_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id), 0)
+                    logger.debug("Reset selected plug - user %s - mb_id %s" % (request.user, mb_id))
+                except LaboremMotherboardDevice.DoesNotExist:
+                    logger.error("request : %s - group : %s" % (request, group))
                 return HttpResponse(status=200)
     return HttpResponse(status=200)
 
