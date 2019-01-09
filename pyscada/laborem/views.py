@@ -641,16 +641,14 @@ def check_users(request):
         return HttpResponse(status=404)
     data = dict()
 
-    data['setTimeout'] = 30000
-
-    data['user_type'] = 0
-    if request.user.groups.all().first() == Group.objects.get(name="viewer") \
-            or request.user.groups.all().first() is None:
-        data['user_type'] = 1
-        data['setTimeout'] = 10000
+    if request.user.groups.all().first() == Group.objects.get(name="viewer"):
+        data['user_type'] = "viewer"
     elif request.user.groups.all().first() == Group.objects.get(name="worker"):
-        data['user_type'] = 2
-        data['setTimeout'] = 1000
+        data['user_type'] = "worker"
+    elif request.user.groups.all().first() == Group.objects.get(name="teacher"):
+        data['user_type'] = "teacher"
+    elif request.user.groups.all().first() is None:
+        data['user_type'] = "none"
     try:
         data['timeline_start'] = (int(format(VariableProperty.objects.get_property(Variable.objects.get(
             name="LABOREM"), "viewer_start_timeline").timestamp, 'U')) - 1)*1000

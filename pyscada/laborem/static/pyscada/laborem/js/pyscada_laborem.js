@@ -422,45 +422,50 @@ function check_users() {
         url: ROOT_URL+'form/check_users/',
         data: {mb_id:mb_id},
         success: function (data) {
-            data['setTimeout'] = 30000;
-            REFRESH_RATE = 30000;
+            data['setTimeout'] = 1000;
+            //REFRESH_RATE = 2500;
             $(".waitingusers-item").remove();
             $(".table-waitingusers tbody").append(data['waitingusers']);
             $(".activeuser-item").remove();
             $(".table-activeuser tbody").append(data['activeuser']);
             if (typeof data['user_type'] != 'undefined') {
-                if (data['user_type'] == 1) {
-                    if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6 && window.location.hash.substr(1) != "viewer") {
-                        window.location.href = "#viewer";
-                    }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > 5 && window.location.hash.substr(1) != "waiting") {
-                        window.location.href = "#waiting";
-                    }
-                }else if (data['user_type'] == 2 && (window.location.hash.substr(1) == "viewer" || window.location.hash.substr(1) == "waiting")) {
-                    window.location.href = "#start";
-                }
-                if (data['user_type'] == 1) {
+                if (data['user_type'] == "viewer") {
                     $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting : ';
                     $(".dropdown-WaitingList-toggle").append(data['titletime']);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
-                    if (data['viewer_rank'] < 6) {
+                    if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6) {
                         data['setTimeout'] = 10000;
                         REFRESH_RATE = 10000;
+                        if (window.location.hash.substr(1) != "viewer") {
+                            window.location.href = "#viewer";
+                        }
+                    }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > 5) {
+                        data['setTimeout'] = 30000;
+                        REFRESH_RATE = 30000;
+                        if (window.location.hash.substr(1) != "waiting") {
+                            window.location.href = "#waiting";
+                        }
                     }
-
-                }else if (data['user_type'] == 2) {
+                }else if (data['user_type'] == "worker") {
                     data['setTimeout'] = 1000;
                     REFRESH_RATE = 1000;
                     $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Working : ';
                     $(".dropdown-WaitingList-toggle").append(data['titletime']);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
-                }else if (data['user_type'] == 0) {
+                    if (window.location.hash.substr(1) == "viewer" || window.location.hash.substr(1) == "waiting") {
+                        window.location.href = "#start";
+                    }
+                }else if (data['user_type'] == "teacher") {
                     data['setTimeout'] = 1000;
                     REFRESH_RATE = 1000;
                     $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting List ';
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
+                }else if (data['user_type'] == "none") {
+                    data['setTimeout'] = 1000;
+                    REFRESH_RATE = 1000;
                 }
             }
             if (data['timeline_start'] != DATA_FROM_TIMESTAMP && data['timeline_start'] != '' && typeof data['timeline_start'] != 'undefined') {
