@@ -619,6 +619,17 @@ def move_robot(request):
     return HttpResponse(status=200)
 
 
+def check_time(request):
+    u = user_check(request)
+    if u:
+        return u
+
+    data = dict()
+    data['setTimeout'] = 1000
+    LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
+
 def check_users(request):
     u = user_check(request)
     if u:
@@ -630,7 +641,7 @@ def check_users(request):
         return HttpResponse(status=404)
     data = dict()
 
-    data['setTimeout'] = 10000
+    data['setTimeout'] = 30000
 
     data['user_type'] = 0
     if request.user.groups.all().first() == Group.objects.get(name="viewer") \

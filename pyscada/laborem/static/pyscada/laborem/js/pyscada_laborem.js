@@ -401,6 +401,20 @@ function change_base_selected_element(base_id, element_id) {
     };
 };
 
+function check_time() {
+    $.ajax({
+        type: 'post',
+        url: ROOT_URL+'form/check_time/',
+        data: {},
+        success: function (data) {
+            setTimeout(function() {check_time()}, data['setTimeout']);
+        },
+        error: function(data) {
+            console.log('check time failed');
+        }
+    })
+}
+
 function check_users() {
     if(typeof $($('.list-dut-item')[0]).data('motherboard-id') == 'undefined'){mb_id = 0}else{mb_id = $($('.list-dut-item')[0]).data('motherboard-id')};
     $.ajax({
@@ -408,33 +422,46 @@ function check_users() {
         url: ROOT_URL+'form/check_users/',
         data: {mb_id:mb_id},
         success: function (data) {
+            data['setTimeout'] = 30000;
+            REFRESH_RATE = 30000;
             $(".waitingusers-item").remove();
             $(".table-waitingusers tbody").append(data['waitingusers']);
             $(".activeuser-item").remove();
             $(".table-activeuser tbody").append(data['activeuser']);
-            if (data['user_type'] == 1) {
-                if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6 && window.location.hash.substr(1) != "viewer") {
-                    window.location.href = "#viewer";
-                }else if (window.location.hash.substr(1) != "waiting") {
-                    window.location.href = "#waiting";
+            if (typeof data['user_type'] != 'undefined') {
+                if (data['user_type'] == 1) {
+                    if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6 && window.location.hash.substr(1) != "viewer") {
+                        window.location.href = "#viewer";
+                    }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > 5 && window.location.hash.substr(1) != "waiting") {
+                        window.location.href = "#waiting";
+                    }
+                }else if (data['user_type'] == 2 && (window.location.hash.substr(1) == "viewer" || window.location.hash.substr(1) == "waiting")) {
+                    window.location.href = "#start";
                 }
-            }else if (data['user_type'] == 2 && (window.location.hash.substr(1) == "viewer" || window.location.hash.substr(1) == "waiting")) {
-                window.location.href = "#start";
-            }
-            if (data['user_type'] == 1) {
-                $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting : ';
-                $(".dropdown-WaitingList-toggle").append(data['titletime']);
-                $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
-                $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
-            }else if (data['user_type'] == 2) {
-                $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Working : ';
-                $(".dropdown-WaitingList-toggle").append(data['titletime']);
-                $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
-                $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
-            }else if (data['user_type'] == 0) {
-                $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting List ';
-                $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
-                $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
+                if (data['user_type'] == 1) {
+                    $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting : ';
+                    $(".dropdown-WaitingList-toggle").append(data['titletime']);
+                    $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
+                    $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
+                    if (data['viewer_rank'] < 6) {
+                        data['setTimeout'] = 10000;
+                        REFRESH_RATE = 10000;
+                    }
+
+                }else if (data['user_type'] == 2) {
+                    data['setTimeout'] = 1000;
+                    REFRESH_RATE = 1000;
+                    $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Working : ';
+                    $(".dropdown-WaitingList-toggle").append(data['titletime']);
+                    $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
+                    $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
+                }else if (data['user_type'] == 0) {
+                    data['setTimeout'] = 1000;
+                    REFRESH_RATE = 1000;
+                    $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting List ';
+                    $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
+                    $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
+                }
             }
             if (data['timeline_start'] != DATA_FROM_TIMESTAMP && data['timeline_start'] != '' && typeof data['timeline_start'] != 'undefined') {
                 //DATA={}
@@ -497,7 +524,7 @@ function check_users() {
             setTimeout(function() {check_users()}, data['setTimeout']);
         },
         error: function(data) {
-            console.log('check user selected failed');
+            console.log('check user failed');
         }
     });
 }
@@ -515,6 +542,7 @@ $( document ).ready(function() {
 
     // Send info and actualize data
     setTimeout(function() {check_users()}, 1000);
+    setTimeout(function() {check_time()}, 1000);
 
     // Load next and previous button at start
     query_previous_and_next_btn()

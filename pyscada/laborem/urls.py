@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^form/reset_selected_plug/$', views.reset_selected_plug),
     url(r'^form/move_robot/$', views.move_robot),
     url(r'^form/check_users/$', views.check_users),
+    url(r'^form/check_time/$', views.check_time),
 ]
