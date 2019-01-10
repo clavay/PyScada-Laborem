@@ -5,6 +5,7 @@ handles write tasks for variables attached to the generic devices
 """
 
 from pyscada.laborem.models import LaboremUser, LaboremGroupInputPermission, LaboremRobotBase
+from pyscada.models import Variable, VariableProperty
 from django.utils.timezone import now, timedelta
 from django.contrib.auth.models import User, Group
 import logging
@@ -72,13 +73,15 @@ def script(self):
                 lu.start_time = now()
                 for base in LaboremRobotBase.objects.all():
                     if base.element is not None and str(base.element.active) != '0':
-                        lu.start_time += timedelta(second=20)
+                        lu.start_time += timedelta(seconds=20)
                 lu.save()
                 logger.debug("New worker : %s" % lu.user)
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=datetime.utcnow())
                 self.write_variable_property("LABOREM", "USER_STOP", 1, value_class="BOOLEAN")
                 self.write_variable_property("LABOREM", "ROBOT_TAKE_OFF", 1, value_class="BOOLEAN")
+                reset_all_vp_of_a_var(self, "BODE_RUN")
+                reset_all_vp_of_a_var(self, "SPECTRE_RUN")
 
         # update the user group to the group selected in LaboremUser
         for U in User.objects.all():
@@ -93,3 +96,12 @@ def script(self):
                 pass
     else:
         logger.error("Please create the 3 groups for the user list")
+
+
+def reset_all_vp_of_a_var(self, variable_name):
+    if variable_name in self.variables:
+        variable = self.variables[variable_name]
+    else:
+        variable = Variable.objects.filter(name=variable_name).first()
+    for vp in VariableProperty.objects.filter(variable=variable):
+        VariableProperty.objects.update_property(variable_property=vp, variable=variable)

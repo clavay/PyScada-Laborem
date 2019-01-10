@@ -18,7 +18,10 @@ What is not Working/Missing
 Installation
 ------------
 
- - If behind a proxy pre-install dependencies : sudo pip3 install cffi Cython numpy lxml
+ - sudo apt-get update
+ - sudo apt-get -y upgrade
+ - sudo apt-get install python3-pip
+ - If behind a proxy pre-install dependencies : sudo pip3 install cffi Cython numpy lxml docutils
  - Install PyScada : https://pyscada.readthedocs.io/en/dev-0.7.x/installation.html
  - Change : sudo pip3 install https://github.com/trombastic/PyScada/archive/dev/0.7.x.zip
     to : sudo pip3 install https://github.com/clavay/PyScada/tarball/hmi

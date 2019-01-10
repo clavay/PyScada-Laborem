@@ -18,26 +18,26 @@
             <div class="control-panel">
                 <table class="table table-condensed table-striped table-responsive table-activeuser" style="width: 300px;">
                   <tr class="activeuser-header">
-                      <th style="text-align: center; width: 150px;">Active User</th>
-                      <th style="text-align: center; width: 150px;">Working Time left</th>
+                      <th style="text-align: center; width: 150px;">Utilisateur actif</th>
+                      <th style="text-align: center; width: 150px;">Temps restant à manipuler</th>
                   </tr>
                 </table>
                 <table class="table table-condensed table-striped table-responsive table-waitingusers">
                   <tr class="waitingusers-header">
-                      <th style="text-align: center; width: 150px;">Waiting Users</th>
-                      <th style="text-align: center; width: 150px;">Waiting Time</th>
+                      <th style="text-align: center; width: 150px;">File d'attente</th>
+                      <th style="text-align: center; width: 150px;">Temps d'attente</th>
                   </tr>
                 </table>
             </div>
         </div>
     </li>
     <li class="dropdown dropdown-TOP10Results">
-        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-stats"></span> TOP10 Results <strong class="caret"></strong></a>
+        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-stats"></span> TOP10 Résultats <strong class="caret"></strong></a>
         <div class="dropdown-menu" style="padding: 15px; width: auto;">
             <div class="control-panel">
                 <table class="table table-condensed table-striped table-responsive table-top10">
                   <tr class="top10-header">
-                      <th style="text-align: center">User</th>
+                      <th style="text-align: center">Utilisateur</th>
                       <th style="text-align: center">Score</th>
                   </tr>
                 </table>
@@ -45,7 +45,7 @@
         </div>
     </li>
     <li class="dropdown dropdown-TOP10QA hidden">
-        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-pencil" style="color: orange"></span> TOP10 Questions/Answers <strong class="caret"></strong></a>
+        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-pencil" style="color: orange"></span> TOP10 Questions/Réponses <strong class="caret"></strong></a>
         <div class="dropdown-menu" style="padding: 15px; width: auto;">
             <div class="control-panel">
                 {% include "form_TOP10.html" with form=form_top10qa %}

@@ -52,8 +52,14 @@ function query_previous_and_next_btn() {
     }else if (actual_hash === "plugs") {
         $(".btn-previous").attr("href", '#start');
         $(".btn-previous").show();
-        if (robot ==='1') {$(".btn-next").attr("href", '#robot'); $(".btn-next").show();}
-        else if (robot ==='0') {$(".btn-next").attr("href", '#preconf'); $(".btn-next").show();}
+        if (robot ==='1') {
+            $(".btn-next").attr("href", '#robot');
+            $(".btn-next").show();
+        }
+        else if (robot ==='0') {
+            $(".btn-next").attr("href", '#preconf');
+            $(".btn-next").show();
+        }
         else {$(".btn-next").hide();}
     }else if (actual_hash === "preconf") {
         $(".btn-previous").attr("href", '#plugs');
@@ -66,10 +72,19 @@ function query_previous_and_next_btn() {
         $(".btn-next").attr("href", '#expe_choice');
         $(".btn-next").hide();
     }else if (actual_hash === "expe_choice") {
-        if (robot ==='1') {$(".btn-previous").attr("href", '#robot'); $(".btn-previous").show();}
-        else if (robot ==='0') {$(".btn-previous").attr("href", '#preconf'); $(".btn-previous").show();}
+        if (robot ==='1') {
+            $(".btn-previous").attr("href", '#robot');
+            $(".btn-previous").show();
+        }
+        else if (robot ==='0') {
+            $(".btn-previous").attr("href", '#preconf');
+            $(".btn-previous").show();
+        }
         else {$(".btn-previous").hide();}
-        if (expe !='') {$(".btn-next").attr("href", '#' + expe); $(".btn-next").show();}
+        if (expe !='') {
+            $(".btn-next").attr("href", '#' + expe);
+            $(".btn-next").show();
+        }
         else {$(".btn-next").hide();}
     }else if (actual_hash === "bode") {
         $(".btn-previous").attr("href", '#expe_choice');
@@ -298,7 +313,7 @@ function change_plug_selected_motherboard() {
             url: ROOT_URL+'form/write_plug/',
             data: {mb_id:mb_id, plug_id:plug_id},
             success: function (data) {
-                $(".btn-next").show();
+
             },
             error: function(data) {
                 add_notification('write plug selected failed',3);
@@ -430,37 +445,37 @@ function check_users() {
             $(".table-activeuser tbody").append(data['activeuser']);
             if (typeof data['user_type'] != 'undefined') {
                 if (data['user_type'] == "viewer") {
-                    $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting : ';
+                    $(".dropdown-WaitingList-toggle")[0].innerHTML = " Temps d'attente : ";
                     $(".dropdown-WaitingList-toggle").append(data['titletime']);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
                     if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6) {
                         data['setTimeout'] = 10000;
                         REFRESH_RATE = 10000;
-                        if (window.location.hash.substr(1) != "viewer") {
+                        if (window.location.hash.substr(1) != "viewer" || window.location.hash.substr(1) == "loading") {
                             window.location.href = "#viewer";
                         }
                     }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > 5) {
                         data['setTimeout'] = 30000;
                         REFRESH_RATE = 30000;
-                        if (window.location.hash.substr(1) != "waiting") {
+                        if (window.location.hash.substr(1) != "waiting" || window.location.hash.substr(1) == "loading") {
                             window.location.href = "#waiting";
                         }
                     }
                 }else if (data['user_type'] == "worker") {
                     data['setTimeout'] = 1000;
                     REFRESH_RATE = 1000;
-                    $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Working : ';
+                    $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Actif pour : ';
                     $(".dropdown-WaitingList-toggle").append(data['titletime']);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
-                    if (window.location.hash.substr(1) == "viewer" || window.location.hash.substr(1) == "waiting") {
+                    if (window.location.hash.substr(1) == "viewer" || window.location.hash.substr(1) == "waiting" || window.location.hash.substr(1) == "loading") {
                         window.location.href = "#start";
                     }
                 }else if (data['user_type'] == "teacher") {
                     data['setTimeout'] = 1000;
                     REFRESH_RATE = 1000;
-                    $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Waiting List ';
+                    $(".dropdown-WaitingList-toggle")[0].innerHTML = " Liste d'attente ";
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
                 }else if (data['user_type'] == "none") {
@@ -543,7 +558,7 @@ $( document ).ready(function() {
     $(".btn-previous").hide();
 
     // If not starting on #start page redirect to this hash
-    if (window.location.hash.substr(1) != "start"){window.location.href = "#start";}
+    if (window.location.hash.substr(1) != "start"){window.location.href = "#loading";}
 
     // Send info and actualize data
     setTimeout(function() {check_users()}, 1000);
