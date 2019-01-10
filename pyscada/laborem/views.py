@@ -685,7 +685,7 @@ def check_users(request):
     laborem_working_user = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").first()
     if laborem_working_user is not None:
         current_user = LaboremUser.objects.filter(user=request.user).first()
-        data['titletime'] = "unlimited"
+        data['titletime'] = "illimité"
         data['waitingusers'] = ""
         i = 0
         j = 0
@@ -708,7 +708,7 @@ def check_users(request):
                 title_time += str((td - (now() - laborem_working_user.start_time) + i * td).seconds % 60) + ' sec'
                 data['titletime'] += title_time
             i += 1
-        time_left = ' unlimited '
+        time_left = ' illimité '
         if i > 0:
             if (td - (now() - laborem_working_user.start_time)).seconds // 60 > 0:
                 time_left = str((td - (now() - laborem_working_user.start_time)).seconds // 60) + ' min ' \
