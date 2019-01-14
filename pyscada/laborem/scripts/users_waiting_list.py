@@ -53,8 +53,8 @@ def script(self):
             logger.debug("users with check > %s sec : %s" % (time_before_remove_group,
                          LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).
                          exclude(laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None)))
-            for u in LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).exclude(
-                    laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
+            for u in LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).\
+                    exclude(laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
                 logger.debug("user %s - timedelta %s" % (u.user, now() - u.last_check))
         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).\
             exclude(laborem_group_input__hmi_group__name="teacher").\

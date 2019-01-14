@@ -95,7 +95,7 @@ function query_previous_and_next_btn() {
         $(".btn-previous").attr("href", '#expe_choice');
         $(".btn-previous").show();
         $(".btn-next").hide();
-    }else if (actual_hash === "viewer" || actual_hash === "waiting") {
+    }else if (actual_hash === "viewer" || actual_hash === "waiting" || actual_hash === "disconnect") {
         $(".btn-previous").hide();
         $(".btn-next").hide();
     }
@@ -231,6 +231,12 @@ function reset_page(page_name) {
     }else if (page_name === "waiting") {
         $('#ViewerModal').modal('hide');
         $(".camera").hide()
+    }else if (page_name === "disconnect") {
+        $('#ViewerModal').modal('hide');
+        $(".camera").hide()
+        $(".user_stop_btn").hide()
+        $(".dropdown-WaitingList").hide()
+        $(".summary.side-menu").hide()
     }
 };
 
@@ -425,6 +431,8 @@ function remove_id() {
             data: {connection_id:CONNECTION_ID},
             success: function (data) {
                 window.location.href = "#loading";
+                check_time();
+                check_users();
             },
             error: function(data) {
                 console.log('remove_id failed');
@@ -451,7 +459,8 @@ function check_time() {
             }else {
                 $('#ViewerModal').modal('hide');
                 window.location.href = "#disconnect";
-                setTimeout(function() {check_time()}, data['setTimeout']);
+                REFRESH_RATE = 30000;
+                //setTimeout(function() {check_time()}, data['setTimeout']);
             }
         },
         error: function(data) {
@@ -482,13 +491,13 @@ function check_users() {
                     if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6) {
                         data['setTimeout'] = 10000;
                         REFRESH_RATE = 10000;
-                        if (window.location.hash.substr(1) != "viewer" || window.location.hash.substr(1) == "loading") {
+                        if (window.location.hash.substr(1) != "viewer" && window.location.hash.substr(1) != "disconnect") {
                             window.location.href = "#viewer";
                         }
                     }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > 5) {
                         data['setTimeout'] = 30000;
                         REFRESH_RATE = 30000;
-                        if (window.location.hash.substr(1) != "waiting" || window.location.hash.substr(1) == "loading") {
+                        if (window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "disconnect") {
                             window.location.href = "#waiting";
                         }
                     }
@@ -571,7 +580,11 @@ function check_users() {
             if ($('.list-dut-item.active .badge.level').length) {
                 $(".plug_details.plug_level").html($('.list-dut-item.active .badge.level')[0].innerHTML)
             }
-            setTimeout(function() {check_users()}, data['setTimeout']);
+            if (window.location.hash.substr(1) != "disconnect") {
+                setTimeout(function() {check_users()}, data['setTimeout']));
+            }else {
+                REFRESH_RATE = 30000;
+            }
         },
         error: function(data) {
             console.log('check user failed');
