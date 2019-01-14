@@ -73,7 +73,7 @@ class GroupDisplayPermissionAdmin(admin.ModelAdmin):
 
 
 class LaboremUserAdmin(admin.ModelAdmin):
-    list_display = ('user', 'laborem_group_input', 'connection_time', 'start_time', 'last_check')
+    list_display = ('user', 'laborem_group_input', 'connection_time', 'start_time', 'last_check', 'connection_id')
 
 
 admin_site.register(ExtendedLaboremMotherboardDevice, LaboremMotherboardDeviceAdmin)

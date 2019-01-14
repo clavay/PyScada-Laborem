@@ -35,27 +35,30 @@ def script(self):
     write your code loop code here, don't change the name of this function
     :return:
     """
+    time_before_remove_group = 12
     # check if the 3 groups exist
     if LaboremGroupInputPermission.objects.filter(hmi_group__name="viewer").count() and \
             LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").count() and \
             LaboremGroupInputPermission.objects.filter(hmi_group__name="teacher").count():
         # do not touch the teachers
-        # move the without group in viewer if check < 12 sec
-        LaboremUser.objects.filter(laborem_group_input=None, last_check__gte=now() - timedelta(seconds=12)).\
+        # move the without group in viewer if check < time_before_remove_group sec
+        LaboremUser.objects.filter(laborem_group_input=None,
+                                   last_check__gte=now() - timedelta(seconds=time_before_remove_group)).\
             exclude(laborem_group_input__hmi_group__name="teacher").\
             update(laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"),
                    connection_time=now())
-        # remove group from users with check > 12 sec
-        if LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).exclude(
+        # remove group from users with check > time_before_remove_group sec
+        if LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).exclude(
                 laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
-            logger.debug("users with check > 12 sec : %s" %
-                         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).
-                         exclude(laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None))
-            for u in LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).exclude(
+            logger.debug("users with check > %s sec : %s" % (time_before_remove_group,
+                         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).
+                         exclude(laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None)))
+            for u in LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).exclude(
                     laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
                 logger.debug("user %s - timedelta %s" % (u.user, now() - u.last_check))
-        LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=12)).\
-            exclude(laborem_group_input__hmi_group__name="teacher").update(laborem_group_input=None, start_time=None)
+        LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).\
+            exclude(laborem_group_input__hmi_group__name="teacher").\
+            update(laborem_group_input=None, start_time=None, connection_id=None)
         # move worker to viewer if start > 5 min and viewer list count > 0
         # if no viewer, actualize the start time each time
         if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").count() > 0:

@@ -23,4 +23,5 @@ urlpatterns = [
     url(r'^form/move_robot/$', views.move_robot),
     url(r'^form/check_users/$', views.check_users),
     url(r'^form/check_time/$', views.check_time),
+    url(r'^form/remove_id/$', views.remove_id),
 ]

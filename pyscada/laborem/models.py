@@ -316,6 +316,7 @@ class LaboremUser(models.Model):
     connection_time = models.DateTimeField(default=datetime.now, blank=True)
     start_time = models.DateTimeField(null=True, blank=True)
     last_check = models.DateTimeField(null=True, blank=True)
+    connection_id = models.CharField(null=True, blank=True, max_length=255)
 
     def __str__(self):
         return self.user.username

@@ -27,6 +27,7 @@ from django.contrib.auth.models import User, Group
 from django.utils.timezone import now, timedelta
 from django.utils.dateformat import format
 
+from uuid import uuid4
 import time
 import json
 import numpy as np
@@ -619,14 +620,59 @@ def move_robot(request):
     return HttpResponse(status=200)
 
 
+def remove_id(request):
+    u = user_check(request)
+    if u:
+        return u
+    if 'connection_id' in request.POST:
+        LaboremUser.objects.update_or_create(user=request.user,
+                                             defaults={'connection_id': request.POST['connection_id']})
+    else:
+        LaboremUser.objects.update_or_create(user=request.user, defaults={'connection_id': None})
+    return HttpResponse(status=200)
+
+
 def check_time(request):
     u = user_check(request)
     if u:
         return u
 
+    time_before_remove_id = 5
     data = dict()
     data['setTimeout'] = 1000
-    LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
+    u = LaboremUser.objects.get(user=request.user)
+    uid = uuid4().hex
+    if 'connection_id' in request.POST and request.POST['connection_id'] != "":
+        if u.connection_id == request.POST['connection_id']:
+            LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
+            data['connection_accepted'] = "1"
+        elif str(u.connection_id) == "" or u.connection_id is None:
+            LaboremUser.objects.update_or_create(user=request.user,
+                                                 defaults={'last_check': now,
+                                                           'connection_id': request.POST['connection_id']})
+            data['connection_accepted'] = "1"
+            data['connection_id'] = request.POST['connection_id']
+        else:
+            LaboremUser.objects.filter(user=request.user,
+                                       last_check__lte=now() - timedelta(seconds=time_before_remove_id)). \
+                exclude(laborem_group_input__hmi_group__name="teacher"). \
+                update(last_check=now(), connection_id=str(request.POST['connection_id']))
+            # LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
+            data['connection_accepted'] = "0"
+    else:
+        if str(u.connection_id) == "" or u.connection_id is None:
+            LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now,
+                                                                              'connection_id': uid})
+            data['connection_accepted'] = "1"
+            data['connection_id'] = uid
+        else:
+            LaboremUser.objects.filter(user=request.user,
+                                       last_check__lte=now() - timedelta(seconds=time_before_remove_id)). \
+                exclude(laborem_group_input__hmi_group__name="teacher"). \
+                update(last_check=now(), connection_id=uid)
+            # LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
+            data['connection_accepted'] = "0"
+            data['connection_id'] = uid
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
@@ -641,6 +687,7 @@ def check_users(request):
         return HttpResponse(status=404)
     data = dict()
 
+    # Laborem group
     if request.user.groups.all().first() == Group.objects.get(name="viewer"):
         data['user_type'] = "viewer"
     elif request.user.groups.all().first() == Group.objects.get(name="worker"):
@@ -649,6 +696,8 @@ def check_users(request):
         data['user_type'] = "teacher"
     elif request.user.groups.all().first() is None:
         data['user_type'] = "none"
+
+    # Define timeline on user click or user connect
     try:
         data['timeline_start'] = (int(format(VariableProperty.objects.get_property(Variable.objects.get(
             name="LABOREM"), "viewer_start_timeline").timestamp, 'U')) - 1)*1000
@@ -659,11 +708,14 @@ def check_users(request):
             name="LABOREM"), "viewer_stop_timeline").timestamp, 'U')) + 1)*1000
     except (Variable.DoesNotExist, AttributeError):
         data['timeline_stop'] = ''
+
+    # Send message for robot, experience or laborem state
     try:
         data['message_laborem'] = VariableProperty.objects.get_property(Variable.objects.get(
             name="LABOREM"), "message_laborem").value_string
     except (Variable.DoesNotExist, AttributeError):
         data['message_laborem'] = ''
+    # Change the % of the progress bar for the MessageModal
     try:
         progress_bar_now = VariableProperty.objects.get_property(Variable.objects.get(
             name="LABOREM"), "progress_bar_now").value_int16
@@ -679,7 +731,7 @@ def check_users(request):
     except (Variable.DoesNotExist, AttributeError):
         data['progress_bar'] = ''
 
-    LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
+    # LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
     laborem_waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
         order_by('connection_time')
     laborem_working_user = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").first()

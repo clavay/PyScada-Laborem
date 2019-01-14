@@ -1,12 +1,13 @@
 /* Javascript library for the PyScada-Laborem web client based on jquery,
 
-version 0.7.2
+version 0.7.3
 
 Copyright (c) 2018 Camille Lavayssière
 Licensed under the GPL.
 
 */
-
+var version = "0.7.3"
+var CONNECTION_ID = ""
 
 function reload_top10_ranking() {
     $.ajax({
@@ -416,13 +417,42 @@ function change_base_selected_element(base_id, element_id) {
     };
 };
 
+function remove_id() {
+    if (CONNECTION_ID != "") {
+        $.ajax({
+            type: 'post',
+            url: ROOT_URL+'form/remove_id/',
+            data: {connection_id:CONNECTION_ID},
+            success: function (data) {
+                window.location.href = "#loading";
+            },
+            error: function(data) {
+                console.log('remove_id failed');
+            }
+        })
+    }else {
+        check_time();
+        remove_id();
+    }
+}
+
 function check_time() {
     $.ajax({
         type: 'post',
         url: ROOT_URL+'form/check_time/',
-        data: {},
+        data: {connection_id:CONNECTION_ID},
         success: function (data) {
-            setTimeout(function() {check_time()}, data['setTimeout']);
+            if (typeof data['connection_id'] != 'undefined') {CONNECTION_ID = data['connection_id']};
+            if (data['connection_accepted'] == "1") {
+                if (window.location.hash.substr(1) == "disconnect") {
+                    window.location.href = "#loading";
+                }
+                setTimeout(function() {check_time()}, data['setTimeout']);
+            }else {
+                $('#ViewerModal').modal('hide');
+                window.location.href = "#disconnect";
+                setTimeout(function() {check_time()}, data['setTimeout']);
+            }
         },
         error: function(data) {
             console.log('check time failed');
@@ -583,6 +613,11 @@ $( document ).ready(function() {
         // Check if we are on a page that need to show the TOP10QAs
         refresh_top10_qa();
     });
+
+    // Remove id
+    $('.remove_id_btn').on('click', function() {
+        remove_id();
+    })
 
     // Stop experience on stop user btn click
     $('.user_stop_btn').on('click', function() {
