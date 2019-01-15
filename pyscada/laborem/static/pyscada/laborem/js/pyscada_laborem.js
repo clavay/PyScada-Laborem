@@ -504,23 +504,23 @@ function check_users() {
             waiting_users_tbody = ""
             waiting_users_count = 0
             for (var key in WAITING_USERS_DATA) {
-                waiting_users_count = key
-                waiting_users_tbody = '<tr class="waitingusers-item"><td>'
+                waiting_users_count = Math.max(key, waiting_users_count)
+                waiting_users_tbody += '<tr class="waitingusers-item"><td>'
                 waiting_users_tbody += WAITING_USERS_DATA[key]['username']
                 waiting_users_tbody += '</td><td style="text-align: center">'
-                if (data['request_user'] = WAITING_USERS_DATA[key]['username']) {
+                if (data['request_user'] === WAITING_USERS_DATA[key]['username']) {
                     title_time = "";
                     data['viewer_rank'] = key;
                 }
                 if (WAITING_USERS_DATA[key]['min'] > 0) {
-                    if (data['request_user'] = WAITING_USERS_DATA[key]['username']) {
+                    if (data['request_user'] === WAITING_USERS_DATA[key]['username']) {
                         title_time += WAITING_USERS_DATA[key]['min'];
                         title_time += ' min '
                     }
                     waiting_users_tbody += WAITING_USERS_DATA[key]['min']
                     waiting_users_tbody += ' min '
                 }
-                if (data['request_user'] = WAITING_USERS_DATA[key]['username']) {
+                if (data['request_user'] === WAITING_USERS_DATA[key]['username']) {
                     title_time += WAITING_USERS_DATA[key]['sec'];
                     title_time += ' sec'
                 }
@@ -536,16 +536,16 @@ function check_users() {
                 active_user_tbody += data['active_user']['name']
                 active_user_tbody += '</td><td style="text-align: center">'
                 if (waiting_users_count > 0) {
-                    if (data['request_user'] = data['active_user']['name']) {title_time = "";}
+                    if (data['request_user'] === data['active_user']['name']) {title_time = "";}
                     if (data['active_user']['min'] > 0) {
-                        if (data['request_user'] = data['active_user']['name']) {
+                        if (data['request_user'] === data['active_user']['name']) {
                             title_time += data['active_user']['min'];
                             title_time += ' min '
                         }
                         active_user_tbody += data['active_user']['min']
                         active_user_tbody += ' min '
                     }
-                    if (data['request_user'] = data['active_user']['name']) {
+                    if (data['request_user'] === data['active_user']['name']) {
                         title_time += data['active_user']['sec'];
                         title_time += ' sec'
                     }
@@ -568,13 +568,21 @@ function check_users() {
                         data['setTimeout'] = 10000;
                         REFRESH_RATE = 10000;
                         if (window.location.hash.substr(1) != "viewer" && window.location.hash.substr(1) != "disconnect") {
-                            window.location.href = "#viewer";
+                            if (CONNECTION_ACCEPTED == 1) {
+                                window.location.href = "#viewer";
+                            }else if (CONNECTION_ACCEPTED == -1) {
+                                window.location.href = "#disconnect";
+                            }
                         }
                     }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > 5) {
                         data['setTimeout'] = 30000;
                         REFRESH_RATE = 30000;
                         if (window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "disconnect") {
-                            window.location.href = "#waiting";
+                            if (CONNECTION_ACCEPTED == 1) {
+                                window.location.href = "#waiting";
+                            }else if (CONNECTION_ACCEPTED == -1) {
+                                window.location.href = "#disconnect";
+                            }
                         }
                     }
                 }else if (data['user_type'] == "worker") {
@@ -585,7 +593,11 @@ function check_users() {
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
                     if (window.location.hash.substr(1) == "viewer" || window.location.hash.substr(1) == "waiting" || window.location.hash.substr(1) == "loading") {
-                        window.location.href = "#start";
+                        if (CONNECTION_ACCEPTED == 1) {
+                            window.location.href = "#start";
+                        }else if (CONNECTION_ACCEPTED == -1) {
+                            window.location.href = "#disconnect";
+                        }
                     }
                 }else if (data['user_type'] == "teacher") {
                     data['setTimeout'] = 1000;

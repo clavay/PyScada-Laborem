@@ -738,6 +738,7 @@ def check_users(request):
 
     # Send viewer list
     # LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
+    data['request_user'] = str(request.user)
     td = timedelta(minutes=5)
     waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
         order_by('connection_time')
@@ -747,15 +748,15 @@ def check_users(request):
         data['active_user']['name'] = str(working_user.user.username)
         data['active_user']['min'] = str((td - (now() - working_user.start_time)).seconds // 60)
         data['active_user']['sec'] = str((td - (now() - working_user.start_time)).seconds % 60)
-    data['request_user'] = str(request.user)
-    wu = 1
-    data['waiting_users'] = {}
-    # data['waiting_users'][0] = waiting_users_list.count()
-    for waiting_user in waiting_users_list:
-        data['waiting_users'][wu] = {}
-        data['waiting_users'][wu]['username'] = str(waiting_user.user.username)
-        data['waiting_users'][wu]['min'] = str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds // 60)
-        data['waiting_users'][wu]['sec'] = str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds % 60)
+        wu = 1
+        data['waiting_users'] = {}
+        # data['waiting_users'][0] = waiting_users_list.count()
+        for waiting_user in waiting_users_list:
+            data['waiting_users'][wu] = {}
+            data['waiting_users'][wu]['username'] = str(waiting_user.user.username)
+            data['waiting_users'][wu]['min'] = str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds // 60)
+            data['waiting_users'][wu]['sec'] = str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds % 60)
+            wu += 1
     try:
         selected_plug = LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id))
         data['plug'] = {}
