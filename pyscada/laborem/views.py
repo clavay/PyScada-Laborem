@@ -603,7 +603,7 @@ def move_robot(request):
                         cwt.save()
                         return HttpResponse(json.dumps(data), content_type='application/json')
                     if move == 'drop':
-                        vp = VariableProperty.objects.get_property(variable=variable, name="LABOREM")
+                        vp = VariableProperty.objects.get_property(variable=variable, name="ROBOT_TAKE_OFF")
                         if vp is None:
                             return HttpResponse(status=200)
                         key = vp.id
@@ -651,7 +651,7 @@ def check_time(request):
                                                  defaults={'last_check': now,
                                                            'connection_id': request.POST['connection_id']})
             data['connection_accepted'] = "1"
-            data['connection_id'] = request.POST['connection_id']
+            # data['connection_id'] = request.POST['connection_id']
         else:
             LaboremUser.objects.filter(user=request.user,
                                        last_check__lte=now() - timedelta(seconds=time_before_remove_id)). \
@@ -688,6 +688,9 @@ def check_users(request):
     data = dict()
 
     # Laborem group
+    data['user_type'] = str(request.user.groups.all().first()) if request.user.groups.all().first() is not None else "none"
+
+    '''
     if request.user.groups.all().first() == Group.objects.get(name="viewer"):
         data['user_type'] = "viewer"
     elif request.user.groups.all().first() == Group.objects.get(name="worker"):
@@ -696,6 +699,7 @@ def check_users(request):
         data['user_type'] = "teacher"
     elif request.user.groups.all().first() is None:
         data['user_type'] = "none"
+    '''
 
     # Define timeline on user click or user connect
     try:
@@ -715,6 +719,7 @@ def check_users(request):
             name="LABOREM"), "message_laborem").value_string
     except (Variable.DoesNotExist, AttributeError):
         data['message_laborem'] = ''
+
     # Change the % of the progress bar for the MessageModal
     try:
         progress_bar_now = VariableProperty.objects.get_property(Variable.objects.get(
@@ -731,10 +736,51 @@ def check_users(request):
     except (Variable.DoesNotExist, AttributeError):
         data['progress_bar'] = ''
 
+    # Send viewer list
     # LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
-    laborem_waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
+    td = timedelta(minutes=5)
+    waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
         order_by('connection_time')
-    laborem_working_user = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").first()
+    working_user = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").first()
+    if working_user is not None:
+        data['active_user'] = {}
+        data['active_user']['name'] = str(working_user.user.username)
+        data['active_user']['min'] = str((td - (now() - working_user.start_time)).seconds // 60)
+        data['active_user']['sec'] = str((td - (now() - working_user.start_time)).seconds % 60)
+    data['request_user'] = str(request.user)
+    wu = 1
+    data['waiting_users'] = {}
+    # data['waiting_users'][0] = waiting_users_list.count()
+    for waiting_user in waiting_users_list:
+        data['waiting_users'][wu] = {}
+        data['waiting_users'][wu]['username'] = str(waiting_user.user.username)
+        data['waiting_users'][wu]['min'] = str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds // 60)
+        data['waiting_users'][wu]['sec'] = str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds % 60)
+    try:
+        selected_plug = LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id))
+        data['plug'] = {}
+        if selected_plug is not None:
+            data['plug']['name'] = selected_plug.name
+            data['plug']['description'] = selected_plug.description
+            if selected_plug.robot:
+                data['plug']['robot'] = "true"
+                data['plug']['base'] = {}
+                for base in LaboremRobotBase.objects.all():
+                    if base.element is not None:
+                        data['plug']['base'][base.__str__()] = base.element.__str__()
+            else:
+                data['plug']['robot'] = "false"
+    except (LaboremMotherboardDevice.DoesNotExist, AttributeError):
+        pass
+    try:
+        experience = VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),
+                                                           "EXPERIENCE").value_string.capitalize()
+        if experience != "":
+            data['experience'] = experience
+    except (Variable.DoesNotExist, AttributeError):
+        pass
+
+    '''
     if laborem_working_user is not None:
         current_user = LaboremUser.objects.filter(user=request.user).first()
         data['titletime'] = "illimité"
@@ -777,7 +823,6 @@ def check_users(request):
                     data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
         data['activeuser'] = '<tr class="waitingusers-item"><td>' + str(laborem_working_user.user.username) + \
                              '</td><td style="text-align: center">' + time_left + '</td></tr>'
-
         data['summary'] = ''
         data['summary'] += '<h3>Résumé</h3>'
         data['summary'] += '<li>En train de manipuler : ' + str(laborem_working_user) + '</li>'
@@ -811,4 +856,6 @@ def check_users(request):
                 pass
         except (LaboremMotherboardDevice.DoesNotExist, AttributeError):
             pass
+    '''
+
     return HttpResponse(json.dumps(data), content_type='application/json')

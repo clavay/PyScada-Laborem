@@ -51,8 +51,9 @@ def script(self):
         if LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).exclude(
                 laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
             logger.debug("users with check > %s sec : %s" % (time_before_remove_group,
-                         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).
-                         exclude(laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None)))
+                         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group))
+                                                             .exclude(laborem_group_input__hmi_group__name="teacher").
+                                                             exclude(laborem_group_input=None)))
             for u in LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).\
                     exclude(laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
                 logger.debug("user %s - timedelta %s" % (u.user, now() - u.last_check))
@@ -79,12 +80,7 @@ def script(self):
                         lu.start_time += timedelta(seconds=20)
                 lu.save()
                 logger.debug("New worker : %s" % lu.user)
-                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                             timestamp=datetime.utcnow())
-                self.write_variable_property("LABOREM", "USER_STOP", 1, value_class="BOOLEAN")
-                self.write_variable_property("LABOREM", "ROBOT_TAKE_OFF", 1, value_class="BOOLEAN")
-                reset_all_vp_of_a_var(self, "BODE_RUN")
-                reset_all_vp_of_a_var(self, "SPECTRE_RUN")
+                reset_laborem_on_user_or_session_change(self)
 
         # update the user group to the group selected in LaboremUser
         for U in User.objects.all():
@@ -99,6 +95,15 @@ def script(self):
                 pass
     else:
         logger.error("Please create the 3 groups for the user list")
+
+
+def reset_laborem_on_user_or_session_change(self):
+    self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                 timestamp=datetime.utcnow())
+    self.write_variable_property("LABOREM", "USER_STOP", 1, value_class="BOOLEAN")
+    self.write_variable_property("LABOREM", "ROBOT_TAKE_OFF", 1, value_class="BOOLEAN")
+    reset_all_vp_of_a_var(self, "BODE_RUN")
+    reset_all_vp_of_a_var(self, "SPECTRE_RUN")
 
 
 def reset_all_vp_of_a_var(self, variable_name):

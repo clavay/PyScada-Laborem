@@ -103,6 +103,8 @@ class LaboremMotherboardDevice(WidgetContentModel):
             return self.plug15
         elif self.plug == '16':
             return self.plug16
+        elif self.plug == '0':
+            return None
 
     def gen_html(self, **kwargs):
         """

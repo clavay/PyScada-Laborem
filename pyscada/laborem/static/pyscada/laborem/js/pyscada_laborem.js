@@ -8,6 +8,9 @@ Licensed under the GPL.
 */
 var version = "0.7.3"
 var CONNECTION_ID = ""
+var USER_TYPE = ""
+var CONNECTION_ACCEPTED = 0
+var WAITING_USERS_DATA = {}
 
 function reload_top10_ranking() {
     $.ajax({
@@ -95,13 +98,17 @@ function query_previous_and_next_btn() {
         $(".btn-previous").attr("href", '#expe_choice');
         $(".btn-previous").show();
         $(".btn-next").hide();
-    }else if (actual_hash === "viewer" || actual_hash === "waiting" || actual_hash === "disconnect") {
+    }else if (actual_hash === "viewer" || actual_hash === "waiting" || actual_hash === "disconnect" || actual_hash === "loading") {
         $(".btn-previous").hide();
         $(".btn-next").hide();
     }
 };
 
 function redirect_to_page(page_name) {
+    if (CONNECTION_ACCEPTED == -1) {
+        window.location.href = "#disconnect";
+        return 1;
+    }
     if (page_name === "preconf") {
         if ($('.list-dut-item.active .badge.robot').length || !$('.list-dut-item.active').length) { window.location.href = "#plugs";}
     }else if (page_name === "robot") {
@@ -109,47 +116,47 @@ function redirect_to_page(page_name) {
     }else if (page_name === "expe_choice") {
         if (!$('.list-dut-item.active').length) {
             window.location.href = "#plugs";
-            return 1
+            return 1;
         }else {
             if ($('.list-dut-item.active .badge.robot').length) {
                 // Finding if all robot bases are selected
                 base_empty = 'no'
-                $('.ui-dropdown-robot-bnt').each(function() {
+                $('.sub-page#robot .ui-dropdown-robot-bnt').each(function() {
                     if ($(this)[0].innerHTML === "------- ") {
                         base_empty = 'yes'
                     }
                 })
                 if (base_empty === 'yes') {
                     window.location.href = "#robot";
-                    return 1
+                    return 1;
                 }
             }
         }
     }else if (page_name === "bode" || page_name === "spectrum") {
         if (!$('.list-dut-item.active').length) {
             window.location.href = "#plugs";
-            return 1
+            return 1;
         }else {
             if ($('.list-dut-item.active .badge.robot').length) {
                 // Finding if all robot bases are selected
                 base_empty = 'no'
-                $('.ui-dropdown-robot-bnt').each(function() {
+                $('.sub-page#robot .ui-dropdown-robot-bnt').each(function() {
                     if ($(this)[0].innerHTML === "------- ") {
                         base_empty = 'yes'
                     }
                 })
                 if (base_empty === 'yes') {
                     window.location.href = "#robot";
-                    return 1
+                    return 1;
                 }else {
                     // finding if an expe is selected
                     if (typeof $('.expe_list_item.active').attr('name') == 'undefined') {
                         window.location.href = "#expe_choice";
-                        return 1
+                        return 1;
                     }else {
                         if (page_name !== $('.expe_list_item.active').attr('name')) {
                             window.location.href = "#" + $('.expe_list_item.active').attr('name');
-                            return 1
+                            return 1;
                         }
                     }
                 }
@@ -157,21 +164,26 @@ function redirect_to_page(page_name) {
                 // finding if an expe is selected
                 if (typeof $('.expe_list_item.active').attr('name') == 'undefined') {
                     window.location.href = "#expe_choice";
-                    return 1
+                    return 1;
                 }else {
                     if (page_name !== $('.expe_list_item.active').attr('name')) {
                         window.location.href = "#" + $('.expe_list_item.active').attr('name');
-                        return 1
+                        return 1;
                     }
                 }
             }
         }
-    }
+    }else if (page_name === "start" || page_name === "plugs") {
+        return;
+    }else { return;}
 }
 
 function reset_page(page_name) {
+    if (redirect_to_page(page_name)) { return;};
     if (page_name === "start") {
         $(".camera").show()
+        $(".dropdown-WaitingList").show()
+        $(".summary.side-menu").show()
         $(".user_stop_btn").hide()
         $('#ViewerModal').modal('hide');
         reset_robot_bases();
@@ -185,21 +197,18 @@ function reset_page(page_name) {
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "preconf") {
-        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").hide()
         change_plug_selected_motherboard();
         reset_robot_bases();
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "robot") {
-        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").hide()
         change_plug_selected_motherboard();
         reset_robot_bases();
         reset_selected_expe();
         $("#tooltip").hide();
     }else if (page_name === "expe_choice") {
-        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").hide()
         change_bases();
         change_plug_selected_motherboard();
@@ -208,7 +217,6 @@ function reset_page(page_name) {
         move_robot("put");
         $("#tooltip").hide();
     }else if (page_name === "bode") {
-        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").show()
         $(".user_stop_btn").removeClass("disabled")
         $(".user_stop_btn").html("Arrêter")
@@ -216,7 +224,6 @@ function reset_page(page_name) {
         change_bases();
         move_robot("put");
     }else if (page_name === "spectrum") {
-        if (redirect_to_page(page_name)) { return;};
         $(".user_stop_btn").show()
         $(".user_stop_btn").removeClass("disabled")
         $(".user_stop_btn").html("Arrêter")
@@ -224,14 +231,18 @@ function reset_page(page_name) {
         change_bases();
         move_robot("put");
     }else if (page_name === "viewer") {
+        $(".dropdown-WaitingList").show()
+        $(".summary.side-menu").show()
         $(".camera").show()
         $(".user_stop_btn").hide()
         update_plots(false);
         $('#ViewerModal').modal('show');
     }else if (page_name === "waiting") {
+        $(".dropdown-WaitingList").show()
+        $(".summary.side-menu").hide()
         $('#ViewerModal').modal('hide');
         $(".camera").hide()
-    }else if (page_name === "disconnect") {
+    }else if (page_name === "disconnect" || page_name === "loading" ) {
         $('#ViewerModal').modal('hide');
         $(".camera").hide()
         $(".user_stop_btn").hide()
@@ -452,11 +463,13 @@ function check_time() {
         success: function (data) {
             if (typeof data['connection_id'] != 'undefined') {CONNECTION_ID = data['connection_id']};
             if (data['connection_accepted'] == "1") {
+                CONNECTION_ACCEPTED = 1;
                 if (window.location.hash.substr(1) == "disconnect") {
                     window.location.href = "#loading";
                 }
                 setTimeout(function() {check_time()}, data['setTimeout']);
             }else {
+                CONNECTION_ACCEPTED = -1;
                 $('#ViewerModal').modal('hide');
                 window.location.href = "#disconnect";
                 REFRESH_RATE = 30000;
@@ -478,14 +491,77 @@ function check_users() {
         success: function (data) {
             data['setTimeout'] = 1000;
             //REFRESH_RATE = 2500;
+
+            // Waiting user part : tbody and title_time
             $(".waitingusers-item").remove();
-            $(".table-waitingusers tbody").append(data['waitingusers']);
+            if (typeof(data['waiting_users'])==="object"){
+                WAITING_USERS_DATA = data['waiting_users'];
+                delete data['waiting_users'];
+            }else{
+                WAITING_USERS_DATA = {}
+            }
+            title_time = "illimité"
+            waiting_users_tbody = ""
+            waiting_users_count = 0
+            for (var key in WAITING_USERS_DATA) {
+                waiting_users_count = key
+                waiting_users_tbody = '<tr class="waitingusers-item"><td>'
+                waiting_users_tbody += WAITING_USERS_DATA[key]['username']
+                waiting_users_tbody += '</td><td style="text-align: center">'
+                if (data['request_user'] = WAITING_USERS_DATA[key]['username']) {
+                    title_time = "";
+                    data['viewer_rank'] = key;
+                }
+                if (WAITING_USERS_DATA[key]['min'] > 0) {
+                    if (data['request_user'] = WAITING_USERS_DATA[key]['username']) {
+                        title_time += WAITING_USERS_DATA[key]['min'];
+                        title_time += ' min '
+                    }
+                    waiting_users_tbody += WAITING_USERS_DATA[key]['min']
+                    waiting_users_tbody += ' min '
+                }
+                if (data['request_user'] = WAITING_USERS_DATA[key]['username']) {
+                    title_time += WAITING_USERS_DATA[key]['sec'];
+                    title_time += ' sec'
+                }
+                waiting_users_tbody += WAITING_USERS_DATA[key]['sec']
+                waiting_users_tbody += ' sec</td></tr>'
+            }
+            $(".table-waitingusers tbody").append(waiting_users_tbody);
+
+            // Working user part : tbody and title_time
             $(".activeuser-item").remove();
-            $(".table-activeuser tbody").append(data['activeuser']);
+            if (typeof data['active_user'] != 'undefined') {
+                active_user_tbody = '<tr class="waitingusers-item"><td>'
+                active_user_tbody += data['active_user']['name']
+                active_user_tbody += '</td><td style="text-align: center">'
+                if (waiting_users_count > 0) {
+                    if (data['request_user'] = data['active_user']['name']) {title_time = "";}
+                    if (data['active_user']['min'] > 0) {
+                        if (data['request_user'] = data['active_user']['name']) {
+                            title_time += data['active_user']['min'];
+                            title_time += ' min '
+                        }
+                        active_user_tbody += data['active_user']['min']
+                        active_user_tbody += ' min '
+                    }
+                    if (data['request_user'] = data['active_user']['name']) {
+                        title_time += data['active_user']['sec'];
+                        title_time += ' sec'
+                    }
+                    active_user_tbody += data['active_user']['sec']
+                    active_user_tbody += ' sec</td></tr>'
+                }else {
+                    active_user_tbody += title_time
+                }
+                $(".table-activeuser tbody").append(active_user_tbody);
+            }
+
+            // Update wainting list drop down
             if (typeof data['user_type'] != 'undefined') {
                 if (data['user_type'] == "viewer") {
                     $(".dropdown-WaitingList-toggle")[0].innerHTML = " Temps d'attente : ";
-                    $(".dropdown-WaitingList-toggle").append(data['titletime']);
+                    $(".dropdown-WaitingList-toggle").append(title_time);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
                     if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6) {
@@ -505,7 +581,7 @@ function check_users() {
                     data['setTimeout'] = 1000;
                     REFRESH_RATE = 1000;
                     $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Actif pour : ';
-                    $(".dropdown-WaitingList-toggle").append(data['titletime']);
+                    $(".dropdown-WaitingList-toggle").append(title_time);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
                     if (window.location.hash.substr(1) == "viewer" || window.location.hash.substr(1) == "waiting" || window.location.hash.substr(1) == "loading") {
@@ -522,6 +598,8 @@ function check_users() {
                     REFRESH_RATE = 1000;
                 }
             }
+
+            // Timeline part
             if (data['timeline_start'] != DATA_FROM_TIMESTAMP && data['timeline_start'] != '' && typeof data['timeline_start'] != 'undefined') {
                 //DATA={}
                 //DATA_FROM_TIMESTAMP = data['timeline_start'];
@@ -542,6 +620,8 @@ function check_users() {
                 DATA_DISPLAY_TO_TIMESTAMP = SERVER_TIME;
                 DATA_DISPLAY_WINDOW = DATA_DISPLAY_TO_TIMESTAMP-DATA_DISPLAY_FROM_TIMESTAMP;
             }
+
+            //Message Modal part
             if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '' && window.location.hash.substr(1) != "waiting") {
                 $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
                 $('#MessageModal').modal('show');
@@ -551,6 +631,8 @@ function check_users() {
                 $(".user_stop_btn").html("Arrêter")
                 $(".message-laborem h2")[0].innerHTML = '';
             }
+
+            // Progress bar part
             if (typeof data['progress_bar'] != 'undefined' && data['progress_bar'] != '') {
                 $($(".progress-bar")[0]).css('width', data['progress_bar'] + '%');
                 $(".progress-bar")[0].innerHTML = data['progress_bar'] + '%';
@@ -561,9 +643,40 @@ function check_users() {
                 $($(".progress-bar")[0]).removeClass("progress-bar-striped active");
                 $(".progress-bar")[0].className += " progress-bar-striped active";
             }
-            if (typeof data['summary'] != 'undefined' && data['summary'] != '') {
-                $(".summary ul").html(data['summary']);
-                $(".summary-modal ul").html(data['summary']);
+
+            // Summary part
+            summary = '<h3>Résumé</h3>'
+            if (typeof data['active_user'] != 'undefined' && typeof data['active_user']['name'] != 'undefined' && data['active_user']['name'] != '') {
+                summary += '<li>En train de manipuler : ' + data['active_user']['name'] + '</li>'
+            }
+            if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] != '') {
+                summary += "<li>File d'attente :<ul><li>Rang : " + data['viewer_rank'] + "</li>"
+            }
+            if (typeof title_time != 'undefined' && title_time != '' && data['user_type'] == 'viewer') {
+                summary += "<li>Temps d'attente : " + title_time + '</li></ul></li>'
+            }
+            if (typeof data['plug']!= 'undefined' && data['plug']!= '') {
+                if (typeof data['plug']['name'] != 'undefined' && data['plug']['name'] != '') {
+                    summary += "<li>Montage en cours : <ul><li>" + data['plug']['name'] + "</li>"
+                }
+                if (typeof data['plug']['robot'] != 'undefined' && data['plug']['robot'] != '') {
+                    if (data['plug']['robot'] == 'true') {
+                        summary += "<li>Modifiable via le robot</li>"
+                        for (var base in data['plug']['base']) {
+                            summary += "<li>" + base + " : " + data['plug']['base'][base] + "</li>"
+                        }
+                    summary += "</ul>"
+                    }else {
+                        summary += "<li>Précablé</li></ul>"
+                    }
+                }
+            }
+            if (typeof data['experience'] != 'undefined' && data['experience'] != '') {
+                summary += "<li>Expérience en cours : " + data['experience'] + "</li>"
+            }
+            if (typeof summary != 'undefined' && summary != '') {
+                $(".summary ul").html(summary);
+                $(".summary-modal ul").html(summary);
                 $(".modal-footer").removeClass("hidden");
                 $(".summary").removeClass("hidden");
             }else {
@@ -572,17 +685,21 @@ function check_users() {
             }
             $($(".camera")[0]).removeClass("hidden");
 
-            if (typeof data['plug_name'] != 'undefined' && data['plug_name'] != '' && typeof data['plug_description'] != 'undefined' && data['plug_description'] != '') {
-                //Change text for plug details :
-                $(".plug_details.plug_name").html(data['plug_name'])
-                $(".plug_details.plug_description").html(data['plug_description'])
+            //Change text for plug details :
+            if (typeof data['plug']['name'] != 'undefined' && data['plug']['name'] != '' && typeof data['plug']['description'] != 'undefined' && data['plug']['description'] != '') {
+                $(".plug_details.plug_name").html(data['plug']['name'])
+                $(".plug_details.plug_description").html(data['plug']['description'])
             }
             if ($('.list-dut-item.active .badge.level').length) {
                 $(".plug_details.plug_level").html($('.list-dut-item.active .badge.level')[0].innerHTML)
             }
+
+            // Reload check_users if not on disconnect page (other session active)
             if (window.location.hash.substr(1) != "disconnect") {
-                setTimeout(function() {check_users()}, data['setTimeout']));
+                console.log("reload")
+                setTimeout(function() {check_users()}, data['setTimeout']);
             }else {
+                console.log("not reload")
                 REFRESH_RATE = 30000;
             }
         },
@@ -604,8 +721,8 @@ $( document ).ready(function() {
     if (window.location.hash.substr(1) != "start"){window.location.href = "#loading";}
 
     // Send info and actualize data
-    setTimeout(function() {check_users()}, 1000);
     setTimeout(function() {check_time()}, 1000);
+    setTimeout(function() {check_users()}, 2000);
 
     // Load next and previous button at start
     query_previous_and_next_btn()
