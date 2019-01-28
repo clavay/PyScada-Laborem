@@ -639,10 +639,10 @@ def script(self):
         time_now = time.time()
         scaled_wave_ch1_mini = list()
         scaled_wave_ch2_mini = list()
-        save_duration = 1000  # in ms
+        save_duration = 100  # in ms - quantity of points to save
         for i in range(0, save_duration):
-            timevalues.append(time_now + 0.001 * i)
-            timevalues_to_show.append(0.001 * i * total_time)
+            timevalues.append(time_now + 0.001 * i)  # store one value each ms
+            timevalues_to_show.append(0.001 * i * total_time * 1000 * 10)  # store time in ms
             scaled_wave_ch1_mini.append(scaled_wave_ch1[i*int(len(scaled_wave_ch1)/save_duration)])
             scaled_wave_ch2_mini.append(scaled_wave_ch2[i*int(len(scaled_wave_ch2)/save_duration)])
             # if not isinstance(len(scaled_wave_ch1)/save_duration, int):

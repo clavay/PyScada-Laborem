@@ -241,6 +241,7 @@ function reset_page(page_name) {
         $(".dropdown-WaitingList").show()
         $(".summary.side-menu").hide()
         $('#ViewerModal').modal('hide');
+        $(".user_stop_btn").hide()
         $(".camera").hide()
     }else if (page_name === "disconnect" || page_name === "loading" ) {
         $('#ViewerModal').modal('hide');
@@ -523,6 +524,11 @@ function check_users() {
                 if (data['request_user'] === WAITING_USERS_DATA[key]['username']) {
                     title_time += WAITING_USERS_DATA[key]['sec'];
                     title_time += ' sec'
+                    if (WAITING_USERS_DATA[key]['min'] > 0 && WAITING_USERS_DATA[key]['sec'] < 12) {
+                        data['viewer_refresh_rate'] = 1;
+                    }else {
+                        data['viewer_refresh_rate'] = 0;
+                    }
                 }
                 waiting_users_tbody += WAITING_USERS_DATA[key]['sec']
                 waiting_users_tbody += ' sec</td></tr>'
@@ -565,8 +571,13 @@ function check_users() {
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
                     if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6) {
-                        data['setTimeout'] = 10000;
-                        REFRESH_RATE = 10000;
+                        if (data['viewer_refresh_rate'] == 1) {
+                            data['setTimeout'] = 1000;
+                            REFRESH_RATE = 1000;
+                        }else {
+                            data['setTimeout'] = 10000;
+                            REFRESH_RATE = 10000;
+                        }
                         if (window.location.hash.substr(1) != "viewer" && window.location.hash.substr(1) != "disconnect") {
                             if (CONNECTION_ACCEPTED == 1) {
                                 window.location.href = "#viewer";
@@ -684,7 +695,12 @@ function check_users() {
                 }
             }
             if (typeof data['experience'] != 'undefined' && data['experience'] != '') {
-                summary += "<li>Expérience en cours : " + data['experience'] + "</li>"
+                expe_list = $('.expe_list_item')
+                for (i=0;i<expe_list.length;i++){
+                    if ($(expe_list[i]).attr('name') == data['experience']) {
+                        summary += "<li>Expérience en cours : " + expe_list[i].innerHTML + "</li>"
+                    }
+                }
             }
             if (typeof summary != 'undefined' && summary != '') {
                 $(".summary ul").html(summary);

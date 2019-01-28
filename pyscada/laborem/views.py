@@ -775,7 +775,7 @@ def check_users(request):
         pass
     try:
         experience = VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),
-                                                           "EXPERIENCE").value_string.capitalize()
+                                                           "EXPERIENCE").value_string.lower()
         if experience != "":
             data['experience'] = experience
     except (Variable.DoesNotExist, AttributeError):

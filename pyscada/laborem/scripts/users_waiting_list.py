@@ -8,6 +8,7 @@ from pyscada.laborem.models import LaboremUser, LaboremGroupInputPermission, Lab
 from pyscada.models import Variable, VariableProperty
 from django.utils.timezone import now, timedelta
 from django.contrib.auth.models import User, Group
+from django.db.models import F, Q
 import logging
 from datetime import datetime
 
@@ -37,17 +38,16 @@ def script(self):
     """
     time_before_remove_group = 12
     # check if the 3 groups exist
-    if LaboremGroupInputPermission.objects.filter(hmi_group__name="viewer").count() and \
-            LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").count() and \
-            LaboremGroupInputPermission.objects.filter(hmi_group__name="teacher").count():
+    if LaboremGroupInputPermission.objects.filter(Q(hmi_group__name="viewer") | Q(hmi_group__name="worker") |
+                                                  Q(hmi_group__name="teacher")).count() == 3:
         # do not touch the teachers
         # move the without group in viewer if check < time_before_remove_group sec
         LaboremUser.objects.filter(laborem_group_input=None,
                                    last_check__gte=now() - timedelta(seconds=time_before_remove_group)).\
-            exclude(laborem_group_input__hmi_group__name="teacher").\
             update(laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"),
                    connection_time=now())
         # remove group from users with check > time_before_remove_group sec
+        '''
         if LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).exclude(
                 laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
             logger.debug("users with check > %s sec : %s" % (time_before_remove_group,
@@ -57,6 +57,7 @@ def script(self):
             for u in LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).\
                     exclude(laborem_group_input__hmi_group__name="teacher").exclude(laborem_group_input=None):
                 logger.debug("user %s - timedelta %s" % (u.user, now() - u.last_check))
+        '''
         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).\
             exclude(laborem_group_input__hmi_group__name="teacher").\
             update(laborem_group_input=None, start_time=None, connection_id=None)
@@ -69,8 +70,8 @@ def script(self):
         else:
             LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").update(start_time=now())
         # if no worker take the first viewer by waiting time
-        if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").count() == 0:
-            if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").count() > 0:
+        if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").count() == 0 and \
+                LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").count() > 0:
                 lu = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
                     order_by("connection_time").first()
                 lu.laborem_group_input = LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").first()
@@ -79,22 +80,27 @@ def script(self):
                     if base.element is not None and str(base.element.active) != '0':
                         lu.start_time += timedelta(seconds=20)
                 lu.save()
-                logger.debug("New worker : %s" % lu.user)
+                # logger.debug("New worker : %s" % lu.user)
                 reset_laborem_on_user_or_session_change(self)
 
         # update the user group to the group selected in LaboremUser
-        for U in User.objects.all():
+        for U in User.objects.exclude(laboremuser__laborem_group_input__isnull=True).exclude(
+                laboremuser__laborem_group_input__hmi_group=F('groups')):
             try:
-                if U.groups.all().first() != LaboremUser.objects.get(user=U).laborem_group_input.hmi_group:
-                    U.groups.clear()
-                    U.groups.add(LaboremUser.objects.get(user=U).laborem_group_input.hmi_group)
-                    U.save()
+                U.groups.clear()
+                U.groups.add(U.laboremuser.laborem_group_input.hmi_group)
+                # logger.debug("User with different laborem group : %s" % U)
             except LaboremUser.DoesNotExist:
                 pass
             except AttributeError:
                 pass
     else:
         logger.error("Please create the 3 groups for the user list")
+    # logger.debug("Total time : %s - start : %s - without group to viewer : %s - remove group : %s -
+    #             move to worker or actualize time : %s - take first viewer to worker : %s - "
+    #             "update user group to the laborem group : %s"
+    #             % (t7-t1, round((t2-t1)*100/(t7-t1)), round((t3-t2)*100/(t7-t1)), round((t4-t3)*100/(t7-t1)),
+    #                round((t5-t4)*100/(t7-t1)), round((t6-t5)*100/(t7-t1)), round((t7-t6)*100/(t7-t1))))
 
 
 def reset_laborem_on_user_or_session_change(self):
