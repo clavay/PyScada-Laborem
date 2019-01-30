@@ -83,6 +83,12 @@ def script(self):
                 # logger.debug("New worker : %s" % lu.user)
                 reset_laborem_on_user_or_session_change(self)
 
+        # set viewer group for empty user.group
+        try:
+            User.objects.get(groups__isnull=True).groups.add(Group.objects.get(name="viewer"))
+        except User.DoesNotExist:
+            pass
+
         # update the user group to the group selected in LaboremUser
         for U in User.objects.exclude(laboremuser__laborem_group_input__isnull=True).exclude(
                 laboremuser__laborem_group_input__hmi_group=F('groups')):

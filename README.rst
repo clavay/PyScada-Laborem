@@ -116,6 +116,7 @@ To add a USB camera
      - Edit /etc/nginx/sites-available/pyscada.conf and add before "location /" :
          location /camera/ {
              proxy_pass http://127.0.0.1:8090/;
+
          }
      - Download : https://github.com/jacksonliam/mjpg-streamer
      - sudo apt-get install cmake libjpeg62-turbo-dev
@@ -129,6 +130,28 @@ To add a USB camera
      - sudo systemctl start laborem_camera
      - add to a custom html :
          <img id='camera-img' src="http://" + window.location.hostname + "/camera/?action=stream" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
+
+
+To use less the SD card on a Raspberry Pi
+-----------------------------------------
+
+ - You will loose everything in /tmp, /var/tmp, /var/log after each reboot !
+ - Move /tamp, /var/tmp and /var/log to memory :
+     - sudo nano /etc/rc.local
+         Add before "exit 0" :
+            - chmod a+w /var/log
+            - mkdir /var/log/nginx
+            - chmod a+w /var/log/nginx
+            - echo >> /var/log/pyscada_debug.log
+            - chmod a+w /var/log/pyscada_debug.log
+     - sudo nano /etc/fstab
+         Add at the end :
+            - tmpfs    /var/log    tmpfs    defaults,noatime,nosuid,mode=0755,size=50m    0 0
+            - tmpfs   /tmp    tmpfs   defaults,noatime,mode=1777,size=30m
+            - tmpfs   /var/tmp    tmpfs   defaults,noatime,mode=1777,size=30m
+ - remove swap :
+     - sudo swapoff --all
+     - sudo apt-get remove dphys-swapfile
 
 Contribute
 ----------

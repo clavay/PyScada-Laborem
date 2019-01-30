@@ -724,10 +724,8 @@ function check_users() {
 
             // Reload check_users if not on disconnect page (other session active)
             if (window.location.hash.substr(1) != "disconnect") {
-                console.log("reload")
                 setTimeout(function() {check_users()}, data['setTimeout']);
             }else {
-                console.log("not reload")
                 REFRESH_RATE = 30000;
             }
         },
