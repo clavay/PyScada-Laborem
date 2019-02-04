@@ -57,7 +57,7 @@ class LaboremTOP10Admin(admin.ModelAdmin):
 
 
 class LaboremPlugDeviceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'motherboardIOConfig', 'level')
+    list_display = ('name', 'motherboardIOConfig', 'level', 'robot')
 
 
 class LaboremRobotBaseAdmin(admin.ModelAdmin):

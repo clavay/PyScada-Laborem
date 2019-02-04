@@ -4,7 +4,8 @@
 import os
 import logging
 import time
-from pyscada.models import Device
+# from pyscada.models import Device
+from pyscada.laborem.models import LaboremMotherboardDevice
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +47,11 @@ def script(self):
 
     try:
         from gpiozero import LED
-        device_laborem = Device.objects.get(pk=8)
-        plug_selected = int(device_laborem.laboremmotherboarddevice.plug)
+#        device_laborem = Device.objects.get(pk=8)
+#        plug_selected = int(device_laborem.laboremmotherboarddevice.plug)
+        device_laborem = LaboremMotherboardDevice.objects.first()
+        plug_selected = int(device_laborem.plug)
+
         if plug_selected:
             plug_selected = plug_selected - 1
             for i in range(0, 4):

@@ -1,4 +1,4 @@
-Sélectionner le composant à placer sur {{ base.description }} :<br>
+Composant {{ base.description }} :<br>
 <div class="dropdown dropdown-robot col-md-2" id="{{ base.pk }}">
     <button class="btn btn-primary dropdown-toggle dropdown-robot-btn" type="button" data-toggle="dropdown">
         <span class="ui-dropdown-robot-bnt">------- </span>
@@ -12,7 +12,7 @@ Sélectionner le composant à placer sur {{ base.description }} :<br>
     </ul>
  </div>
 {% for Elements in visible_robot_element_list %}
-    <br>
+    <!--<br>-->
 {% endfor %}
 <br>
 <br>

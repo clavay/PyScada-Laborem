@@ -150,6 +150,8 @@ def view_laborem(request, link_title):
             mc, sbc = widget.content.create_panel_html(widget_pk=widget.pk, user=request.user)
             if mc is not None:
                 main_content.append(dict(html=mc, widget=widget))
+            else:
+                logger.info("main_content of widget : %s is None !" % widget)
             if sbc is not None:
                 sidebar_content.append(dict(html=sbc, widget=widget))
             if widget.content.content_model == "pyscada.hmi.models.Chart":
@@ -203,6 +205,7 @@ def form_write_plug(request):
                                                           laboremgroupinputpermission__hmi_group__in=request.user.
                                                           groups.iterator())
             except LaboremMotherboardDevice.DoesNotExist:
+                logger.warning("In form_write_plug  : LaboremMotherboardDevice.DoesNotExist - mb_id : %s" % mb_id)
                 return HttpResponse(status=200)
         if mb is not None:
             mb.change_selected_plug(plug_id)
@@ -567,7 +570,7 @@ def reset_selected_plug(request):
                     LaboremMotherboardDevice.change_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id), 0)
                     logger.debug("Reset selected plug - user %s - mb_id %s" % (request.user, mb_id))
                 except LaboremMotherboardDevice.DoesNotExist:
-                    logger.error("request : %s - group : %s" % (request, group))
+                    logger.error("request : %s - mb_id : %s - group : %s" % (request, mb_id, group))
                 return HttpResponse(status=200)
     return HttpResponse(status=200)
 
@@ -768,7 +771,7 @@ def check_users(request):
                 data['plug']['base'] = {}
                 for base in LaboremRobotBase.objects.all():
                     if base.element is not None:
-                        data['plug']['base'][base.__str__()] = base.element.__str__()
+                        data['plug']['base'][base.description] = base.element.__str__()
             else:
                 data['plug']['robot'] = "false"
     except (LaboremMotherboardDevice.DoesNotExist, AttributeError):

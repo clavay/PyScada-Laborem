@@ -686,7 +686,7 @@ function check_users() {
                     if (data['plug']['robot'] == 'true') {
                         summary += "<li>Modifiable via le robot</li>"
                         for (var base in data['plug']['base']) {
-                            summary += "<li>" + base + " : " + data['plug']['base'][base] + "</li>"
+                            summary += "<li>Composant " + base + " : " + data['plug']['base'][base] + "</li>"
                         }
                     summary += "</ul>"
                     }else {
@@ -714,7 +714,7 @@ function check_users() {
             $($(".camera")[0]).removeClass("hidden");
 
             //Change text for plug details :
-            if (typeof data['plug']['name'] != 'undefined' && data['plug']['name'] != '' && typeof data['plug']['description'] != 'undefined' && data['plug']['description'] != '') {
+            if (typeof data['plug'] != 'undefined' && typeof data['plug']['name'] != 'undefined' && data['plug']['name'] != '' && typeof data['plug']['description'] != 'undefined' && data['plug']['description'] != '') {
                 $(".plug_details.plug_name").html(data['plug']['name'])
                 $(".plug_details.plug_description").html(data['plug']['description'])
             }
