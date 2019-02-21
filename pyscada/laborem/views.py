@@ -489,7 +489,7 @@ def validate_top10_answers(request):
 
 
 def calculate_note(level, answer, student_answer):
-    return level * np.exp(-abs(1-float(student_answer)/float(answer))*5)
+    return level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))*2)
 
 
 def rank_top10(request):
