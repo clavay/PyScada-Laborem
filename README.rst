@@ -74,9 +74,10 @@ To use CAS auth
 
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
 
-   url(r'^accounts/login$', django_cas_ng.views.login, name='cas_ng_login'),
-   url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
-   url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
+   - import django_cas_ng.views
+   - url(r'^accounts/login$', django_cas_ng.views.login, name='cas_ng_login'),
+   - url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
+   - url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
 
  Behind a proxy for CAS V2 :
   - sudo pip3 install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
@@ -144,14 +145,27 @@ To use less the SD card on a Raspberry Pi
             - chmod a+w /var/log/nginx
             - echo >> /var/log/pyscada_debug.log
             - chmod a+w /var/log/pyscada_debug.log
+            - # If you want to copy the DB on RAM at start from your save
+            - rsync -av /var/lib/mysql_to_restore/mysql /tmp
+            - chown -R mysql:mysql /tmp/mysql
      - sudo nano /etc/fstab
          Add at the end :
             - tmpfs    /var/log    tmpfs    defaults,noatime,nosuid,mode=0755,size=50m    0 0
-            - tmpfs   /tmp    tmpfs   defaults,noatime,mode=1777,size=30m
+            - tmpfs   /tmp    tmpfs   defaults,noatime,mode=1777,size=350m
             - tmpfs   /var/tmp    tmpfs   defaults,noatime,mode=1777,size=30m
- - remove swap :
+ - Remove swap (included in the "Read-only root filesystem"):
      - sudo swapoff --all
      - sudo apt-get remove dphys-swapfile
+ - (In test !!!) Move mysql to RAM at boot and save it before shutdown or each day :
+     - sudo systemctl stop nginx gunicorn gunicorn.socket pyscada mysql
+     - wait for mysql to shutdown...
+     - sudo rsync -av /var/lib/mysql /tmp
+     - sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
+          - change datadir=/var/lib/mysql
+          - to datadir=/tmp/mysql
+     - sudo systemctl start mysql nginx gunicorn pyscada
+ - Read-only root filesystem for Raspbian Stretch (using overlay) :
+     - https://github.com/JasperE84/root-ro
 
 Contribute
 ----------
