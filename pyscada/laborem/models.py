@@ -7,8 +7,6 @@ from pyscada.visa.models import VISADevice
 from pyscada.hmi.models import WidgetContentModel, Page
 
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.utils.encoding import python_2_unicode_compatible
 from django.template.loader import get_template
 from django.contrib.auth.models import User, Group
@@ -324,10 +322,8 @@ class LaboremUser(models.Model):
         return self.user.username
 
 
-@receiver(post_save, sender=LaboremMotherboardDevice)
-def _reinit_daq_daemons(sender, instance, **kwargs):
-    """
-    update the daq daemon configuration when changes be applied in the models
-    """
-    if type(instance) is LaboremMotherboardDevice:
-        post_save.send_robust(sender=Device, instance=instance.laboremmotherboard_device)
+class ExtendedLaboremMotherboardDevice(Device):
+    class Meta:
+        proxy = True
+        verbose_name = 'Laborem Motherboard Device'
+        verbose_name_plural = 'Laborem Motherboard Devices'

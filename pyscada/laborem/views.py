@@ -26,6 +26,7 @@ from django.views.decorators.csrf import requires_csrf_token
 from django.contrib.auth.models import User, Group
 from django.utils.timezone import now, timedelta
 from django.utils.dateformat import format
+from django.conf import settings
 
 from uuid import uuid4
 import time
@@ -36,22 +37,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
-def user_check(request):
-    if not request.user.is_authenticated():
-        return redirect('/accounts/choose_login/?next=%s' % request.path)
-    else:
-        if LaboremUser.objects.filter(user=request.user).count() == 0:
-            lu = LaboremUser(user=request.user)
-            lu.save()
-        return False
+UNAUTHENTICATED_REDIRECT = settings.UNAUTHENTICATED_REDIRECT if hasattr(
+    settings, 'UNAUTHENTICATED_REDIRECT') else '/accounts/login/'
 
 
+def unauthenticated_redirect(func):
+    def wrapper(*args, **kwargs):
+        if not args[0].user.is_authenticated():
+            return redirect('%s?next=%s' % (UNAUTHENTICATED_REDIRECT, args[0].path))
+        else:
+            if LaboremUser.objects.filter(user=args[0].user).count() == 0:
+                lu = LaboremUser(user=args[0].user)
+                lu.save()
+        return func(*args, **kwargs)
+    return wrapper
+
+
+@unauthenticated_redirect
 def index(request):
-    u = user_check(request)
-    if u:
-        return u
-
     if LaboremUser.objects.get(user=request.user).laborem_group_input is None:
         LaboremUser.objects.filter(user=request.user).exclude(laborem_group_input__hmi_group__name="teacher").update(
             laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"),
@@ -71,14 +74,9 @@ def index(request):
     return TemplateResponse(request, 'view_laborem_overview.html', c)  # HttpResponse(t.render(c))
 
 
+@unauthenticated_redirect
 @requires_csrf_token
 def view_laborem(request, link_title):
-    # if not request.user.is_authenticated():
-    #    return redirect('/accounts/choose_login/?next=%s' % request.path)
-    u = user_check(request)
-    if u:
-        return u
-
     page_template = get_template('content_page.html')
     widget_row_template = get_template('widget_row.html')
 
@@ -189,11 +187,8 @@ def view_laborem(request, link_title):
     return TemplateResponse(request, 'view_laborem.html', c)
 
 
+@unauthenticated_redirect
 def form_write_plug(request):
-    u = user_check(request)
-    if u:
-        return u
-
     if 'mb_id' in request.POST and 'plug_id' in request.POST:
         mb_id = int(request.POST['mb_id'])
         plug_id = int(request.POST['plug_id'])
@@ -214,11 +209,8 @@ def form_write_plug(request):
     return HttpResponse(status=404)
 
 
+@unauthenticated_redirect
 def form_write_robot_base(request):
-    u = user_check(request)
-    if u:
-        return u
-
     if LaboremGroupInputPermission.objects.count() > 0:
         try:
             LaboremGroupInputPermission.objects.get(move_robot=True, hmi_group__in=request.user.groups.all())
@@ -245,11 +237,8 @@ def form_write_robot_base(request):
     return HttpResponse(status=404)
 
 
+@unauthenticated_redirect
 def form_write_property(request):
-    u = user_check(request)
-    if u:
-        return u
-
     if 'variable_property' in request.POST and 'value' in request.POST:
         value = request.POST['value']
         try:
@@ -288,11 +277,8 @@ def form_write_property(request):
     return HttpResponse(status=404)
 
 
+@unauthenticated_redirect
 def query_top10_question(request):
-    u = user_check(request)
-    if u:
-        return u
-
     group_ok = False
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
@@ -377,11 +363,8 @@ def query_top10_question(request):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
+@unauthenticated_redirect
 def validate_top10_answers(request):
-    u = user_check(request)
-    if u:
-        return u
-
     group_ok = False
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
@@ -492,10 +475,8 @@ def calculate_note(level, answer, student_answer):
     return level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))*2)
 
 
+@unauthenticated_redirect
 def rank_top10(request):
-    u = user_check(request)
-    if u:
-        return u
     time.sleep(2)
     LaboremTOP10Ranking.objects.all().delete()
     for user in LaboremTOP10Score.objects.values_list('user').distinct():
@@ -539,11 +520,8 @@ def query_page(position, **kwargs):
     return page
 
 
+@unauthenticated_redirect
 def reset_robot_bases(request):
-    u = user_check(request)
-    if u:
-        return u
-
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
@@ -553,11 +531,8 @@ def reset_robot_bases(request):
     return HttpResponse(status=200)
 
 
+@unauthenticated_redirect
 def reset_selected_plug(request):
-    u = user_check(request)
-    if u:
-        return u
-
     if 'mb_id' in request.POST:
         mb_id = int(request.POST['mb_id'])
     else:
@@ -575,11 +550,8 @@ def reset_selected_plug(request):
     return HttpResponse(status=200)
 
 
+@unauthenticated_redirect
 def move_robot(request):
-    u = user_check(request)
-    if u:
-        return u
-
     data = dict()
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
@@ -623,10 +595,8 @@ def move_robot(request):
     return HttpResponse(status=200)
 
 
+@unauthenticated_redirect
 def remove_id(request):
-    u = user_check(request)
-    if u:
-        return u
     if 'connection_id' in request.POST:
         LaboremUser.objects.update_or_create(user=request.user,
                                              defaults={'connection_id': request.POST['connection_id']})
@@ -635,11 +605,8 @@ def remove_id(request):
     return HttpResponse(status=200)
 
 
+@unauthenticated_redirect
 def check_time(request):
-    u = user_check(request)
-    if u:
-        return u
-
     time_before_remove_id = 5
     data = dict()
     data['setTimeout'] = 1000
@@ -679,10 +646,8 @@ def check_time(request):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
+@unauthenticated_redirect
 def check_users(request):
-    u = user_check(request)
-    if u:
-        return u
     if 'mb_id' in request.POST:
         mb_id = int(request.POST['mb_id'])
     else:
@@ -691,7 +656,8 @@ def check_users(request):
     data = dict()
 
     # Laborem group
-    data['user_type'] = str(request.user.groups.all().first()) if request.user.groups.all().first() is not None else "none"
+    data['user_type'] = \
+        str(request.user.groups.all().first()) if request.user.groups.all().first() is not None else "none"
 
     '''
     if request.user.groups.all().first() == Group.objects.get(name="viewer"):
@@ -757,8 +723,10 @@ def check_users(request):
         for waiting_user in waiting_users_list:
             data['waiting_users'][wu] = {}
             data['waiting_users'][wu]['username'] = str(waiting_user.user.username)
-            data['waiting_users'][wu]['min'] = str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds // 60)
-            data['waiting_users'][wu]['sec'] = str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds % 60)
+            data['waiting_users'][wu]['min'] = \
+                str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds // 60)
+            data['waiting_users'][wu]['sec'] = \
+                str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds % 60)
             wu += 1
     try:
         selected_plug = LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id))

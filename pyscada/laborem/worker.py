@@ -61,7 +61,7 @@ class Process(BaseDAQProcess):
                     laborem_process['id'] = bp.id
                     laborem_process['failed'] += 1
                 else:
-                    logger.debug('process pyscada.laborem-%s failed more then 3 times' % laborem_process['key'])
+                    logger.debug('process pyscada.laborem-%s failed more than 3 times' % laborem_process['key'])
 
         return 1, None
 

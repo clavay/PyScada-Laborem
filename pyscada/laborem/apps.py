@@ -10,3 +10,6 @@ class PyScadaLaboremConfig(AppConfig):
     name = 'pyscada.laborem'
     verbose_name = _("PyScada Laborem")
     path = os.path.dirname(os.path.realpath(__file__))
+
+    def ready(self):
+        import pyscada.laborem.signals

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from pyscada.laborem import PROTOCOL_ID
 from pyscada.laborem.models import LaboremMotherboardDevice, LaboremMotherboardIOConfig, LaboremMotherboardIOElement
+from pyscada.laborem.models import ExtendedLaboremMotherboardDevice
 from pyscada.laborem.models import LaboremPlugDevice, LaboremRobotElement, LaboremRobotBase, LaboremUser
 from pyscada.laborem.models import LaboremTOP10 , LaboremTOP10Score, LaboremTOP10Ranking, LaboremGroupInputPermission
 from pyscada.admin import DeviceAdmin
@@ -13,13 +14,6 @@ from django.contrib import admin
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-class ExtendedLaboremMotherboardDevice(Device):
-    class Meta:
-        proxy = True
-        verbose_name = 'Laborem Motherboard Device'
-        verbose_name_plural = 'Laborem Motherboard Devices'
 
 
 class LaboremMotherboardDeviceAdminInline(admin.StackedInline):
