@@ -145,9 +145,24 @@ To use less the SD card on a Raspberry Pi
             - chmod a+w /var/log/nginx
             - echo >> /var/log/pyscada_debug.log
             - chmod a+w /var/log/pyscada_debug.log
+            - # If you want to mount a webdav access :
+                - systemctl start systemd-timesyncd.service
+                - sleep 10
+                - if sudo -u pyscada /bin/mount /home/pyscada/nextcloud ; then
+                -     printf "Mount nextcloud success\n"
+                - else
+                -     printf "Mount nextcloud failed\n"
+                - fi
+                - Add in /etc/systemd/system/pyscada.service :
+                - before ExecStart : ExecStartPre=/home/pyscada/pre_start_pyscada.sh
+                - after ExecStop : ExecStopPost=/home/pyscada/post_stop_pyscada.sh
             - # If you want to copy the DB on RAM at start from your save
-            - rsync -av /var/lib/mysql_to_restore/mysql /tmp
-            - chown -R mysql:mysql /tmp/mysql
+                - rsync -av /var/lib/mysql_to_restore/mysql /tmp
+                - chown -R mysql:mysql /tmp/mysql
+                - systemctl start mysql
+                - sleep 10
+                - systemctl start pyscada
+                - systemctl start gunicorn
      - sudo nano /etc/fstab
          Add at the end :
             - tmpfs    /var/log    tmpfs    defaults,noatime,nosuid,mode=0755,size=50m    0 0
@@ -166,6 +181,29 @@ To use less the SD card on a Raspberry Pi
      - sudo systemctl start mysql nginx gunicorn pyscada
  - Read-only root filesystem for Raspbian Stretch (using overlay) :
      - https://github.com/JasperE84/root-ro
+ - Creating WebDAV mounts on the Linux command line (for Nextcloud)
+     - sudo apt-get install davfs2
+     - usermod -aG davfs2 <linux_username>
+     - usermod -aG davfs2 pyscada
+     - close the session and open it
+     - mkdir /home/pyscada/nextcloud
+     - sudo nano /etc/davfs2/secrets
+         - Add : https://your_nextcloud.org/remote.php/dav/files/<nextcloud_username>/ <nextcloud_username> <nextcloud_password>
+         - If behind a proxy, add : proxy "" ""
+     - sudo nano /etc/fstab
+         - Add https://your_nextcloud.org/remote.php/dav/files/<nextcloud_username>/ /home/<linux_username>/nextcloud davfs user,rw,noauto 0 0
+     - nano /etc/davfs2/davfs2.conf
+         - uncomment : use_locks 0
+         - if behind a proxy, uncomment : use_proxy 1
+                              and add : proxy <your_proxy.com>:<port>
+     - to mount it : mount /home/pyscada/nextcloud
+     - to unmount it : umount /home/pyscada/nextcloud
+     - to auto mount at start : change "noauto" in /etc/fstab by "auto"
+ - To automatically "clean" reboot the raspberry each night at 0:00 :
+     - sudo crontab -e
+     - add : 0 0 * * * /home/pyscada/clean_reboot.sh
+
+
 
 Contribute
 ----------
