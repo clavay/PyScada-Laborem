@@ -30,6 +30,9 @@ Installation
  - Install PyScada-Laborem : sudo pip3 install https://github.com/clavay/PyScada-Laborem/tarball/master
  - Install PyScada-GPIO : sudo pip3 install pyscada-gpio
  - Install PyScada-Scripting : sudo pip3 install pyscada-scripting
+ - Install Scipy :
+    - sudo apt-get install gcc gfortran python-dev libopenblas-dev liblapack-dev cython
+    - sudo pip3 install scipy
  - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py before url(r'^', include('pyscada.hmi.urls')), :
     - url(r'^', include('pyscada.laborem.urls')),
 
@@ -132,6 +135,21 @@ To add a USB camera
      - add to a custom html :
          <img id='camera-img' src="http://" + window.location.hostname + "/camera/?action=stream" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
 
+To add a PiCamera
+-------------------
+
+
+ Install picamera : sudo apt-get install python3-picamera
+     - Edit /etc/nginx/sites-available/pyscada.conf and add before "location /" :
+         location /picamera/ {
+             proxy_pass http://127.0.0.1:8091/;
+
+         }
+     - copy pi-camera.py to /home/pi
+     - sudo systemctl enable laborem_pi_camera
+     - sudo systemctl start laborem_pi_camera
+     - add to a custom html :
+         <img id='pi-camera-img' src="http://" + window.location.hostname + "/picamera/stream.mjpg" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
 
 To use less the SD card on a Raspberry Pi
 -----------------------------------------
@@ -203,6 +221,13 @@ To use less the SD card on a Raspberry Pi
      - sudo crontab -e
      - add : 0 0 * * * /home/pyscada/clean_reboot.sh
 
+
+To use GPIB adapters
+--------------------
+ - Follow this instructions : https://xdevs.com/guide/ni_gpib_rpi/
+ - To install to python3 :
+     - cd linux-gpib/linux-gpib-4.2.0/linux-gpib-user-4.2.0/language/python/
+     - sudo python3 setup.py install
 
 
 Contribute

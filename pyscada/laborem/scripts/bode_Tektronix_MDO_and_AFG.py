@@ -9,9 +9,9 @@ import time
 from django.utils.timezone import now
 import numpy as np
 from django.conf import settings
+from struct import unpack
 
 logger = logging.getLogger(__name__)
-
 
 ###################################################
 # This part is for the robot used in GIM IUT Anglet
@@ -140,6 +140,7 @@ def pince(robot, openclose):
 # End of the robot part
 #######################
 
+
 def startup(self):
     """
     write your code startup code here, don't change the name of this function
@@ -172,7 +173,7 @@ def startup(self):
 
     self.write_variable_property("LABOREM", "message_laborem", "Laborem is starting. Please Wait...",
                                  value_class='string')
-    time.sleep(60)
+    time.sleep(10)
     self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
     visa_backend = '@py'  # use PyVISA-py as backend
@@ -181,9 +182,7 @@ def startup(self):
     try:
         device_mdo = Device.objects.get(pk=6)
         device_afg = Device.objects.get(pk=5)
-        device_dmm = Device.objects.get(pk=4)
         device_robot = Device.objects.get(pk=1)
-        device_alim_dc = Device.objects.get(pk=10)
     except Device.DoesNotExist:
         logger.error("Script Laborem - Device(s) does not exist, please create all the devices first.")
         return False
@@ -225,21 +224,6 @@ def startup(self):
         logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_afg.__str__(), e))
         pass
     try:
-        resource_prefix = device_dmm.visadevice.resource_name.split('::')[0]
-        extras = {}
-        if hasattr(settings, 'VISA_DEVICE_SETTINGS'):
-            if resource_prefix in settings.VISA_DEVICE_SETTINGS:
-                extras = settings.VISA_DEVICE_SETTINGS[resource_prefix]
-        logger.debug('VISA_DEVICE_SETTINGS for %s: %r' % (resource_prefix, extras))
-        self.inst_dmm = self.rm.open_resource(device_dmm.visadevice.resource_name, **extras)
-        if self.inst_dmm is not None:
-            logger.debug('Connected visa device : %s' % device_dmm.__str__())
-        else:
-            logger.debug('NOT connected visa device : %s' % device_dmm.__str__())
-    except Exception as e:
-        logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_dmm.__str__(), e))
-        pass
-    try:
         resource_prefix = device_robot.visadevice.resource_name.split('::')[0]
         extras = {}
         if hasattr(settings, 'VISA_DEVICE_SETTINGS'):
@@ -253,22 +237,6 @@ def startup(self):
             logger.debug('NOT connected visa device : %s' % device_robot.__str__())
     except Exception as e:
         logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_robot.__str__(), e))
-        pass
-    try:
-        resource_prefix = device_alim_dc.visadevice.resource_name.split('::')[0]
-        extras = {}
-        if hasattr(settings, 'VISA_DEVICE_SETTINGS'):
-            if resource_prefix in settings.VISA_DEVICE_SETTINGS:
-                extras = settings.VISA_DEVICE_SETTINGS[resource_prefix]
-        logger.debug('VISA_DEVICE_SETTINGS for %s: %r' % (resource_prefix, extras))
-        self.inst_alim_dc = self.rm.open_resource(device_alim_dc.visadevice.resource_name, **extras)
-        if self.inst_alim_dc is not None:
-            logger.debug('Connected visa device : %s' % device_alim_dc.__str__())
-            self.inst_alim_dc.write('OUT1')
-        else:
-            logger.debug('NOT connected visa device : %s' % device_alim_dc.__str__())
-    except Exception as e:
-        logger.error("Visa ResourceManager cannot open resource : %s - Exception : %s" % (device_alim_dc.__str__(), e))
         pass
 
     return True
@@ -297,12 +265,6 @@ def shutdown(self):
     except AttributeError:
         pass
     try:
-        if self.inst_dmm is not None:
-            self.inst_dmm.close()
-            self.inst_dmm = None
-    except AttributeError:
-        pass
-    try:
         robot = self.inst_robot
         # on tourne le bras
         rotation_base(self, robot, 0)
@@ -311,14 +273,6 @@ def shutdown(self):
         if self.inst_robot is not None:
             self.inst_robot.close()
             self.inst_robot = None
-    except AttributeError:
-        pass
-    except visa.VisaIOError:
-        pass
-    try:
-        if self.inst_alim_dc is not None:
-            self.inst_alim_dc.close()
-            self.inst_alim_dc = None
     except AttributeError:
         pass
     except visa.VisaIOError:
@@ -333,7 +287,6 @@ def script(self):
 
     :return:
     """
-    # logger.debug("Script Bode running...")
     put_on_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON'))
     if put_on_robot:
         logger.debug("Putting on Elements...")
@@ -394,16 +347,21 @@ def script(self):
                                      timestamp=now())
         self.write_variable_property("LABOREM", "message_laborem", "Diagrammes de Bode en cours d'acquisition...",
                                      value_class='string')
+
+        # Send *RST to all instruments
+        reset_instrument(self.inst_afg)
+        reset_instrument(self.inst_mdo)
         time.sleep(2)
 
+        # Prepare AFG for Bode : output1 on, output imp max
+        afg_prepare_for_bode(self, ch=1)
+
+        # Set generator Vpp
         vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
-        self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP SIN;SOUR1:'
-                            'VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
-        self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
-        self.inst_mdo.write('*RST;:SEL:CH1 1;:SEL:CH2 1;:HORIZONTAL:POSITION 0;:CH1:YUN "V";:CH1:SCALE ' +
-                            str(1.2 * float(vepp) / (2 * 4)) + ';:CH2:YUN "V";:CH2:BANdwidth 10000000;'
-                            ':CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;'
-                            ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM;')
+        afg_set_vpp(self, ch=1, vpp=vepp)
+
+        # Prepare MDO trigger, channel 1 vertical scale, bandwidth
+        mdo_prepare_for_bode(self, vpp=vepp)
 
         fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
         fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
@@ -415,6 +373,7 @@ def script(self):
         self.write_variable_property("LABOREM", "progress_bar_min", 0, value_class='int16')
         self.write_variable_property("LABOREM", "progress_bar_max", nb_points, value_class='int16')
 
+        range_i = None
         for f in np.geomspace(fmin, fmax, nb_points):
             if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
@@ -429,92 +388,26 @@ def script(self):
             n += 1
             self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
 
-            # Set the generator to freq f
-            self.inst_afg.write('SOUR1:FREQ:FIX ' + str(f))
+            # Set the generator frequency to f
+            afg_set_frequency(self, ch=1, frequency=f)
 
-            # Read from the multimeter the RMS value of the output
-            i = 0
-            i_max = 3  # Try X time max to read 3  vseff
-            vseff = 0
-            while i < i_max:
-                try:
-                    i += 1
-                    time.sleep(1)
-                    vseff = self.inst_dmm.query(':READ?')
-                    break
-                except Exception as e:
-                    logger.error("Error reading multimeter : %s" % e)
-            vsmax = float(vseff)*float(np.sqrt(2))
-            mdo_horiz_scale = str(round(float(4.0 / (10.0 * float(f))), 6))
-            mdo_ch2_scale = str(1.4 * float(vsmax) / 4.0)
-            logger.debug("Freq = %s - horiz scale = %s - ch2 scale = %s - vsmax = %s - vseff = %s"
-                         % (int(f), mdo_horiz_scale, mdo_ch2_scale, vsmax, vseff))
-
-            # Set the oscilloscope horizontal scale and vertical scale for the output
-            self.inst_mdo.write(':HORIZONTAL:SCALE ' + mdo_horiz_scale + ';:CH2:SCALE ' + mdo_ch2_scale +
-                                ';:TRIG:A:LEV:CH1 0;:MEASUrement:IMMed:SOUrce1 CH1;'
-                                ':MEASUrement:IMMed:SOUrce2 CH2;:MEASUREMENT:IMMed:TYPE PHASE')
-
-            # Wait for the oscilloscope to show the signals
-            time.sleep(20 / f)
+            # Set the oscilloscope horizontal scale and find the vertical scale for channel 2
+            range_i = mdo_find_vertical_scale(self, ch=2, frequency=f, range_i=range_i)
 
             # Start reading the phase
-            cmd_phase = str(':MEASUREMENT:IMMED:VALUE?')
-            i = 0
-            i_max = 3  # Try X time max to read 3 phases
-            mean_phase = 999
-            while i < i_max:
-                i += 1
-                phase = []
-                for k in range(1, 4):
-                    j = 0
-                    j_max = 3  # Try X time max to read 1 phase
-                    while j < j_max:
-                        j += 1
-                        phase_tmp = float(self.inst_mdo.query(cmd_phase))
-                        if type(phase_tmp) == float:
-                            phase.append(phase_tmp)
-                            j = j_max
-                        else:
-                            logger.error('Phase is not float : %s' % phase_tmp)
-                            time.sleep(0.1)
-                    time.sleep(0.1)
-                mean_phase = np.mean(phase)
-                st_dev_phase = np.std(phase)
-                # logger.debug("Phase : %s - Mean : %s - StDev : %s" % (phase, mean_phase, st_dev_phase))
-                if float(mean_phase < 200) and st_dev_phase < 3:
-                    break
+            phase, phase2 = mdo_get_phase(self, source1=1, source2=2, frequency=f)
 
             # Start reading the gain
-            cmd_p2p1 = str(':MEASUrement:IMMed:SOUrce1 CH1;:MEASUREMENT:IMMED:TYPE PK2PK;:MEASUREMENT:IMMED:VALUE?')
-            cmd_p2p2 = str(':MEASUrement:IMMed:SOUrce1 CH2;:MEASUREMENT:IMMED:TYPE PK2PK;:MEASUREMENT:IMMED:VALUE?')
-            i = 0
-            i_max = 3  # Try X time max to read 2 pic to pic values
-            gain = 999
-            while i < i_max:
-                p2p1_ok = False
-                p2p2_ok = False
-                p2p1 = float(self.inst_mdo.query(cmd_p2p1))
-                if isinstance(p2p1, float):
-                    p2p1_ok = True
-                else:
-                    logger.error('p2p1 is not float : %s' % p2p1)
-                p2p2 = float(self.inst_mdo.query(cmd_p2p2))
-                if isinstance(p2p2, float):
-                    p2p2_ok = True
-                else:
-                    logger.error('p2p2 is not float : %s' % p2p2)
-                i += 1
-                if p2p1_ok and p2p2_ok:
-                    gain = 20 * np.log10(p2p2/p2p1)
-                    if np.isinf(gain):
-                        gain = 0
-                    break
-                else:
-                    time.sleep(0.1)
+            gain = mdo_gain(self, source1=1, source2=2)
 
-            logger.debug("Freq : %s - Gain : %s - Phase : %s" % (f, gain, mean_phase))
-            self.write_values_to_db(data={'Bode_Freq': [f], 'Bode_Gain': [gain], 'Bode_Phase': [mean_phase]})
+            logger.debug("Freq : %s - Gain : %s - Phase : %s" % (f, gain, phase))
+            # self.write_values_to_db(data={'Bode_Freq': [f], 'Bode_Gain': [gain], 'Bode_Phase': [phase]})
+            timevalues = time.time()
+            self.write_values_to_db(data={'Bode_Freq': [f], 'timevalues': [timevalues]})
+            self.write_values_to_db(data={'Bode_Gain': [gain], 'timevalues': [timevalues]})
+            self.write_values_to_db(data={'Bode_Phase': [phase], 'timevalues': [timevalues]})
+            self.write_values_to_db(data={'Bode_Phase_numpy': [phase2], 'timevalues': [timevalues]})
+
         logger.debug("Bode end")
         self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                      timestamp=now())
@@ -525,154 +418,69 @@ def script(self):
         self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
     waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
-
     if waveform:
         logger.debug("Waveform running...")
         self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                      timestamp=now())
         self.write_variable_property("LABOREM", "message_laborem", "Analyse spectrale en cours d'acquisition...",
                                      value_class='string')
+
+        # Send *RST to all instruments
+        reset_instrument(self.inst_afg)
+        reset_instrument(self.inst_mdo)
         time.sleep(2)
-        self.inst_mdo.timeout = 10000
 
+        # Prepare AFG for Bode : output1 on, output imp max
+        afg_prepare_for_bode(self, ch=1)
+
+        # Set generator Vpp
         vepp = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP')
-        funcshape1 = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_3_FUNCTION_SHAPE')
+        afg_set_vpp(self, ch=1, vpp=vepp)
 
-        # Set the generator to freq f
+        # Prepare MDO trigger, channel 1 vertical scale, bandwidth
+        mdo_prepare_for_bode(self, vpp=vepp)
+
+        # Set generator function shape
+        func_shape = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_3_FUNCTION_SHAPE')
+        afg_set_function_shape(self, ch=1, function_shape=func_shape)
+
+        # Set the generator frequency to f
         f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
-        mdo_horiz_scale = str(round(float(4.0 / (10.0 * float(f))), 6))
-
-        self.inst_afg.write('*RST;OUTPut1:STATe ON;OUTP1:IMP MAX;SOUR1:AM:STAT OFF;SOUR1:FUNC:SHAP ' + funcshape1
-                            + ';SOUR1:VOLT:LEV:IMM:AMPL ' + str(vepp) + 'Vpp')
-        self.inst_afg.write('SOUR1:FREQ:FIX ' + str(f))
-        self.inst_dmm.write('*RST;:FUNC "VOLTage:AC";:VOLTage:AC:RANGe:AUTO 1;:VOLTage:AC:RESolution MIN;:TRIG:DEL MIN')
-        self.inst_mdo.write('*RST;:SEL:CH1 1;:HORIZONTAL:POSITION 0;:CH1:YUN "V";'
-                            ':CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;'
-                            ':TRIG:A:EDGE:COUPLING DC;:TRIG:A:EDGE:SOU CH1;:TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM')
-        self.inst_mdo.write(':HORIZONTAL:SCALE ' + mdo_horiz_scale + ';:CH1:SCALE ' + str(1.2 * float(vepp) / (2 * 4)))
-        self.inst_mdo.write(':SEL:CH2 1;:CH2:YUN "V";:CH2:BANdwidth 10000000;')
-
-        # io config
-        self.inst_mdo.write('header 0')
-        self.inst_mdo.write('data:encdg SRIBINARY')
-        self.inst_mdo.write('data:source CH1')  # channel
-        self.inst_mdo.write('data:start 1')  # first sample
-        record = int(self.inst_mdo.query('horizontal:recordlength?'))
-        self.inst_mdo.write('data:stop {}'.format(record))  # last sample
-        self.inst_mdo.write('wfmoutpre:byt_n 1')  # 1 byte per sample
-
-        # acq config
-        self.inst_mdo.write('acquire:state 0')  # stop
-        self.inst_mdo.write('acquire:stopafter SEQUENCE')  # single
-        self.inst_mdo.write('acquire:state 1')  # run
-
-        # data query
-        time.sleep(20 / f)
-        self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20 / f)
-        time.sleep(20 / f)
-        bin_wave_ch1 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20 / f)
-
-        # retrieve scaling factors
-        tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
-        # tstart = float(self.inst_mdo.query('wfmoutpre:xzero?'))
-        vscale_ch1 = float(self.inst_mdo.query('wfmoutpre:ymult?'))  # volts / level
-        voff_ch1 = float(self.inst_mdo.query('wfmoutpre:yzero?'))  # reference voltage
-        vpos_ch1 = float(self.inst_mdo.query('wfmoutpre:yoff?'))  # reference position (level)
-
-        # create scaled vectors
-        # horizontal (time)
-        total_time = tscale * record
-        # tstop = tstart + total_time
-        # scaled_time = np.linspace(tstart, tstop, num=record, endpoint=False)
-        # vertical (voltage)
-        unscaled_wave_ch1 = np.array(bin_wave_ch1, dtype='double')  # data type conversion
-        scaled_wave_ch1 = (unscaled_wave_ch1 - vpos_ch1) * vscale_ch1 + voff_ch1
-        scaled_wave_ch1 = scaled_wave_ch1.tolist()
-
-        # Read from the multimeter the RMS value of the output
-        i = 0
-        i_max = 3  # Try X time max to read 3  vseff
-        vseff = 0
-        while i < i_max:
-            try:
-                i += 1
-                time.sleep(1)
-                vseff = self.inst_dmm.query(':READ?')
-                break
-            except Exception as e:
-                logger.error("Error reading multimeter : %s" % e)
-        vsmax = float(vseff) * float(np.sqrt(2))
-        mdo_ch2_scale = str(1.4 * float(vsmax) / 4.0)
+        afg_set_frequency(self, ch=1, frequency=f)
 
         # Set the oscilloscope horizontal scale and vertical scale for the output
-        self.inst_mdo.write(':CH2:SCALE ' + mdo_ch2_scale + ';:TRIG:A:LEV:CH2 0;')
+        range_i = None
+        mdo_find_vertical_scale(self, ch=2, frequency=f, range_i=range_i)
 
-        # io config
-        self.inst_mdo.write('header 0')
-        self.inst_mdo.write('data:encdg SRIBINARY')
-        self.inst_mdo.write('data:source CH2')  # channel
-        self.inst_mdo.write('data:start 1')  # first sample
-        record = int(self.inst_mdo.query('horizontal:recordlength?'))
-        self.inst_mdo.write('data:stop {}'.format(record))  # last sample
-        self.inst_mdo.write('wfmoutpre:byt_n 1')  # 1 byte per sample
+        mdo_horizontal_scale_in_period(self, period=4.0, frequency=f)
 
-        # acq config
-        self.inst_mdo.write('acquire:state 0')  # stop
-        self.inst_mdo.write('acquire:stopafter SEQUENCE')  # single
-        self.inst_mdo.write('acquire:state 1')  # run
+        resolution = 10000
+        scaled_wave_ch1 = mdo_query_waveform(self, ch=1, points_resolution=resolution, frequency=f, refresh=True)
+        scaled_wave_ch2 = mdo_query_waveform(self, ch=2, points_resolution=resolution, frequency=f, refresh=False)
 
-        # data query
-        time.sleep(20 / f)
-        self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20 / f)
-        time.sleep(20 / f)
-        bin_wave_ch2 = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=20 / f)
-
-        # retrieve scaling factors
-        vscale_ch2 = float(self.inst_mdo.query('wfmoutpre:ymult?'))  # volts / level
-        voff_ch2 = float(self.inst_mdo.query('wfmoutpre:yzero?'))  # reference voltage
-        vpos_ch2 = float(self.inst_mdo.query('wfmoutpre:yoff?'))  # reference position (level)
-
-        # create scaled vectors
-        # vertical (voltage)
-        unscaled_wave_ch2 = np.array(bin_wave_ch2, dtype='double')  # data type conversion
-        scaled_wave_ch2 = (unscaled_wave_ch2 - vpos_ch2) * vscale_ch2 + voff_ch2
-        scaled_wave_ch2 = scaled_wave_ch2.tolist()
-
-        timevalues = list()
-        timevalues_to_show = list()
-        time_now = time.time()
         scaled_wave_ch1_mini = list()
         scaled_wave_ch2_mini = list()
-        save_duration = 100  # in ms - quantity of points to save
-        for i in range(0, save_duration):
-            timevalues.append(time_now + 0.001 * i)  # store one value each ms
-            timevalues_to_show.append(0.001 * i * total_time * 1000 * 10)  # store time in ms
-            scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_duration)])
-            scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_duration)])
-            # if not isinstance(len(scaled_wave_ch1)/save_duration, int):
-            #    logger.debug("Waweform 1 length is not a multiple of 1000 : %s" % len(scaled_wave_ch1))
-            # if not isinstance(len(scaled_wave_ch2)/save_duration, int):
-            #    logger.debug("Waweform 2 length is not a multiple of 1000 : %s" % len(scaled_wave_ch2))
+        time_values = list()
+        time_values_to_show = list()
+        time_now = time.time()
+
+        # Prepare the lists to save
+        save_resolution = 100
+        for i in range(0, save_resolution):
+            time_values.append(time_now + 0.001 * i)  # store one value each ms
+            time_values_to_show.append(0.001 * i * mdo_horizontal_time(self) * 1000 * 10)  # store time in ms
+            scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
+            scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
 
         # FFT CH1
-        eta1 = scaled_wave_ch1
-        nfft1 = len(eta1)
-        hanning_1 = np.hanning(nfft1) * eta1
-        spectrum_hanning_1 = abs(np.fft.fft(hanning_1))
-        spectrum_hanning_1 = spectrum_hanning_1 * 2 * 2 / nfft1  # also correct for Hann filter
-        frequencies1 = np.linspace(0, 1 / tscale, nfft1, endpoint=False).tolist()
+        spectrum_hanning_1 = fft(scaled_wave_ch1)
+        tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
+        frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
+        # FFT CH2
+        spectrum_hanning_2 = fft(scaled_wave_ch2)
 
         logger.debug("tscale %s - f %s - Ech/s %s - Vepp %s" % (tscale, f, f / tscale, vepp))
-        logger.debug("length eta1 %s - hanning %s - hanning_1 %s - spectrum_hanning_1 %s - frequencies1 %s"
-                     % (nfft1, len(np.hanning(nfft1)), len(hanning_1), len(spectrum_hanning_1), len(frequencies1)))
-
-        # FFT CH2
-        eta2 = scaled_wave_ch2
-        nfft2 = len(eta2)
-        hanning_2 = np.hanning(nfft2) * eta2
-        spectrum_hanning_2 = abs(np.fft.fft(hanning_2))
-        spectrum_hanning_2 = spectrum_hanning_2 * 2 * 2 / nfft2  # also correct for Hann filter
-        # frequencies2 = np.linspace(0, 1/tscale, nfft2, endpoint=False).tolist()
+        logger.debug("spectrum_hanning_1 %s - frequencies %s" % (len(spectrum_hanning_1), len(frequencies)))
 
         if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
@@ -683,12 +491,12 @@ def script(self):
             self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
             return
 
-        self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': timevalues})
-        self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': timevalues})
-        self.write_values_to_db(data={'Wave_time': timevalues_to_show, 'timevalues': timevalues})
-        self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': timevalues})
-        self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': timevalues})
-        self.write_values_to_db(data={'Bode_Freq': frequencies1[:100], 'timevalues': timevalues})
+        self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
+        self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
+        self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+        self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
+        self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
+        self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
         self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                      timestamp=now())
         time.sleep(4)
@@ -697,3 +505,209 @@ def script(self):
                                      value_class='BOOLEAN')
 
     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+
+
+# AFG functions
+def afg_prepare_for_bode(self, ch=1):
+    self.inst_afg.query('OUTP%d:STATe ON;OUTP%d:IMP MAX;SOUR%d:AM:STAT OFF;*OPC?;' % (ch, ch, ch))
+
+
+def afg_set_vpp(self, ch=1, vpp=1):
+    self.inst_afg.query('SOUR%d:VOLT:LEV:IMM:AMPL %sVpp;*OPC?;' % (ch, str(vpp)))
+
+
+def afg_set_function_shape(self, ch=1, function_shape='SIN'):
+    self.inst_afg.query('SOUR%d:FUNC:SHAP %s;*OPC?;' % (ch, function_shape))
+
+
+def afg_set_frequency(self, ch=1, frequency=1000):
+    self.inst_afg.query('SOUR%d:FREQ:FIX %s;*OPC?;' % (ch, str(frequency)))
+
+
+# MDO functions
+def mdo_query_waveform(self, ch=1, points_resolution=100, frequency=1000, refresh=False):
+    self.inst_mdo.query(':SEL:CH%d 1;:HORIZONTAL:POSITION 0;:CH%d:YUN "V";' 
+                        ':CH%d:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING AC;:TRIG:A:EDGE:SOU CH%d;'
+                        ':TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM;*OPC?' % (ch, ch, ch, ch))
+
+    # io config
+    self.inst_mdo.write('header 0')
+    self.inst_mdo.write('data:encdg SRIBINARY')
+    self.inst_mdo.write('data:source CH%d' % ch)  # channel
+    self.inst_mdo.write('data:snap')  # last sample
+    self.inst_mdo.write('wfmoutpre:byt_n 1')  # 1 byte per sample
+
+    if refresh:
+        # acq config
+        self.inst_mdo.write('acquire:state 0')  # stop
+        self.inst_mdo.write('acquire:stopafter SEQUENCE')  # single
+        self.inst_mdo.write('acquire:state 1')  # run
+
+    # data query
+    self.inst_mdo.query('*OPC?')
+    bin_wave = self.inst_mdo.query_binary_values('curve?', datatype='b', container=np.array, delay=2 * 10 / frequency)
+
+    # retrieve scaling factors
+    # tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
+    vscale = float(self.inst_mdo.query('wfmoutpre:ymult?'))  # volts / level
+    voff = float(self.inst_mdo.query('wfmoutpre:yzero?'))  # reference voltage
+    vpos = float(self.inst_mdo.query('wfmoutpre:yoff?'))  # reference position (level)
+
+    # create scaled vectors
+    # horizontal (time)
+    # total_time = tscale * record
+    # tstop = tstart + total_time
+    # scaled_time = np.linspace(tstart, tstop, num=record, endpoint=False)
+    # vertical (voltage)
+    unscaled_wave = np.array(bin_wave, dtype='double')  # data type conversion
+    scaled_wave = (unscaled_wave - vpos) * vscale + voff
+    scaled_wave = scaled_wave.tolist()
+
+    scaled_wave_mini = list()
+    for i in range(0, points_resolution):
+        scaled_wave_mini.append(scaled_wave[i * int(len(scaled_wave) / points_resolution)])
+
+    return np.asarray(scaled_wave_mini)
+
+
+def mdo_get_phase(self, source1=1, source2=2, frequency=1000):
+    mdo_horizontal_scale_in_period(self, period=4.0, frequency=frequency)
+    self.inst_mdo.write(':MEASUrement:IMMed:SOUrce1 CH%d;:MEASUrement:IMMed:SOUrce2 CH%d;'
+                        ':MEASUREMENT:IMMed:TYPE PHASE' % (source1, source2))
+
+    # Start reading the phase
+    retries = 0
+    while retries < 3:
+        self.inst_mdo.write('acquire:state 0')  # stop
+        self.inst_mdo.write('acquire:stopafter SEQUENCE')  # single
+        self.inst_mdo.write('acquire:state 1')  # run
+        self.inst_mdo.query('*OPC?')
+        phase = float(self.inst_mdo.query(':MEASUREMENT:IMMED:VALUE?;'))
+        retries += 1
+        if -360 < phase < 360:
+            break
+        if retries >= 3:
+            phase = None
+            break
+        logger.debug('Wrong phase = %s' % phase)
+        time.sleep(1)
+    if phase < -180 and phase is not None:
+        phase += 360
+    mdo_horizontal_scale_in_period(self, period=4.0, frequency=frequency)
+
+    a = mdo_query_waveform(self, ch=1, frequency=frequency, refresh=True, points_resolution=10000)
+    b = mdo_query_waveform(self, ch=2, frequency=frequency, refresh=False, points_resolution=10000)
+    phase2 = find_phase_2_signals(a, b, frequency, mdo_horizontal_time(self))
+    logger.debug('phase oscillo = %s - phase scipy = %s' % (phase, phase2))
+    return phase, phase2
+
+
+def mdo_horizontal_time(self):
+    record = int(self.inst_mdo.query('horizontal:recordlength?'))
+    tscale = float(self.inst_mdo.query('wfmoutpre:xincr?'))
+    return tscale * record
+
+
+def fft(eta):
+    nfft = len(eta)
+    hanning = np.hanning(nfft) * eta
+    spectrum_hanning = abs(np.fft.fft(hanning))
+    spectrum_hanning = spectrum_hanning * 2 * 2 / nfft  # also correct for Hann filter
+    return spectrum_hanning
+
+
+def mdo_horizontal_scale_in_period(self, period=1.0, frequency=1000):
+    mdo_horiz_scale = str(round(float(period / (10.0 * float(frequency))), 6))
+    self.inst_mdo.query(':HORIZONTAL:SCALE %s;*OPC?' % mdo_horiz_scale)
+
+
+def mdo_find_vertical_scale(self, ch=1, frequency=1000, range_i=None):
+    vranges = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10]
+    if range_i is None:
+        range_i = int(np.ceil(len(vranges) / 2.0))
+    mdo_horizontal_scale_in_period(self, period=1.0, frequency=frequency)
+
+    failed = 0
+    mdo_div_quantity = 8.0
+    range_i_min = 0
+    while range_i < len(vranges):
+        logger.debug(range_i)
+        self.inst_mdo.query(':CH%d:SCALE %s;*OPC?' % (ch, str(vranges[range_i])))
+        data = mdo_query_waveform(self, ch=ch, frequency=frequency, refresh=True)
+        if data is None:
+            failed += 1
+            if failed > 3:
+                logger.debug('data is None more than 3 times')
+                break
+            continue
+        failed = 0
+        if np.max(abs(data)) > (mdo_div_quantity * 0.9 * vranges[range_i] / 2.0):
+            range_i_min = range_i + 1
+            range_i += 3
+            range_i = min(len(vranges) - 1, range_i)
+        if range_i == 0:
+            if np.max(abs(data)) < (mdo_div_quantity * 0.9 * vranges[range_i] / 2.0):
+                break
+            range_i = 1
+            continue
+        if (mdo_div_quantity * 0.9 * vranges[range_i - 1] / 2.0) <= np.max(abs(data)) \
+                < (mdo_div_quantity * 0.9 * vranges[range_i] / 2.0):
+            break
+        range_i_old = range_i
+        range_i = max(range_i_min, np.where(vranges > 2.0 * np.max(abs(data)) / mdo_div_quantity * 0.9)[0][0])
+        if range_i == range_i_old:
+            break
+
+    logger.debug(range_i)
+    mdo_ch2_scale = str(vranges[range_i])
+    logger.debug("Freq = %s - horiz scale = %s - ch2 scale = %s"
+                 % (int(frequency), str(round(float(1.0 / (10.0 * float(frequency))), 6)), mdo_ch2_scale))
+    return range_i
+
+
+def mdo_query_peak_to_peak(self, ch=1):
+    return float(self.inst_mdo.query((':MEASUrement:IMMed:SOUrce1 CH%d;:MEASUREMENT:IMMED:TYPE PK2PK;'
+                                      ':MEASUREMENT:IMMED:VALUE?' % ch)))
+
+
+def mdo_gain(self, source1=1, source2=2):
+    return 20 * np.log10(mdo_query_peak_to_peak(self, ch=source2) / mdo_query_peak_to_peak(self, ch=source1))
+
+
+def mdo_prepare_for_bode(self, vpp):
+    self.inst_mdo.query(':SEL:CH1 1;:SEL:CH2 1;:HORIZONTAL:POSITION 0;:CH1:YUN "V";:CH1:SCALE %s;:CH2:YUN "V";'
+                        ':CH2:BANdwidth 10000000;:CH1:BANdwidth 10000000;:TRIG:A:TYP EDGE;:TRIG:A:EDGE:COUPLING AC;'
+                        ':TRIG:A:EDGE:SOU CH1;:TRIG:A:EDGE:SLO FALL;:TRIG:A:MODE NORM;:CH1:COUP AC;:CH2:COUP AC;'
+                        ':TRIG:A:LEV:CH1 0;*OPC?;' % str(1.2 * float(vpp) / (2 * 4)))
+
+
+def reset_instrument(inst):
+    inst.query('*RST;*OPC?')
+
+
+def find_phase_2_signals(a, b, frequency, tmax):
+    period = 1 / frequency                            # period of oscillations (seconds)
+    tmax = float(tmax)
+    nsamples = int(a.size)
+    logger.debug('tmax = %s - nsamples = %s' % (tmax, nsamples))                  # length of time series (seconds)
+
+    # construct time array
+    t = np.linspace(0.0, tmax, nsamples, endpoint=False)
+
+    # calculate cross correlation of the two signals
+    xcorr = np.correlate(a, b, "full")
+
+    # The peak of the cross-correlation gives the shift between the two signals
+    # The xcorr array goes from -nsamples to nsamples
+    dt = np.linspace(-t[-1], t[-1], 2*nsamples-1)
+    recovered_time_shift = dt[np.argmax(xcorr)]
+
+    # force the phase shift to be in [-pi:pi]
+    recovered_phase_shift = -1 * 2 * np.pi * (((0.5 + recovered_time_shift / period) % 1.0) - 0.5)
+    recovered_phase_shift_before = -1 * 2 * np.pi * (((0.5 + dt[np.argmax(xcorr) - 1] / period) % 1.0) - 0.5)
+    recovered_phase_shift_after = -1 * 2 * np.pi * (((0.5 + dt[np.argmax(xcorr) + 1] / period) % 1.0) - 0.5)
+    logger.debug('phase - 1 = %s - phase = %s - phase + 1 = %s' %
+                 (recovered_phase_shift_before*180/np.pi, recovered_phase_shift*180/np.pi,
+                  recovered_phase_shift_after*180/np.pi))
+
+    return recovered_phase_shift*180/np.pi

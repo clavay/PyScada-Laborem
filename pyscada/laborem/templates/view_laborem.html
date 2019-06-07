@@ -150,6 +150,7 @@
         <ul class="status-panel">
             <li>Camera</li>
             <img class="camera-img" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
+            <img class="pi-camera-img" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
         </ul>
     </div>
     <div class="summary side-menu right hidden col-md-3" style="width: 300px; list-style: circle;">
@@ -301,6 +302,9 @@
                 function updateImage() {
                     $(".camera-img").each(function(){
                         $(this)[0].src = window.location.origin + "/camera/?action=stream"
+                    });
+                    $(".pi-camera-img").each(function(){
+                        $(this)[0].src = window.location.origin + "/picamera/stream.mjpg"
                     });
                 }
                 setInterval(updateImage, 3000);

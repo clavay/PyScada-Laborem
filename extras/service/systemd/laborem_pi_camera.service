@@ -1,0 +1,17 @@
+[Unit]
+Description=Laborem Camera
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/tmp/laborem_camera.pid
+User=pyscada
+Group=pyscada
+ExecStart=/usr/bin/python3 /home/pi/pi-camera.py
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
+
+

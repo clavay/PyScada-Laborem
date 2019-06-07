@@ -149,6 +149,11 @@ class LaboremMotherboardIOConfig(models.Model):
     pin4 = models.OneToOneField(GPIOVariable, help_text='A3 connector', null=True, blank=True, related_name='mobo_pin4')
     pin5 = models.OneToOneField(GPIOVariable, help_text='Relay', null=True, blank=True, related_name='mobo_pin5')
     pin6 = models.OneToOneField(GPIOVariable, help_text='Ground', null=True, blank=True, related_name='mobo_pin6')
+    mdo1 = models.ForeignKey(Device, help_text='Oscilloscope', null=True, blank=True, related_name='osc1')
+    dmm1 = models.ForeignKey(Device, help_text='Multimeter', null=True, blank=True, related_name='mm1')
+    afg1 = models.ForeignKey(Device, help_text='Function Generator', null=True, blank=True, related_name='afg1')
+    dcps1 = models.ForeignKey(Device, help_text='DC Power Supply', null=True, blank=True, related_name='dcps1')
+    robot1 = models.ForeignKey(Device, help_text='Robot Arm', null=True, blank=True, related_name='robot1')
 
     def __str__(self):
         return self.name
