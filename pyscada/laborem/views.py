@@ -55,12 +55,16 @@ def unauthenticated_redirect(func):
 
 @unauthenticated_redirect
 def index(request):
-    if LaboremUser.objects.get(user=request.user).laborem_group_input is None:
-        LaboremUser.objects.filter(user=request.user).exclude(laborem_group_input__hmi_group__name="teacher").update(
-            laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"),
-            last_check=now(), connection_time=now())
-        time.sleep(3)
-        return redirect('/')
+    try:
+        if LaboremUser.objects.get(user=request.user).laborem_group_input is None:
+            LaboremUser.objects.filter(user=request.user).exclude(laborem_group_input__hmi_group__name="teacher").update(
+                laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"),
+                last_check=now(), connection_time=now())
+            time.sleep(3)
+            return redirect('/')
+    except LaboremGroupInputPermission.DoesNotExist:
+        pass
+
     if GroupDisplayPermission.objects.count() == 0:
         view_list = View.objects.all()
     else:
@@ -591,6 +595,8 @@ def move_robot(request):
                                 data['message_laborem'] = "Le robot retire les éléments..."
                         cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
                         cwt.save()
+                        VariableProperty.objects.update_or_create_property(variable=Variable.objects.get(
+                            name="LABOREM"), name="viewer_start_timeline", value=1, timestamp=now())
                         return HttpResponse(json.dumps(data), content_type='application/json')
     return HttpResponse(status=200)
 

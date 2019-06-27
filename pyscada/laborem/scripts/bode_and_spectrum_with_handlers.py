@@ -49,15 +49,24 @@ def startup(self):
 
     try:
         device_laborem = LaboremMotherboardDevice.objects.first()
-        self.inst_mdo = device_laborem.MotherboardIOConfig.mdo1.get_device_instance().get_handler_instance()
-        self.inst_afg = device_laborem.MotherboardIOConfig.afg1.get_device_instance().get_handler_instance()
+        for d in Device.objects.all():
+            if d == device_laborem.MotherboardIOConfig.mdo1:
+                self.inst_mdo = d.visadevice.instrument.get_handler_instance()
+            if d == device_laborem.MotherboardIOConfig.afg1:
+                self.inst_afg = d.visadevice.instrument.get_handler_instance()
     except Device.DoesNotExist:
         logger.error("Script Laborem - Device(s) does not exist, please create all the devices first.")
         return False
+    except AttributeError:
+        logger.error("Script Laborem - The motherboard does not have the good IO configuration for this script.")
+        return False
 
     try:
-        self.inst_robot = device_laborem.MotherboardIOConfig.robot1.get_device_instance().get_handler_instance()
+        for d in Device.objects.all():
+            if d == device_laborem.laboremmotherboard_device.MotherboardIOConfig.mdo1:
+                self.inst_robot = d.get_handler_instance()
     except Device.DoesNotExist:
+        self.inst_robot = None
         logger.debug("Script Laborem - Robot does not exist.")
 
     if self.inst_robot is not None:
@@ -304,7 +313,7 @@ def script(self):
 
         # FFT CH1
         spectrum_hanning_1 = self.inst_mdo.fft(scaled_wave_ch1)
-        tscale = float(self.inst_mdo.inst.query('wfmoutpre:xincr?'))
+        tscale = self.inst_mdo.mdo_xincr()
         frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
         # FFT CH2
         spectrum_hanning_2 = self.inst_mdo.fft(scaled_wave_ch2)

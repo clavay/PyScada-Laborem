@@ -28,7 +28,6 @@ function reload_top10_ranking() {
     });
 };
 
-
 function query_previous_and_next_btn() {
     actual_hash = window.location.hash.substr(1);
     robot = ""
@@ -266,6 +265,7 @@ function move_robot(mov) {
         success: function (data) {
             if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '' && window.location.hash.substr(1) != "waiting") {
                 $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
+                $(".user_stop_btn").hide()
                 $('#MessageModal').modal('show');
             }else {
                 $('#MessageModal').modal('hide');
@@ -467,6 +467,8 @@ function check_time() {
                 CONNECTION_ACCEPTED = 1;
                 if (window.location.hash.substr(1) == "disconnect") {
                     window.location.href = "#loading";
+                }else if (window.location.hash.substr(1) == "loading") {
+                    check_users()
                 }
                 setTimeout(function() {check_time()}, data['setTimeout']);
             }else {

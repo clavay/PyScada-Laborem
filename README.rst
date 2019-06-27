@@ -75,6 +75,8 @@ To use CAS auth
 
    CAS_SERVER_URL = 'https://account.example.com/cas/'
 
+   UNAUTHENTICATED_REDIRECT = '/accounts/choose_login/'
+
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
 
    - import django_cas_ng.views
@@ -102,6 +104,8 @@ To use CAS auth
    CAS_SERVER_URL = 'https://account.example.com/cas/'
    CAS_VERSION = '2'
    CAS_EXTRA_LOGIN_KWARGS = {'proxies': {'https': 'http://proxy.com:3128'}, 'timeout': 5}
+
+   UNAUTHENTICATED_REDIRECT = '/accounts/choose_login/'
 
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
 

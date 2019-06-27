@@ -4,13 +4,12 @@
 handles write tasks for variables attached to the generic devices
 """
 
-from pyscada.laborem.models import LaboremUser, LaboremGroupInputPermission, LaboremRobotBase
+from pyscada.laborem.models import LaboremUser, LaboremGroupInputPermission, LaboremRobotBase, LaboremMotherboardDevice
 from pyscada.models import Variable, VariableProperty
 from django.utils.timezone import now, timedelta
 from django.contrib.auth.models import User, Group
 from django.db.models import F, Q
 import logging
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -72,16 +71,16 @@ def script(self):
         # if no worker take the first viewer by waiting time
         if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").count() == 0 and \
                 LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").count() > 0:
-                lu = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
+            lu = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
                     order_by("connection_time").first()
-                lu.laborem_group_input = LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").first()
-                lu.start_time = now()
-                for base in LaboremRobotBase.objects.all():
-                    if base.element is not None and str(base.element.active) != '0':
-                        lu.start_time += timedelta(seconds=20)
-                lu.save()
-                # logger.debug("New worker : %s" % lu.user)
-                reset_laborem_on_user_or_session_change(self)
+            lu.laborem_group_input = LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").first()
+            lu.start_time = now()
+            for base in LaboremRobotBase.objects.all():
+                if base.element is not None and str(base.element.active) != '0':
+                    lu.start_time += timedelta(seconds=20)
+            lu.save()
+            # logger.debug("New worker : %s" % lu.user)
+            reset_laborem_on_user_or_session_change(self)
 
         # set viewer group for empty user.group
         try:
@@ -111,7 +110,7 @@ def script(self):
 
 def reset_laborem_on_user_or_session_change(self):
     self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                 timestamp=datetime.utcnow())
+                                 timestamp=now())
     self.write_variable_property("LABOREM", "USER_STOP", 1, value_class="BOOLEAN")
     self.write_variable_property("LABOREM", "ROBOT_TAKE_OFF", 1, value_class="BOOLEAN")
     reset_all_vp_of_a_var(self, "BODE_RUN")

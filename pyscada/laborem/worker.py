@@ -5,7 +5,9 @@ from __future__ import unicode_literals
 
 from pyscada.utils.scheduler import Process as BaseDAQProcess
 from pyscada.models import BackgroundProcess
-from pyscada.laborem.models import LaboremMotherboardDevice
+from pyscada.laborem.models import LaboremMotherboardDevice, LaboremGroupInputPermission
+from pyscada.models import Variable, VariableProperty
+from django.contrib.auth.models import Group
 
 import json
 import traceback
@@ -38,6 +40,31 @@ class Process(BaseDAQProcess):
                                            'key': item.id,
                                            'device_id': item.laboremmotherboard_device.pk,
                                            'failed': 0})
+
+        # Create the 3 groups needed by Laborem and filling the permissions
+        v = Group.objects.get_or_create(name="viewer")[0]
+        w = Group.objects.get_or_create(name="worker")[0]
+        t = Group.objects.get_or_create(name="teacher")[0]
+        lv = LaboremGroupInputPermission.objects.get_or_create(hmi_group=v)[0]
+        lw = LaboremGroupInputPermission.objects.get_or_create(hmi_group=w)[0]
+        lt = LaboremGroupInputPermission.objects.get_or_create(hmi_group=t)[0]
+        for var in Variable.objects.all():
+            lw.variables.add(var)
+            lt.variables.add(var)
+        for vp in VariableProperty.objects.all():
+            lw.variable_properties.add(vp)
+            lt.variable_properties.add(vp)
+        try:
+            lw.laborem_motherboard_device.add(LaboremMotherboardDevice.objects.first())
+            lt.laborem_motherboard_device.add(LaboremMotherboardDevice.objects.first())
+        except Exception:
+            logger.error("Laborem Starting : No LaboremMotherBoardDevice")
+        lw.move_robot = True
+        lt.move_robot = True
+        lw.top10_answer = True
+        lt.top10_answer = True
+        lw.save()
+        lt.save()
 
     def loop(self):
         """

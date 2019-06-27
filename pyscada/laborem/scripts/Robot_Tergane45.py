@@ -104,7 +104,7 @@ class Handler(GenericDevice):
 
         if mouvement == 1:
             self.inst.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
-                                                            angle_max_poignet), 'F'))
+                                                                angle_max_poignet), 'F'))
             time.sleep(temps_entre_cmd)
             self.inst.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
             time.sleep(temps_entre_cmd)
@@ -116,7 +116,7 @@ class Handler(GenericDevice):
             self.inst.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
             time.sleep(temps_entre_cmd)
             self.inst.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
-                                                            angle_max_poignet), 'F'))
+                                                                angle_max_poignet), 'F'))
             time.sleep(1)
         elif mouvement == 3:
             self.inst.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
@@ -124,7 +124,7 @@ class Handler(GenericDevice):
             self.inst.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
             time.sleep(temps_entre_cmd)
             self.inst.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
-                                                            angle_max_poignet), 'F'))
+                                                                angle_max_poignet), 'F'))
             time.sleep(1)
         return True
 
@@ -134,7 +134,7 @@ class Handler(GenericDevice):
         self.inst.write(self.format_ascii(self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base), 'B'))
         try:
             variable = Variable.objects.filter(name='LABOREM').first()
-            old_theta = 0.0 - VariableProperty.objects.get_property(variable=variable, name='OLD_THETA')
+            old_theta = 0.0 - VariableProperty.objects.get_property(variable=variable, name='OLD_THETA').value()
             tempo = abs(sum([self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base), old_theta])) * 5000 / 1024
             time.sleep(tempo / 1000)
             VariableProperty.objects.update_or_create_property(variable=variable, name='OLD_THETA',

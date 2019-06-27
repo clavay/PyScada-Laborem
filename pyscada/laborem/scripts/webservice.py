@@ -10,6 +10,8 @@ import requests
 from django.conf import settings
 import ipaddress
 import logging
+from time import time
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,13 +68,13 @@ def script(self):
             resp = requests.get(url=url, proxies=proxies)
 
             if resp.status_code == 200:
-                time = resp.json()['time']
+                timejson = resp.json()['time']
                 value = resp.json()['value']
                 unit = resp.json()['unit']
                 value = float(value) - float(val_init)
-                logger.debug('%s - %s - %s - %s - %s - %s - %s - %s - %s' %
-                             (v, ip, device, variable, value, time, value, unit, v.unit))
-                self.write_values_to_db(data={v: [float(value)], 'timevalues': [float(time)]})
+                #logger.debug('%s - %s - %s - %s - %s - %s - %s - %s - %s' %
+                #             (v, ip, device, variable, value, time, value, unit, v.unit))
+                self.write_values_to_db(data={v: [float(value)], 'timevalues': [float(time())]})
             else:
                 logger.debug('request status_code wrong : %s - %s - %s - %s' % (resp.status_code, ip, device, variable))
         except ValueError:
