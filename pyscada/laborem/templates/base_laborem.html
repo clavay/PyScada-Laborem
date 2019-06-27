@@ -27,7 +27,7 @@
             <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
                 <div class="container">
                     <div class="navbar-header">
-                        <p style="float:left;margin-bottom:0px;margin-right:15px;"><img src="/static/pyscada/img/UOuagalogo.jpg" height=50px>&nbsp;&nbsp;<img src="/static/pyscada/img/AUFlogo.jpg" height=50px></p>
+                        <p style="float:left;margin-bottom:0px;margin-right:15px;"><img src="{% static "pyscada/img/logo1.jpg" %}" onerror="this.width=0;" height=50px>&nbsp;&nbsp;<img src="{% static "pyscada/img/logo2.jpg" %}" onerror="this.width=0;" height=50px></p>
                         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
                             <span class="icon-bar"></span>
                             <span class="icon-bar"></span>
@@ -45,7 +45,11 @@
                             <li class="dropdown"><!-- User -->
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon  glyphicon-user"></span> {% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}<b class="caret"></b></a>
                                 <ul class="dropdown-menu">
-                                    <li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">{{ user.first_name }} {{ user.last_name }}</a></li>	
+                                    {% if user.is_staff %}
+                                    <li><a href="{% url 'pyscada_admin:index' %}" target="{{ link_target }}">Admin</a></li>
+                                    <li class="divider"></li>
+                                    {% endif %}
+                                    <li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">{{ user.first_name }} {{ user.last_name }}</a></li>
                                     <li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">{{ user.email }}</a></li>
                                     <li role="presentation" class="disabled hidden"><a role="menuitem" tabindex="-1" href="#">change user info</a></li>
                                     <li class="divider hidden"></li>
