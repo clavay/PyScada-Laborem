@@ -18,6 +18,8 @@ What is not Working/Missing
 Installation
 ------------
 
+ - For automatic installation look at : extras/install.sh (you need to configure settings.py manually)
+
  - sudo apt-get update
  - sudo apt-get -y upgrade
  - sudo apt-get install python3-pip
