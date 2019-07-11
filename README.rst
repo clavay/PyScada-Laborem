@@ -2,8 +2,8 @@ PyScada-Laborem
 ==================================
 
 Laborem extension to PyScada
-For information about PyScada look at : https://github.com/clavay/PyScada and http://pyscada.rtfd.io
-For the hardware development look at : https://github.com/bletow/Laborem-plugs
+ - For information about PyScada look at : https://github.com/clavay/PyScada and http://pyscada.rtfd.io
+ - For the hardware development look at : https://github.com/bletow/Laborem-plugs
 
 What is Working
 ---------------
