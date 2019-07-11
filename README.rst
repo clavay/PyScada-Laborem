@@ -2,6 +2,8 @@ PyScada-Laborem
 ==================================
 
 Laborem extension to PyScada
+For information about PyScada look at : https://github.com/clavay/PyScada and http://pyscada.rtfd.io
+For the hardware development look at : https://github.com/bletow/Laborem-plugs
 
 What is Working
 ---------------
@@ -26,7 +28,7 @@ Installation
  - If behind a proxy pre-install dependencies : sudo pip3 install cffi Cython numpy lxml docutils
  - Install PyScada : https://pyscada.readthedocs.io/en/dev-0.7.x/installation.html
  - Change : sudo pip3 install https://github.com/trombastic/PyScada/archive/dev/0.7.x.zip
-    to : sudo pip3 install https://github.com/clavay/PyScada/tarball/hmi
+    to : sudo pip3 install https://github.com/clavay/PyScada/tarball/hmi-tmp
  - Install pyusb : sudo pip3 install pyusb
  - Install gpiozero : sudo pip3 install gpiozero
  - Install PyScada-Laborem : sudo pip3 install https://github.com/clavay/PyScada-Laborem/tarball/master
