@@ -233,6 +233,7 @@ To use less the SD card on a Raspberry Pi
 To use GPIB adapters
 --------------------
  - Follow this instructions : https://xdevs.com/guide/ni_gpib_rpi/
+ - sudo usermod -a -G plugdev pyscada
  - To install to python3 :
      - cd linux-gpib/linux-gpib-4.2.0/linux-gpib-user-4.2.0/language/python/
      - sudo python3 setup.py install
