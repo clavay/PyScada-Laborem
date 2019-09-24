@@ -8,7 +8,7 @@ from pyscada.laborem.models import LaboremPlugDevice, LaboremRobotElement, Labor
 from pyscada.laborem.models import LaboremTOP10 , LaboremTOP10Score, LaboremTOP10Ranking, LaboremGroupInputPermission
 from pyscada.admin import DeviceAdmin
 from pyscada.admin import admin_site
-from pyscada.models import Device, DeviceProtocol
+from pyscada.models import DeviceProtocol
 from django.contrib import admin
 
 import logging

@@ -9,6 +9,7 @@ from pyscada.laborem.models import LaboremMotherboardDevice, LaboremGroupInputPe
 from pyscada.models import Variable, VariableProperty
 from django.contrib.auth.models import Group
 
+import traceback
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ class Process(SingleDeviceDAQProcessWorker):
             lt.laborem_motherboard_device.add(LaboremMotherboardDevice.objects.first())
         except Exception:
             logger.error("Laborem Starting : No LaboremMotherBoardDevice")
+            logger.debug('%s, unhandled exception\n%s' % (self.label, traceback.format_exc()))
         lw.move_robot = True
         lt.move_robot = True
         lw.top10_answer = True

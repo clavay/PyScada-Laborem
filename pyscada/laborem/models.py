@@ -302,6 +302,18 @@ class LaboremTOP10Ranking(models.Model):
 
 
 @python_2_unicode_compatible
+class LaboremExperience(models.Model):
+    name = models.CharField(default='', max_length=255)
+    short_name = models.CharField(default='', max_length=255)
+    description = models.TextField(default='', verbose_name="Description", null=True)
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
 class LaboremGroupInputPermission(models.Model):
     hmi_group = models.OneToOneField(Group)
     variables = models.ManyToManyField(Variable, blank=True)
@@ -309,6 +321,7 @@ class LaboremGroupInputPermission(models.Model):
     laborem_motherboard_device = models.ManyToManyField(LaboremMotherboardDevice, blank=True)
     move_robot = models.BooleanField(default=False, blank=True)
     top10_answer = models.BooleanField(default=False, blank=True)
+    laborem_experiences = models.ManyToManyField(LaboremExperience, blank=True)
 
     def __str__(self):
         return self.hmi_group.name

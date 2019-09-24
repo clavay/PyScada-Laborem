@@ -51,11 +51,6 @@ def startup(self):
         device_laborem = LaboremMotherboardDevice.objects.first()
         self.inst_mdo = device_laborem.MotherboardIOConfig.mdo1.get_device_instance().get_handler_instance()
         self.inst_afg = device_laborem.MotherboardIOConfig.afg1.get_device_instance().get_handler_instance()
-#        for d in Device.objects.all():
-#            if d == device_laborem.MotherboardIOConfig.mdo1:
-#                self.inst_mdo = d.visadevice.instrument.get_handler_instance()
-#            if d == device_laborem.MotherboardIOConfig.afg1:
-#                self.inst_afg = d.visadevice.instrument.get_handler_instance()
     except Device.DoesNotExist:
         self.inst_mdo = None
         self.inst_afg = None
@@ -67,15 +62,20 @@ def startup(self):
 
     try:
         self.inst_robot = device_laborem.MotherboardIOConfig.robot1.get_device_instance().get_handler_instance()
-#        for d in Device.objects.all():
-#            if d == device_laborem.laboremmotherboard_device.MotherboardIOConfig.mdo1:
-#                self.inst_robot = d.get_handler_instance()
+        self.inst_robot.init()
     except Device.DoesNotExist:
         self.inst_robot = None
         logger.debug("Script Laborem - Robot does not exist.")
+    except AttributeError:
+        self.inst_robot = None
+        logger.debug("Script Laborem - Robot is None.")
 
-    if self.inst_robot is not None:
-        self.inst_robot.init()
+    try:
+        self.inst_mdo2 = device_laborem.MotherboardIOConfig.mdo2.get_device_instance().get_handler_instance()
+    except Device.DoesNotExist:
+        self.inst_mdo2 = None
+    except AttributeError:
+        self.inst_mdo2 = None
 
     return True
 
@@ -111,6 +111,12 @@ def shutdown(self):
         pass
     except visa.VisaIOError:
         pass
+    try:
+        if self.inst_mdo2 is not None:
+            self.inst_mdo2.inst.close()
+            self.inst_mdo2.inst = None
+    except AttributeError:
+        pass
 
     return True
 
@@ -121,7 +127,7 @@ def script(self):
 
     :return:
     """
-    if self.inst_afg.inst is not None and self.inst_mdo.inst is not None and self.inst_robot.inst is not None:
+    if self.inst_afg.inst is not None and self.inst_mdo.inst is not None:  # and self.inst_robot.inst is not None:
         put_on_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON'))
         if put_on_robot:
             if self.inst_robot is None:
@@ -156,9 +162,10 @@ def script(self):
         take_off_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_TAKE_OFF'))
         if take_off_robot:
             if self.inst_robot is None:
-                self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
-                                             value_class='string')
-                time.sleep(5)
+                #self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
+                #                             value_class='string')
+                #time.sleep(5)
+                pass
             else:
                 logger.debug("Taking off Elements...")
                 for base in LaboremRobotBase.objects.all():
@@ -266,6 +273,100 @@ def script(self):
                                          value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
+        bode_compare_instruments = bool(self.read_variable_property(variable_name='Bode_run',
+                                                                    property_name='BODE_5_LOOP_COMPARE'))
+        if bode_compare_instruments:
+            logger.debug("Bode running...")
+            logger.debug("MDO1 timeout : %d" % self.inst_mdo.inst.timeout)
+            logger.debug("MDO2 timeout : %d" % self.inst_mdo2.inst.timeout)
+            self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                         timestamp=now())
+            self.write_variable_property("LABOREM", "message_laborem", "Diagrammes de Bode en cours d'acquisition...",
+                                         value_class='string')
+
+            # Send *RST to all instruments
+            self.inst_afg.reset_instrument()
+            self.inst_mdo.reset_instrument()
+            self.inst_mdo2.reset_instrument()
+            time.sleep(2)
+
+            # Prepare AFG for Bode : output1 on, output imp max
+            self.inst_afg.afg_prepare_for_bode(ch=1)
+
+            # Set generator Vpp
+            vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
+            self.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+
+            # Prepare MDO trigger, channel 1 vertical scale, bandwidth
+            self.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
+            self.inst_mdo2.mdo_prepare_for_bode(vpp=vepp)
+
+            fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
+            fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
+            nb_points = self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS')
+
+            # Progress bar
+            n = 0
+            self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
+            self.write_variable_property("LABOREM", "progress_bar_min", 0, value_class='int16')
+            self.write_variable_property("LABOREM", "progress_bar_max", nb_points, value_class='int16')
+
+            range_i = None
+            range_i_2 = None
+            for f in np.geomspace(fmin, fmax, nb_points):
+                if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+                    self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                                 timestamp=now())
+                    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+                    self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
+                                                 value_class='BOOLEAN')
+                    self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
+                    self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                    return
+                # Progress bar
+                n += 1
+                self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
+
+                # Set the generator frequency to f
+                self.inst_afg.afg_set_frequency(ch=1, frequency=f)
+
+                period = 4.0
+
+                # Set the oscilloscope horizontal scale and find the vertical scale for channel 2
+                range_i = self.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i, period=period)
+                range_i_2 = self.inst_mdo2.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i_2, period=period)
+
+                # Start reading the phase
+                phase_osc, phase_np = self.inst_mdo.mdo_get_phase(source1=1, source2=2, frequency=f, period=period)
+                phase_osc2, phase_np2 = self.inst_mdo2.mdo_get_phase(source1=1, source2=2, frequency=f, period=period)
+
+                # Start reading the gain
+                period = 2.0
+                self.inst_mdo.mdo_horizontal_scale_in_period(period=period, frequency=f)
+                gain = self.inst_mdo.mdo_gain(source1=1, source2=2, frequency=f, period=period)
+                self.inst_mdo2.mdo_horizontal_scale_in_period(period=period, frequency=f)
+                gain2 = self.inst_mdo2.mdo_gain(source1=1, source2=2, frequency=f, period=period)
+
+                logger.debug("Freq : %s - Gain : %s - Phase Osc : %s - Phase Np : %s" % (f, gain, phase_osc, phase_np))
+
+                timevalues = time.time()
+                self.write_values_to_db(data={'Bode_Freq': [f], 'timevalues': [timevalues]})
+                self.write_values_to_db(data={'Bode_Gain': [gain], 'timevalues': [timevalues]})
+                self.write_values_to_db(data={'Bode_Phase': [phase_osc], 'timevalues': [timevalues]})
+                self.write_values_to_db(data={'Bode_Phase_numpy': [phase_np], 'timevalues': [timevalues]})
+                self.write_values_to_db(data={'Bode_Gain2': [gain2], 'timevalues': [timevalues]})
+                self.write_values_to_db(data={'Bode_Phase2': [phase_osc2], 'timevalues': [timevalues]})
+                self.write_values_to_db(data={'Bode_Phase_numpy2': [phase_np2], 'timevalues': [timevalues]})
+
+            logger.debug("Bode end")
+            self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
+                                         timestamp=now())
+            time.sleep(2)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP_COMPARE', value=0,
+                                         value_class='BOOLEAN')
+            self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
+
         waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
         if waveform:
             logger.debug("Waveform running...")
@@ -360,9 +461,3 @@ def script(self):
                                          value_class='BOOLEAN')
 
         self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-
-    else:
-        logger.error("Script Laborem : an instrument is None")
-        logger.error("self.inst_afg : %s" % self.inst_afg)
-        logger.error("self.inst_mdo : %s" % self.inst_mdo)
-        logger.error("self.inst_robot : %s" % self.inst_robot)

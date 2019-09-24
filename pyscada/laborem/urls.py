@@ -24,4 +24,5 @@ urlpatterns = [
     url(r'^form/check_users/$', views.check_users),
     url(r'^form/check_time/$', views.check_time),
     url(r'^form/remove_id/$', views.remove_id),
+    url(r'^form/get_experience_list/$', views.get_experience_list),
 ]

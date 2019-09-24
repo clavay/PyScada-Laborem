@@ -10,13 +10,9 @@ from pyscada.hmi.models import View
 from pyscada.hmi.models import Page
 
 from pyscada.laborem import version as laborem_version
-from pyscada.models import Variable, VariableProperty, DeviceWriteTask, VariablePropertyManager
-from .models import LaboremRobotElement
-from .models import LaboremRobotBase
-from .models import LaboremMotherboardDevice
-from .models import LaboremTOP10
-from .models import LaboremTOP10Score
-from .models import LaboremTOP10Ranking, LaboremGroupInputPermission, LaboremUser
+from pyscada.models import Variable, VariableProperty, DeviceWriteTask
+from .models import LaboremRobotElement, LaboremRobotBase, LaboremMotherboardDevice, LaboremExperience
+from .models import LaboremTOP10Ranking, LaboremGroupInputPermission, LaboremUser, LaboremTOP10, LaboremTOP10Score
 
 from django.http import HttpResponse
 from django.template.loader import get_template
@@ -150,10 +146,10 @@ def view_laborem(request, link_title):
             if not widget.visible:
                 continue
             mc, sbc = widget.content.create_panel_html(widget_pk=widget.pk, user=request.user)
-            if mc is not None:
+            if mc is not None and mc is not "":
                 main_content.append(dict(html=mc, widget=widget))
             else:
-                logger.info("main_content of widget : %s is None !" % widget)
+                logger.info("main_content of widget : %s is %s !" % (widget, mc))
             if sbc is not None:
                 sidebar_content.append(dict(html=sbc, widget=widget))
             if widget.content.content_model == "pyscada.hmi.models.Chart":
@@ -185,7 +181,7 @@ def view_laborem(request, link_title):
         'view_show_timeline': v.show_timeline,
         'version_string': core_version,
         'laborem_version_string': laborem_version,
-        'form_top10qa': form_top10qa
+        'form_top10qa': form_top10qa,
     }
 
     return TemplateResponse(request, 'view_laborem.html', c)
@@ -836,4 +832,17 @@ def check_users(request):
             pass
     '''
 
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
+
+@unauthenticated_redirect
+def get_experience_list(request):
+    if LaboremGroupInputPermission.objects.count() == 0:
+        visible_experience_list = LaboremExperience.objects.all().values_list('pk', flat=True)
+    else:
+        visible_experience_list = LaboremGroupInputPermission.objects.filter(
+            hmi_group__in=request.user.groups.iterator()).values_list('laborem_experiences', flat=True)
+    data = dict()
+    for e in visible_experience_list:
+        data[LaboremExperience.objects.get(pk=e).short_name] = LaboremExperience.objects.get(pk=e).name
     return HttpResponse(json.dumps(data), content_type='application/json')

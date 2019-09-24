@@ -737,6 +737,22 @@ function check_users() {
     });
 }
 
+function get_experience_list() {
+    $.ajax({
+        type: 'post',
+        url: ROOT_URL+'form/get_experience_list/',
+        data: {},
+        success: function (data) {
+            for (var key in data){
+                $(".expe_list").append('<a href="javascript:;" class="list-group-item expe_list_item" name=' + key + '>' + data[key] + '</a>')
+            };
+        },
+        error: function(data) {
+            console.log('get_experience_list failed');
+        }
+    })
+}
+
 $( document ).ready(function() {
     // Change text and link of PyScada in navbar
     $(".navbar-brand").attr("href", "");
@@ -757,6 +773,9 @@ $( document ).ready(function() {
 
     // Load top10 ranking at start
     reload_top10_ranking();
+
+    // Load experience list at start
+    get_experience_list();
 
     // Reset the pages settings at start
     reset_page(window.location.hash.substr(1));

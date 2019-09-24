@@ -84,8 +84,10 @@ def script(self):
 
         # set viewer group for empty user.group
         try:
-            User.objects.get(groups__isnull=True).groups.add(Group.objects.get(name="viewer"))
+            User.objects.filter(groups__isnull=True).first().groups.add(Group.objects.get(name="viewer"))
         except User.DoesNotExist:
+            pass
+        except AttributeError:
             pass
 
         # update the user group to the group selected in LaboremUser

@@ -80,3 +80,5 @@ def script(self):
         except ValueError:
             # logger.debug('IP address not valid : %s - %s - %s' % (ip, device, variable))
             pass
+        except requests.exceptions.ConnectionError:
+            pass
