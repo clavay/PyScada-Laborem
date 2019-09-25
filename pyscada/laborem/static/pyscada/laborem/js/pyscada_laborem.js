@@ -746,6 +746,27 @@ function get_experience_list() {
             for (var key in data){
                 $(".expe_list").append('<a href="javascript:;" class="list-group-item expe_list_item" name=' + key + '>' + data[key] + '</a>')
             };
+            // Change next button and save experience in Variable Property
+            $('.expe_list_item').on('click', function() {
+                var $this = $(this);
+                $('.expe_list_item.active').removeClass('active');
+                $this.addClass('active');
+                if (typeof $('.expe_list_item.active').attr('name') != 'undefined') {
+                    expe = $('.expe_list_item.active').attr('name')
+                    $.ajax({
+                        type: 'post',
+                        url: ROOT_URL+'form/write_property/',
+                        data: {variable_property:"EXPERIENCE",value:expe},
+                        success: function (data) {
+
+                        },
+                        error: function(data) {
+                            add_notification('write expe failed',3);
+                        }
+                    });
+                }
+                query_previous_and_next_btn();
+            });
         },
         error: function(data) {
             console.log('get_experience_list failed');
@@ -827,28 +848,6 @@ $( document ).ready(function() {
         $(".img-plug").attr("src",$img);
         //change_plug_selected_motherboard($mb_id, $plug_id, $plug_name)
         query_previous_and_next_btn()
-    });
-
-    // Change next button and save experience in Variable Property
-    $('.expe_list_item').on('click', function() {
-        var $this = $(this);
-        $('.expe_list_item.active').removeClass('active');
-        $this.addClass('active');
-        if (typeof $('.expe_list_item.active').attr('name') != 'undefined') {
-            expe = $('.expe_list_item.active').attr('name')
-            $.ajax({
-                type: 'post',
-                url: ROOT_URL+'form/write_property/',
-                data: {variable_property:"EXPERIENCE",value:expe},
-                success: function (data) {
-
-                },
-                error: function(data) {
-                    add_notification('write expe failed',3);
-                }
-            });
-        }
-        query_previous_and_next_btn();
     });
 
     // For the robot : active the selected item in a listbox and disable it in others listboxes

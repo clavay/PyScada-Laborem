@@ -94,7 +94,7 @@ def script(self):
         for U in User.objects.exclude(laboremuser__laborem_group_input__isnull=True).exclude(
                 laboremuser__laborem_group_input__hmi_group=F('groups')):
             try:
-                U.groups.clear()
+                U.groups.remove(Group.objects.get(name='viewer'), Group.objects.get(name='worker'))
                 U.groups.add(U.laboremuser.laborem_group_input.hmi_group)
                 # logger.debug("User with different laborem group : %s" % U)
             except LaboremUser.DoesNotExist:

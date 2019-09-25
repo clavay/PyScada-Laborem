@@ -303,8 +303,7 @@ class LaboremTOP10Ranking(models.Model):
 
 @python_2_unicode_compatible
 class LaboremExperience(models.Model):
-    name = models.CharField(default='', max_length=255)
-    short_name = models.CharField(default='', max_length=255)
+    page = models.OneToOneField(Page, null=True)
     description = models.TextField(default='', verbose_name="Description", null=True)
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)

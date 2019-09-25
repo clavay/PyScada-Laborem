@@ -198,7 +198,7 @@ def form_write_plug(request):
             try:
                 mb = LaboremMotherboardDevice.objects.get(pk=mb_id,
                                                           laboremgroupinputpermission__hmi_group__in=request.user.
-                                                          groups.iterator())
+                                                          groups.exclude(name='teacher').iterator())
             except LaboremMotherboardDevice.DoesNotExist:
                 logger.warning("In form_write_plug  : LaboremMotherboardDevice.DoesNotExist - mb_id : %s" % mb_id)
                 return HttpResponse(status=200)
@@ -249,7 +249,7 @@ def form_write_property(request):
                 try:
                     vpgetbyname = VariableProperty.objects.get(pk=variable_property,
                                                                laboremgroupinputpermission__hmi_group__in=request.user.
-                                                               groups.iterator())
+                                                               groups.exclude(name='teacher').iterator())
                     VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
                 except VariableProperty.DoesNotExist:
                     logger.debug("form_write_property - vp as int or float - "
@@ -265,7 +265,7 @@ def form_write_property(request):
                 try:
                     vpgetbyname = VariableProperty.objects.get(name=variable_property,
                                                                laboremgroupinputpermission__hmi_group__in=request.
-                                                               user.groups.iterator())
+                                                               user.groups.exclude(name='teacher').iterator())
                     VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
                 except VariableProperty.DoesNotExist:
                     logger.debug("form_write_property - vp as str - "
@@ -659,7 +659,8 @@ def check_users(request):
 
     # Laborem group
     data['user_type'] = \
-        str(request.user.groups.all().first()) if request.user.groups.all().first() is not None else "none"
+        str(request.user.groups.remove(Group.objects.get(name='teacher')).first()) \
+        if request.user.groups.remove(Group.objects.get(name='teacher')).first() is not None else "none"
 
     '''
     if request.user.groups.all().first() == Group.objects.get(name="viewer"):
@@ -844,5 +845,6 @@ def get_experience_list(request):
             hmi_group__in=request.user.groups.iterator()).values_list('laborem_experiences', flat=True)
     data = dict()
     for e in visible_experience_list:
-        data[LaboremExperience.objects.get(pk=e).short_name] = LaboremExperience.objects.get(pk=e).name
+        if e is not None:
+            data[LaboremExperience.objects.get(pk=e).link_title] = LaboremExperience.objects.get(pk=e).title
     return HttpResponse(json.dumps(data), content_type='application/json')

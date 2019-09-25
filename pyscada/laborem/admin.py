@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from pyscada.laborem import PROTOCOL_ID
 from pyscada.laborem.models import LaboremMotherboardDevice, LaboremMotherboardIOConfig, LaboremMotherboardIOElement
-from pyscada.laborem.models import ExtendedLaboremMotherboardDevice
+from pyscada.laborem.models import ExtendedLaboremMotherboardDevice, LaboremExperience
 from pyscada.laborem.models import LaboremPlugDevice, LaboremRobotElement, LaboremRobotBase, LaboremUser
 from pyscada.laborem.models import LaboremTOP10 , LaboremTOP10Score, LaboremTOP10Ranking, LaboremGroupInputPermission
 from pyscada.admin import DeviceAdmin
@@ -62,8 +62,8 @@ class LaboremRobotElementAdmin(admin.ModelAdmin):
     list_display = ('name', 'active', 'value', 'unit', 'R', 'theta', 'z')
 
 
-class GroupDisplayPermissionAdmin(admin.ModelAdmin):
-    filter_horizontal = ('variables', 'variable_properties', 'laborem_motherboard_device')
+class LaboremGroupInputPermissionAdmin(admin.ModelAdmin):
+    filter_horizontal = ('variables', 'variable_properties', 'laborem_motherboard_device', 'laborem_experiences')
 
 
 class LaboremUserAdmin(admin.ModelAdmin):
@@ -73,11 +73,12 @@ class LaboremUserAdmin(admin.ModelAdmin):
 admin_site.register(ExtendedLaboremMotherboardDevice, LaboremMotherboardDeviceAdmin)
 admin_site.register(LaboremMotherboardIOConfig)
 admin_site.register(LaboremMotherboardIOElement)
+admin_site.register(LaboremExperience)
 admin_site.register(LaboremPlugDevice, LaboremPlugDeviceAdmin)
 admin_site.register(LaboremRobotElement, LaboremRobotElementAdmin)
 admin_site.register(LaboremRobotBase, LaboremRobotBaseAdmin)
 admin_site.register(LaboremTOP10, LaboremTOP10Admin)
 admin_site.register(LaboremTOP10Score, LaboremTOP10ScoreAdmin)
 admin_site.register(LaboremTOP10Ranking, LaboremTOP10RankingAdmin)
-admin_site.register(LaboremGroupInputPermission, GroupDisplayPermissionAdmin)
+admin_site.register(LaboremGroupInputPermission, LaboremGroupInputPermissionAdmin)
 admin_site.register(LaboremUser, LaboremUserAdmin)
