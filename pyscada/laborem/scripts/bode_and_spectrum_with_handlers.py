@@ -44,7 +44,7 @@ def startup(self):
 
     self.write_variable_property("LABOREM", "message_laborem", "Laborem is starting. Please Wait...",
                                  value_class='string')
-    time.sleep(10)
+    time.sleep(60)
     self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
     try:

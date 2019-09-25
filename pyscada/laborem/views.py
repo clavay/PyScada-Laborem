@@ -659,8 +659,8 @@ def check_users(request):
 
     # Laborem group
     data['user_type'] = \
-        str(request.user.groups.remove(Group.objects.get(name='teacher')).first()) \
-        if request.user.groups.remove(Group.objects.get(name='teacher')).first() is not None else "none"
+        str(request.user.groups.exclude(name='teacher').first()) \
+        if request.user.groups.exclude(name='teacher').first() is not None else "none"
 
     '''
     if request.user.groups.all().first() == Group.objects.get(name="viewer"):
@@ -846,5 +846,5 @@ def get_experience_list(request):
     data = dict()
     for e in visible_experience_list:
         if e is not None:
-            data[LaboremExperience.objects.get(pk=e).link_title] = LaboremExperience.objects.get(pk=e).title
+            data[LaboremExperience.objects.get(pk=e).page.link_title] = LaboremExperience.objects.get(pk=e).page.title
     return HttpResponse(json.dumps(data), content_type='application/json')
