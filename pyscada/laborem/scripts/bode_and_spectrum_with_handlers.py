@@ -44,38 +44,22 @@ def startup(self):
 
     self.write_variable_property("LABOREM", "message_laborem", "Laborem is starting. Please Wait...",
                                  value_class='string')
-    time.sleep(60)
-    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
     try:
-        device_laborem = LaboremMotherboardDevice.objects.first()
-        self.inst_mdo = device_laborem.MotherboardIOConfig.mdo1.get_device_instance().get_handler_instance()
-        self.inst_afg = device_laborem.MotherboardIOConfig.afg1.get_device_instance().get_handler_instance()
-    except Device.DoesNotExist:
-        self.inst_mdo = None
-        self.inst_afg = None
-        logger.error("Script Laborem - Device(s) does not exist, please create all the devices first.")
-        return False
+        io_conf = LaboremMotherboardDevice.objects.first().MotherboardIOConfig
     except AttributeError:
         logger.error("Script Laborem - The motherboard does not have the good IO configuration for this script.")
         return False
 
-    try:
-        self.inst_robot = device_laborem.MotherboardIOConfig.robot1.get_device_instance().get_handler_instance()
-        self.inst_robot.init()
-    except Device.DoesNotExist:
-        self.inst_robot = None
-        logger.debug("Script Laborem - Robot does not exist.")
-    except AttributeError:
-        self.inst_robot = None
-        logger.debug("Script Laborem - Robot is None.")
+    self.instruments = lambda: None
+    self.instruments.inst_mdo = connect_check_visa(io_conf.mdo1)
+    self.instruments.inst_afg = connect_check_visa(io_conf.afg1)
+    self.instruments.inst_robot = connect_check_visa(io_conf.robot1, False)
+    self.instruments.inst_mdo2 = connect_check_visa(io_conf.mdo2)
 
-    try:
-        self.inst_mdo2 = device_laborem.MotherboardIOConfig.mdo2.get_device_instance().get_handler_instance()
-    except Device.DoesNotExist:
-        self.inst_mdo2 = None
-    except AttributeError:
-        self.inst_mdo2 = None
+    self.instruments.inst_robot.init() if self.instruments.inst_robot is not None else True
+
+    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
     return True
 
@@ -90,33 +74,14 @@ def shutdown(self):
                                  timestamp=now())
     self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                  timestamp=now())
+
     try:
-        if self.inst_mdo is not None:
-            self.inst_mdo.inst.close()
-            self.inst_mdo.inst = None
-    except AttributeError:
-        pass
-    try:
-        if self.inst_afg is not None:
-            self.inst_afg.inst.close()
-            self.inst_afg.inst = None
-    except AttributeError:
-        pass
-    try:
-        if self.inst_robot is not None:
-            self.inst_robot.init()
-            self.inst_robot.inst.close()
-            self.inst_robot = None
-    except AttributeError:
-        pass
-    except visa.VisaIOError:
-        pass
-    try:
-        if self.inst_mdo2 is not None:
-            self.inst_mdo2.inst.close()
-            self.inst_mdo2.inst = None
-    except AttributeError:
-        pass
+        self.instruments.inst_mdo.inst.close()
+        self.instruments.inst_afg.inst.close()
+        self.instruments.inst_robot.inst.close()
+        self.instruments.inst_mdo2.inst.close()
+    except visa.VisaIOError as e:
+        logger.error(e)
 
     return True
 
@@ -127,10 +92,11 @@ def script(self):
 
     :return:
     """
-    if self.inst_afg.inst is not None and self.inst_mdo.inst is not None:  # and self.inst_robot.inst is not None:
+    if self.instruments.inst_afg.inst is not None and self.instruments.inst_mdo.inst is not None:
+        # and self.instruments.inst_robot.inst is not None:
         put_on_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON'))
         if put_on_robot:
-            if self.inst_robot is None:
+            if self.instruments.inst_robot is None:
                 self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
                                              value_class='string')
                 time.sleep(5)
@@ -147,7 +113,8 @@ def script(self):
                         r_base = base.R
                         theta_base = base.theta
                         z_base = base.z
-                        self.inst_robot.take_and_drop(r_element, theta_element, z_element, r_base, theta_base, z_base)
+                        self.instruments.inst_robot.take_and_drop(
+                            r_element, theta_element, z_element, r_base, theta_base, z_base)
                         base.element.change_active_to_base_id(base.pk)
                     else:
                         if base.element is None:
@@ -161,10 +128,10 @@ def script(self):
 
         take_off_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_TAKE_OFF'))
         if take_off_robot:
-            if self.inst_robot is None:
-                #self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
+            if self.instruments.inst_robot is None:
+                # self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
                 #                             value_class='string')
-                #time.sleep(5)
+                # time.sleep(5)
                 pass
             else:
                 logger.debug("Taking off Elements...")
@@ -178,7 +145,8 @@ def script(self):
                         r_base = base.R
                         theta_base = base.theta
                         z_base = base.z
-                        self.inst_robot.take_and_drop(r_base, theta_base, z_base, r_element, theta_element, z_element)
+                        self.instruments.inst_robot.take_and_drop(
+                            r_base, theta_base, z_base, r_element, theta_element, z_element)
                         base.element.change_active_to_base_id('0')
                     else:
                         if base.element is None:
@@ -192,28 +160,28 @@ def script(self):
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
         bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
-        if bode:
+        if bode and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
             logger.debug("Bode running...")
-            logger.debug("MDO timeout : %d" % self.inst_mdo.inst.timeout)
+            logger.debug("MDO timeout : %d" % self.instruments.inst_mdo.inst.timeout)
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem", "Diagrammes de Bode en cours d'acquisition...",
                                          value_class='string')
 
             # Send *RST to all instruments
-            self.inst_afg.reset_instrument()
-            self.inst_mdo.reset_instrument()
+            self.instruments.inst_afg.reset_instrument()
+            self.instruments.inst_mdo.reset_instrument()
             time.sleep(2)
 
             # Prepare AFG for Bode : output1 on, output imp max
-            self.inst_afg.afg_prepare_for_bode(ch=1)
+            self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
 
             # Set generator Vpp
             vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
-            self.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+            self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
 
             fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
             fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
@@ -241,20 +209,22 @@ def script(self):
                 self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
 
                 # Set the generator frequency to f
-                self.inst_afg.afg_set_frequency(ch=1, frequency=f)
+                self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
                 period = 4.0
 
                 # Set the oscilloscope horizontal scale and find the vertical scale for channel 2
-                range_i = self.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i, period=period)
+                range_i = self.instruments.inst_mdo.mdo_find_vertical_scale(
+                    ch=2, frequency=f, range_i=range_i, period=period)
 
                 # Start reading the phase
-                phase_osc, phase_np = self.inst_mdo.mdo_get_phase(source1=1, source2=2, frequency=f, period=period)
+                phase_osc, phase_np = self.instruments.inst_mdo.mdo_get_phase(
+                    source1=1, source2=2, frequency=f, period=period)
 
                 # Start reading the gain
                 period = 2.0
-                self.inst_mdo.mdo_horizontal_scale_in_period(period=period, frequency=f)
-                gain = self.inst_mdo.mdo_gain(source1=1, source2=2, frequency=f, period=period)
+                self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=period, frequency=f)
+                gain = self.instruments.inst_mdo.mdo_gain(source1=1, source2=2, frequency=f, period=period)
 
                 logger.debug("Freq : %s - Gain : %s - Phase Osc : %s - Phase Np : %s" % (f, gain, phase_osc, phase_np))
 
@@ -275,31 +245,32 @@ def script(self):
 
         bode_compare_instruments = bool(self.read_variable_property(variable_name='Bode_run',
                                                                     property_name='BODE_5_LOOP_COMPARE'))
-        if bode_compare_instruments:
+        if bode_compare_instruments and self.instruments.inst_mdo is not None \
+                and self.instruments.inst_afg is not None and self.instruments.inst_mdo2 is not None:
             logger.debug("Bode running...")
-            logger.debug("MDO1 timeout : %d" % self.inst_mdo.inst.timeout)
-            logger.debug("MDO2 timeout : %d" % self.inst_mdo2.inst.timeout)
+            logger.debug("MDO1 timeout : %d" % self.instruments.inst_mdo.inst.timeout)
+            logger.debug("MDO2 timeout : %d" % self.instruments.inst_mdo2.inst.timeout)
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem", "Diagrammes de Bode en cours d'acquisition...",
                                          value_class='string')
 
             # Send *RST to all instruments
-            self.inst_afg.reset_instrument()
-            self.inst_mdo.reset_instrument()
-            self.inst_mdo2.reset_instrument()
+            self.instruments.inst_afg.reset_instrument()
+            self.instruments.inst_mdo.reset_instrument()
+            self.instruments.inst_mdo2.reset_instrument()
             time.sleep(2)
 
             # Prepare AFG for Bode : output1 on, output imp max
-            self.inst_afg.afg_prepare_for_bode(ch=1)
+            self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
 
             # Set generator Vpp
             vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
-            self.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+            self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
-            self.inst_mdo2.mdo_prepare_for_bode(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
+            self.instruments.inst_mdo2.mdo_prepare_for_bode(vpp=vepp)
 
             fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
             fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
@@ -328,26 +299,32 @@ def script(self):
                 self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
 
                 # Set the generator frequency to f
-                self.inst_afg.afg_set_frequency(ch=1, frequency=f)
+                self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
                 period = 4.0
 
                 # Set the oscilloscope horizontal scale and find the vertical scale for channel 2
-                range_i = self.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i, period=period)
-                range_i_2 = self.inst_mdo2.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i_2, period=period)
+                range_i = self.instruments.inst_mdo.mdo_find_vertical_scale(
+                    ch=2, frequency=f, range_i=range_i, period=period)
+                range_i_2 = self.instruments.inst_mdo2.mdo_find_vertical_scale(
+                    ch=2, frequency=f, range_i=range_i_2, period=period)
 
                 # Start reading the phase
-                phase_osc, phase_np = self.inst_mdo.mdo_get_phase(source1=1, source2=2, frequency=f, period=period)
-                phase_osc2, phase_np2 = self.inst_mdo2.mdo_get_phase(source1=1, source2=2, frequency=f, period=period)
+                phase_osc, phase_np = self.instruments.inst_mdo.mdo_get_phase(
+                    source1=1, source2=2, frequency=f, period=period)
+                phase_osc2, phase_np2 = self.instruments.inst_mdo2.mdo_get_phase(
+                    source1=1, source2=2, frequency=f, period=period)
 
                 # Start reading the gain
                 period = 2.0
-                self.inst_mdo.mdo_horizontal_scale_in_period(period=period, frequency=f)
-                gain = self.inst_mdo.mdo_gain(source1=1, source2=2, frequency=f, period=period)
-                self.inst_mdo2.mdo_horizontal_scale_in_period(period=period, frequency=f)
-                gain2 = self.inst_mdo2.mdo_gain(source1=1, source2=2, frequency=f, period=period)
+                self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=period, frequency=f)
+                gain = self.instruments.inst_mdo.mdo_gain(source1=1, source2=2, frequency=f, period=period)
+                self.instruments.inst_mdo2.mdo_horizontal_scale_in_period(period=period, frequency=f)
+                gain2 = self.instruments.inst_mdo2.mdo_gain(source1=1, source2=2, frequency=f, period=period)
 
                 logger.debug("Freq : %s - Gain : %s - Phase Osc : %s - Phase Np : %s" % (f, gain, phase_osc, phase_np))
+                logger.debug("Freq : %s - Gain2 : %s - Phase2 Osc : %s - Phase2 Np : %s" %
+                             (f, gain2, phase_osc2, phase_np2))
 
                 timevalues = time.time()
                 self.write_values_to_db(data={'Bode_Freq': [f], 'timevalues': [timevalues]})
@@ -376,40 +353,40 @@ def script(self):
                                          value_class='string')
 
             # Send *RST to all instruments
-            self.inst_afg.reset_instrument()
-            self.inst_mdo.reset_instrument()
+            self.instruments.inst_afg.reset_instrument()
+            self.instruments.inst_mdo.reset_instrument()
             time.sleep(2)
 
             # Prepare AFG for Bode : output1 on, output imp max
-            self.inst_afg.afg_prepare_for_bode(ch=1)
+            self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
 
             # Set generator Vpp
             vepp = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP')
-            self.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+            self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
 
             # Set generator function shape
             func_shape = self.read_variable_property(variable_name='Spectre_run',
                                                      property_name='SPECTRE_3_FUNCTION_SHAPE')
-            self.inst_afg.afg_set_function_shape(ch=1, function_shape=func_shape)
+            self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=func_shape)
 
             # Set the generator frequency to f
             f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
-            self.inst_afg.afg_set_frequency(ch=1, frequency=f)
+            self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
             # Set the oscilloscope horizontal scale and vertical scale for the output
             range_i = None
-            self.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i)
+            self.instruments.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i)
 
-            self.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
+            self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
 
             resolution = 10000
-            scaled_wave_ch1 = self.inst_mdo.mdo_query_waveform(ch=1, points_resolution=resolution, frequency=f,
-                                                               refresh=True)
-            scaled_wave_ch2 = self.inst_mdo.mdo_query_waveform(ch=2, points_resolution=resolution, frequency=f,
-                                                               refresh=False)
+            scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
+                ch=1, points_resolution=resolution, frequency=f, refresh=True)
+            scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
+                ch=2, points_resolution=resolution, frequency=f, refresh=False)
 
             scaled_wave_ch1_mini = list()
             scaled_wave_ch2_mini = list()
@@ -424,16 +401,16 @@ def script(self):
                 # store one value each ms
                 time_values.append(time_now + 0.001 * i)
                 # store time in ms
-                time_values_to_show.append(0.001 * i * self.inst_mdo.mdo_horizontal_time() * 1000 * 10)
+                time_values_to_show.append(0.001 * i * self.instruments.inst_mdo.mdo_horizontal_time() * 1000 * 10)
                 scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
                 scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
 
             # FFT CH1
-            spectrum_hanning_1 = self.inst_mdo.fft(scaled_wave_ch1)
-            tscale = self.inst_mdo.mdo_xincr()
+            spectrum_hanning_1 = self.instruments.inst_mdo.fft(scaled_wave_ch1)
+            tscale = self.instruments.inst_mdo.mdo_xincr()
             frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
             # FFT CH2
-            spectrum_hanning_2 = self.inst_mdo.fft(scaled_wave_ch2)
+            spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
 
             logger.debug("tscale %s - f %s - Ech/s %s - Vepp %s" % (tscale, f, f / tscale, vepp))
             logger.debug("spectrum_hanning_1 %s - frequencies %s" % (len(spectrum_hanning_1), len(frequencies)))
@@ -461,3 +438,33 @@ def script(self):
                                          value_class='BOOLEAN')
 
         self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+
+
+def connect_check_visa(config, idn=True):
+    inst = None
+    range_i = range(0, 10)
+    for i in range_i:
+        try:
+            inst = config.get_device_instance().get_handler_instance()
+        except Device.DoesNotExist:
+            logger.error("Script Laborem - Device %s does not exist" % config)
+        except AttributeError:
+            logger.error("Script Laborem - The motherboard does not have the good IO configuration for this script.")
+        if inst is not None and inst.inst is not None:
+            try:
+                if idn:
+                    logger.debug(inst.inst.query("*IDN?"))
+                break
+            except visa.VisaIOError:
+                logger.error("%s - visa.VisaIOError for device : %s" % (i, config))
+                if i == max(range_i):
+                    inst = None
+            except AttributeError as e:
+                logger.error("%s - visa.AttributeError for device : %s - %s" % (i, config, e))
+                if i == max(range_i):
+                    inst = None
+            except UnicodeDecodeError:
+                logger.error("Script Laborem - Device %s - UnicodeDecodeError" % config)
+        time.sleep(10)
+    return inst
+

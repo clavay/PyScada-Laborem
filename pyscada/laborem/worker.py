@@ -39,8 +39,8 @@ class Process(SingleDeviceDAQProcessWorker):
             lw.laborem_motherboard_device.add(LaboremMotherboardDevice.objects.first())
             lt.laborem_motherboard_device.add(LaboremMotherboardDevice.objects.first())
         except Exception:
-            logger.error("Laborem Starting : No LaboremMotherBoardDevice")
-            logger.debug('%s, unhandled exception\n%s' % (self.label, traceback.format_exc()))
+            logger.error("Laborem cannot start : No LaboremMotherBoardDevice")
+            # logger.debug('%s, unhandled exception\n%s' % (self.label, traceback.format_exc()))
         lw.move_robot = True
         lt.move_robot = True
         lw.top10_answer = True

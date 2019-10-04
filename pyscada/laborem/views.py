@@ -213,7 +213,8 @@ def form_write_plug(request):
 def form_write_robot_base(request):
     if LaboremGroupInputPermission.objects.count() > 0:
         try:
-            LaboremGroupInputPermission.objects.get(move_robot=True, hmi_group__in=request.user.groups.all())
+            LaboremGroupInputPermission.objects.get(
+                move_robot=True, hmi_group__in=request.user.groups.exclude(name='teacher').iterator())
         except LaboremGroupInputPermission.DoesNotExist:
             logger.error("write robot base LaboremGroupInputPermission.DoesNotExist for %s" % request.user)
             return HttpResponse(status=404)
