@@ -39,7 +39,7 @@ UNAUTHENTICATED_REDIRECT = settings.UNAUTHENTICATED_REDIRECT if hasattr(
 
 def unauthenticated_redirect(func):
     def wrapper(*args, **kwargs):
-        if not args[0].user.is_authenticated():
+        if not args[0].user.is_authenticated:
             return redirect('%s?next=%s' % (UNAUTHENTICATED_REDIRECT, args[0].path))
         else:
             if LaboremUser.objects.filter(user=args[0].user).count() == 0:

@@ -13,7 +13,7 @@ urlpatterns = [
     url(r'^form/write_plug/$', views.form_write_plug),
     url(r'^form/write_robot_base/$', views.form_write_robot_base),
     url(r'^form/write_property/$', views.form_write_property),
-    url(r'^accounts/choose_login/$', auth_views.login, {'template_name': 'choose_login.html'},
+    url(r'^accounts/choose_login/$', auth_views.LoginView, {'template_name': 'choose_login.html'},
         name='choose_login_view'),
     url(r'^json/query_top10_question/$', views.query_top10_question),
     url(r'^form/validate_top10_answers/$', views.validate_top10_answers),
