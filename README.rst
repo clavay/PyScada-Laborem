@@ -32,7 +32,7 @@ Installation
  - Install pyusb : sudo pip3 install pyusb
  - Install gpiozero : sudo pip3 install gpiozero
  - Install PyScada-Laborem : sudo pip3 install https://github.com/clavay/PyScada-Laborem/tarball/master
- - Install PyScada-GPIO : sudo pip3 install pyscada-gpio
+ - Install PyScada-GPIO : sudo pip3 install https://github.com/clavay/PyScada-GPIO/tarball/master
  - Install PyScada-Scripting : sudo pip3 install pyscada-scripting
  - Install Scipy :
     - sudo apt-get install gcc gfortran python-dev libopenblas-dev liblapack-dev cython
