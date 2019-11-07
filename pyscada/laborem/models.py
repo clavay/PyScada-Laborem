@@ -20,38 +20,6 @@ logger = logging.getLogger(__name__)
 @python_2_unicode_compatible
 class LaboremMotherboardDevice(WidgetContentModel):
     laboremmotherboard_device = models.OneToOneField(Device, blank=True, null=True, on_delete=models.CASCADE)
-    plug1 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug1', blank=True, null=True,
-                              on_delete=models.CASCADE)
-    plug2 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug2', blank=True, null=True,
-                              on_delete=models.CASCADE)
-    plug3 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug3', blank=True, null=True,
-                              on_delete=models.CASCADE)
-    plug4 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug4', blank=True, null=True,
-                              on_delete=models.CASCADE)
-    plug5 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug5', blank=True, null=True,
-                              on_delete=models.CASCADE)
-    plug6 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug6', blank=True, null=True,
-                              on_delete=models.CASCADE)
-    plug7 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug7', blank=True, null=True,
-                              on_delete=models.CASCADE)
-    plug8 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug8', blank=True, null=True,
-                              on_delete=models.CASCADE)
-    plug9 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug9', blank=True, null=True,
-                              on_delete=models.CASCADE)
-    plug10 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug10', blank=True, null=True,
-                               on_delete=models.CASCADE)
-    plug11 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug11', blank=True, null=True,
-                               on_delete=models.CASCADE)
-    plug12 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug12', blank=True, null=True,
-                               on_delete=models.CASCADE)
-    plug13 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug13', blank=True, null=True,
-                               on_delete=models.CASCADE)
-    plug14 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug14', blank=True, null=True,
-                               on_delete=models.CASCADE)
-    plug15 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug15', blank=True, null=True,
-                               on_delete=models.CASCADE)
-    plug16 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug16', blank=True, null=True,
-                               on_delete=models.CASCADE)
     MotherboardIOConfig = models.ForeignKey('LaboremMotherboardIOConfig', blank=True, null=True,
                                             on_delete=models.CASCADE)
     # TODO : Make the motherboard Config to be restrictive on plug selection
@@ -87,37 +55,37 @@ class LaboremMotherboardDevice(WidgetContentModel):
 
     def get_selected_plug(self):
         if self.plug == '1':
-            return self.plug1
+            return self.MotherboardIOConfig.plug1
         elif self.plug == '2':
-            return self.plug2
+            return self.MotherboardIOConfig.plug2
         elif self.plug == '3':
-            return self.plug3
+            return self.MotherboardIOConfig.plug3
         elif self.plug == '4':
-            return self.plug4
+            return self.MotherboardIOConfig.plug4
         elif self.plug == '5':
-            return self.plug5
+            return self.MotherboardIOConfig.plug5
         elif self.plug == '6':
-            return self.plug6
+            return self.MotherboardIOConfig.plug6
         elif self.plug == '7':
-            return self.plug7
+            return self.MotherboardIOConfig.plug7
         elif self.plug == '8':
-            return self.plug8
+            return self.MotherboardIOConfig.plug8
         elif self.plug == '9':
-            return self.plug9
+            return self.MotherboardIOConfig.plug9
         elif self.plug == '10':
-            return self.plug10
+            return self.MotherboardIOConfig.plug10
         elif self.plug == '11':
-            return self.plug11
+            return self.MotherboardIOConfig.plug11
         elif self.plug == '12':
-            return self.plug12
+            return self.MotherboardIOConfig.plug12
         elif self.plug == '13':
-            return self.plug13
+            return self.MotherboardIOConfig.plug13
         elif self.plug == '14':
-            return self.plug14
+            return self.MotherboardIOConfig.plug14
         elif self.plug == '15':
-            return self.plug15
+            return self.MotherboardIOConfig.plug15
         elif self.plug == '16':
-            return self.plug16
+            return self.MotherboardIOConfig.plug16
         elif self.plug == '0':
             return None
 
@@ -184,6 +152,38 @@ class LaboremMotherboardIOConfig(models.Model):
                               on_delete=models.SET_NULL)
     robot1 = models.ForeignKey(Device, help_text='Robot Arm', null=True, blank=True, related_name='robot1',
                                on_delete=models.SET_NULL)
+    plug1 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug1', blank=True, null=True,
+                              on_delete=models.CASCADE)
+    plug2 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug2', blank=True, null=True,
+                              on_delete=models.CASCADE)
+    plug3 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug3', blank=True, null=True,
+                              on_delete=models.CASCADE)
+    plug4 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug4', blank=True, null=True,
+                              on_delete=models.CASCADE)
+    plug5 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug5', blank=True, null=True,
+                              on_delete=models.CASCADE)
+    plug6 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug6', blank=True, null=True,
+                              on_delete=models.CASCADE)
+    plug7 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug7', blank=True, null=True,
+                              on_delete=models.CASCADE)
+    plug8 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug8', blank=True, null=True,
+                              on_delete=models.CASCADE)
+    plug9 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug9', blank=True, null=True,
+                              on_delete=models.CASCADE)
+    plug10 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug10', blank=True, null=True,
+                               on_delete=models.CASCADE)
+    plug11 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug11', blank=True, null=True,
+                               on_delete=models.CASCADE)
+    plug12 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug12', blank=True, null=True,
+                               on_delete=models.CASCADE)
+    plug13 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug13', blank=True, null=True,
+                               on_delete=models.CASCADE)
+    plug14 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug14', blank=True, null=True,
+                               on_delete=models.CASCADE)
+    plug15 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug15', blank=True, null=True,
+                               on_delete=models.CASCADE)
+    plug16 = models.ForeignKey('LaboremPlugDevice', related_name='mobo_plug16', blank=True, null=True,
+                               on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name

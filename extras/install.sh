@@ -66,6 +66,7 @@ cd /var/www/pyscada/
 sudo -u pyscada django-admin startproject PyScadaServer
 
 # TODO : Copy settings.py
+echo "You need to configure settings.py (look at https://pyscada.readthedocs.io/en/master/django_settings.html#settings-py)"
 url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/dev/0.7.x/extras/urls.py'
 if `validate_url $url >/dev/null`; then
     sudo wget $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py

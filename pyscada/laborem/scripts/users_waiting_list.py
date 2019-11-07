@@ -69,17 +69,16 @@ def script(self):
         else:
             LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").update(start_time=now())
         # if no worker take the first viewer by waiting time
-        if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").count() == 0 and \
-                LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").count() > 0:
-            lu = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
-                    order_by("connection_time").first()
-            lu.laborem_group_input = LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").first()
-            lu.start_time = now()
-            for base in LaboremRobotBase.objects.all():
-                if base.element is not None and str(base.element.active) != '0':
-                    lu.start_time += timedelta(seconds=20)
-            lu.save()
-            # logger.debug("New worker : %s" % lu.user)
+        if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").count() == 0:
+            if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").count() > 0:
+                lu = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
+                        order_by("connection_time").first()
+                lu.laborem_group_input = LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").first()
+                lu.start_time = now()
+                for base in LaboremRobotBase.objects.all():
+                    if base.element is not None and str(base.element.active) != '0':
+                        lu.start_time += timedelta(seconds=20)
+                lu.save()
             reset_laborem_on_user_or_session_change(self)
 
         # set viewer group for empty user.group

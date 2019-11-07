@@ -8,13 +8,14 @@ Laborem extension to PyScada
 What is Working
 ---------------
 
- - nothing is test
+ - Working with CAS authentication
+ - Working with set of Tektronix and HP instruments
 
 
 What is not Working/Missing
 ---------------------------
 
- - Test with real hardware
+ - Test with other hardware
  - Documentation
 
 Installation
@@ -33,7 +34,7 @@ Installation
  - Install gpiozero : sudo pip3 install gpiozero
  - Install PyScada-Laborem : sudo pip3 install https://github.com/clavay/PyScada-Laborem/tarball/master
  - Install PyScada-GPIO : sudo pip3 install https://github.com/clavay/PyScada-GPIO/tarball/master
- - Install PyScada-Scripting : sudo pip3 install pyscada-scripting
+ - Install PyScada-Scripting : sudo pip3 install https://github.com/clavay/PyScada-Scipting/tarball/master
  - Install Scipy :
     - sudo apt-get install gcc gfortran python-dev libopenblas-dev liblapack-dev cython
     - sudo pip3 install scipy
@@ -45,6 +46,7 @@ Installation
         ...
         'pyscada.laborem',
         'pyscada.gpio',
+        'pyscada.scripting',
 
     ]
  - Add access to USB devices for pyscada user :
@@ -84,9 +86,9 @@ To use CAS auth
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
 
    - import django_cas_ng.views
-   - url(r'^accounts/login$', django_cas_ng.views.login, name='cas_ng_login'),
-   - url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
-   - url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
+   - url(r'^accounts/login$', django_cas_ng.views.LoginView.as_view(), name='cas_ng_login'),
+   - url(r'^accounts/logout$', django_cas_ng.views.LogoutView.as_view(), name='cas_ng_logout'),
+   - url(r'^accounts/callback$', django_cas_ng.views.CallbackView.as_view(), name='cas_ng_proxy_callback'),
 
  Behind a proxy for CAS V2 :
   - sudo pip3 install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
@@ -114,9 +116,9 @@ To use CAS auth
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
 
    - import django_cas_ng.views
-   - url(r'^accounts/CASlogin/$', django_cas_ng.views.login, name='cas_ng_login'),
-   - url(r'^accounts/logout$', django_cas_ng.views.logout, name='cas_ng_logout'),
-   - url(r'^accounts/callback$', django_cas_ng.views.callback, name='cas_ng_proxy_callback'),
+   - url(r'^accounts/CASlogin/$', django_cas_ng.views.LoginView.as_view(), name='cas_ng_login'),
+   - url(r'^accounts/logout$', django_cas_ng.views.LogoutView.as_view(), name='cas_ng_logout'),
+   - url(r'^accounts/callback$', django_cas_ng.views.CallbackView.as_view(), name='cas_ng_proxy_callback'),
 
  - sudo /var/www/pyscada/PyScadaServer/manage.py migrate
 

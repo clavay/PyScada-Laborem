@@ -134,9 +134,9 @@ def script(self):
                 # time.sleep(5)
                 pass
             else:
-                logger.debug("Taking off Elements...")
                 for base in LaboremRobotBase.objects.all():
                     if base.element is not None and str(base.element.active) != '0':
+                        logger.debug("Taking off Elements...")
                         self.write_variable_property("LABOREM", "message_laborem", "Le robot retire les éléments...",
                                                      value_class='string')
                         r_element = base.element.R
@@ -150,7 +150,8 @@ def script(self):
                         base.element.change_active_to_base_id('0')
                     else:
                         if base.element is None:
-                            logger.debug("Base : %s  - Element : %s" % (base, base.element))
+                            # logger.debug("Base : %s  - Element : %s" % (base, base.element))
+                            pass
                         else:
                             logger.debug("Base : %s  - Element : %s - base.element.active : %s " %
                                          (base, base.element, base.element.active))

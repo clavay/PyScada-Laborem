@@ -7,6 +7,7 @@ handles write tasks for variables attached to the generic devices
 from pyscada.models import DeviceWriteTask, VariableProperty, RecordedData
 from time import time, sleep
 import logging
+from django.utils.timezone import now
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ def startup(self):
     write your code startup code here, don't change the name of this function
     :return:
     """
-    sleep(60)
+    sleep(10)
     pass
 
 
@@ -37,7 +38,7 @@ def script(self):
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
                                                variable_property__variable__device__protocol=1)\
             .order_by('variable_property__name'):
-        logger.debug('GenericDeviceWriteTask VP : %s' % task.__str__())
+        #logger.debug('GenericDeviceWriteTask VP : %s' % task.__str__())
         if task.variable_property.variable.scaling is not None:
             task.value = task.variable_property.variable.scaling.scale_output_value(task.value)
         if task.variable_property:
@@ -56,7 +57,7 @@ def script(self):
 
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
                                                variable__device__protocol=1).order_by('variable__name'):
-        logger.debug('GenericDeviceWriteTask Variable : %s' % task.__str__())
+        #logger.debug('GenericDeviceWriteTask Variable : %s' % task.__str__())
         # if task.variable.scaling is not None:
         #    task.value = task.variable.scaling.scale_output_value(task.value)
         if task.variable:
@@ -66,7 +67,9 @@ def script(self):
                 task.done = True
                 task.finished = time()
                 task.save()
-                RecordedData.objects.bulk_create([task.variable.create_recorded_data_element()])
+                item = task.variable.create_recorded_data_element()
+                item.date_saved = now()
+                RecordedData.objects.bulk_create([item])
             else:
                 task.failed = True
                 task.finished = time()

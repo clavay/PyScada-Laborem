@@ -18,11 +18,12 @@ from django.http import HttpResponse
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.shortcuts import redirect
-from django.views.decorators.csrf import requires_csrf_token
+from django.views.decorators.csrf import requires_csrf_token, csrf_exempt
 from django.contrib.auth.models import User, Group
 from django.utils.timezone import now, timedelta
 from django.utils.dateformat import format
 from django.conf import settings
+from django.contrib.auth import authenticate, login
 
 from uuid import uuid4
 import time
@@ -187,6 +188,48 @@ def view_laborem(request, link_title):
     return TemplateResponse(request, 'view_laborem.html', c)
 
 
+@csrf_exempt
+def write_task_pycom(request):
+    if 'username' not in request.POST or 'password' not in request.POST or 'key' not in request.POST \
+            or 'value' not in request.POST or 'item_type' not in request.POST:
+        return HttpResponse(status=404)
+    item_type = request.POST['item_type']
+    key = int(request.POST['key'])
+    value = request.POST['value']
+    user = authenticate(username=request.POST.get('username'), password=request.POST.get('password'))
+    if user:
+        login(request, user)
+    else:
+        return HttpResponse(status=404)
+    if LaboremGroupInputPermission.objects.count() == 0:
+        if item_type == 'variable':
+            cwt = DeviceWriteTask(variable_id=key, value=value, start=time.time(),
+                                  user=request.user)
+            cwt.save()
+            return HttpResponse(status=200)
+        elif item_type == 'variable_property':
+            cwt = DeviceWriteTask(variable_property_id=key, value=value, start=time.time(),
+                                  user=request.user)
+            cwt.save()
+            return HttpResponse(status=200)
+    else:
+        if item_type == 'variable':
+            if LaboremGroupInputPermission.objects.filter(
+                    variables__pk=key, hmi_group__in=request.user.groups.exclude(name='teacher').iterator()):
+                cwt = DeviceWriteTask(variable_id=key, value=value, start=time.time(),
+                                      user=request.user)
+                cwt.save()
+                return HttpResponse(status=200)
+        elif item_type == 'variable_property':
+            if LaboremGroupInputPermission.objects.filter(
+                    variable_properties__pk=key, hmi_group__in=request.user.groups.exclude(name='teacher').iterator()):
+                cwt = DeviceWriteTask(variable_property_id=key, value=value, start=time.time(),
+                                      user=request.user)
+                cwt.save()
+                return HttpResponse(status=200)
+    return HttpResponse(status=404)
+
+
 @unauthenticated_redirect
 def form_write_plug(request):
     if 'mb_id' in request.POST and 'plug_id' in request.POST:
@@ -292,41 +335,12 @@ def query_top10_question(request):
         return HttpResponse(status=404)
     mb_id = int(request.POST['mb_id'])
     page = request.POST['page']
-    if LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "1":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug1
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "2":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug2
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "3":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug3
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "4":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug4
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "5":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug5
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "6":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug6
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "7":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug7
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "8":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug8
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "9":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug9
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "10":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug10
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "11":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug11
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "12":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug12
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "13":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug13
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "14":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug14
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "15":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug15
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "16":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug16
-    else:
+
+    plug = LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id))
+    if plug is None:
         logger.error("Cannot select plug in query_top10_question")
         return HttpResponse(status=404)
+
     data = {}
     if LaboremRobotBase.objects.get(name="base1").element is not None \
             and LaboremRobotBase.objects.get(name="base2").element is not None:
@@ -377,41 +391,12 @@ def validate_top10_answers(request):
         return HttpResponse(status=404)
     mb_id = int(request.POST['mb_id'])
     page = request.POST['page']
-    if LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "1":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug1
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "2":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug2
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "3":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug3
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "4":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug4
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "5":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug5
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "6":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug6
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "7":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug7
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "8":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug8
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "9":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug9
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "10":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug10
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "11":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug11
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "12":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug12
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "13":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug13
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "14":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug14
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "15":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug15
-    elif LaboremMotherboardDevice.objects.get(pk=mb_id).plug == "16":
-        plug = LaboremMotherboardDevice.objects.get(pk=mb_id).plug16
-    else:
+
+    plug = LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id))
+    if plug is None:
         logger.error("Cannot select plug in validate_top10_answers")
         return HttpResponse(status=404)
+
     level_plug = 0
     if plug.level == "1":
         level_plug = 1
