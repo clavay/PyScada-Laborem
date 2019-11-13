@@ -89,11 +89,7 @@ function query_previous_and_next_btn() {
             $(".btn-next").show();
         }
         else {$(".btn-next").hide();}
-    }else if (actual_hash === "bode") {
-        $(".btn-previous").attr("href", '#expe_choice');
-        $(".btn-previous").show();
-        $(".btn-next").hide();
-    }else if (actual_hash === "spectrum") {
+    }else if (actual_hash === "bode" || actual_hash === "signals" || actual_hash === "spectrum") {
         $(".btn-previous").attr("href", '#expe_choice');
         $(".btn-previous").show();
         $(".btn-next").hide();
@@ -131,7 +127,7 @@ function redirect_to_page(page_name) {
                 }
             }
         }
-    }else if (page_name === "bode" || page_name === "spectrum") {
+    }else if (page_name === "bode" || page_name === "signals" || page_name === "spectrum") {
         if (!$('.list-dut-item.active').length) {
             window.location.href = "#plugs";
             return 1;
@@ -195,13 +191,7 @@ function reset_page(page_name) {
         reset_selected_plug();
         reset_selected_expe();
         $("#tooltip").hide();
-    }else if (page_name === "preconf") {
-        $(".user_stop_btn").hide()
-        change_plug_selected_motherboard();
-        reset_robot_bases();
-        reset_selected_expe();
-        $("#tooltip").hide();
-    }else if (page_name === "robot") {
+    }else if (page_name === "preconf" || page_name === "robot") {
         $(".user_stop_btn").hide()
         change_plug_selected_motherboard();
         reset_robot_bases();
@@ -215,14 +205,7 @@ function reset_page(page_name) {
         reset_selected_expe();
         move_robot("put");
         $("#tooltip").hide();
-    }else if (page_name === "bode") {
-        $(".user_stop_btn").show()
-        $(".user_stop_btn").removeClass("disabled")
-        $(".user_stop_btn").html("Arrêter")
-        update_plots(false);
-        change_bases();
-        move_robot("put");
-    }else if (page_name === "spectrum") {
+    }else if (page_name === "bode" || page_name === "signals" || page_name === "spectrum") {
         $(".user_stop_btn").show()
         $(".user_stop_btn").removeClass("disabled")
         $(".user_stop_btn").html("Arrêter")
@@ -349,71 +332,66 @@ function change_bases() {
 }
 
 function refresh_top10_qa() {
-    dropdown_TOP10QA = document.getElementsByClassName("dropdown-TOP10QA");
-    pages = document.getElementsByClassName("sub-page");
-    for (i=0;i<pages.length;i++){
-        if (pages[i].id === window.location.hash.substr(1)) {
-            if (pages[i].getElementsByClassName("ShowTOP10QA").length) {
-                questions = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group-addon-label");
-                input_group = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("input-group");
-                form_control = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("form-control");
-                ok_button = document.getElementsByClassName("dropdown-TOP10QA")[0].getElementsByClassName("write-task-form-top10-set");
-                ok_button[0].disabled = false;
-                ok_button[0].innerHTML = "Répondre"
-                answers=[]
-                mb_id = $('.list-dut-item.active').data('motherboard-id');
-                //changes the number and value of the questions
-                $.ajax({
-                    url: ROOT_URL+'json/query_top10_question/',
-                    dataType: "json",
-                    type: "POST",
-                    data: {mb_id:mb_id, page:pages[i].id},
-                    success: function (data) {
-                        questions[0].innerHTML = data['question1'];
-                        questions[1].innerHTML = data['question2'];
-                        questions[2].innerHTML = data['question3'];
-                        questions[3].innerHTML = data['question4'];
-                        answers[0] = data['answer1'];
-                        answers[1] = data['answer2'];
-                        answers[2] = data['answer3'];
-                        answers[3] = data['answer4'];
-                        if ((questions[0].innerHTML != "Question1" && questions[0].innerHTML != "" && questions[0].innerHTML != "undefined")
-                        || (questions[1].innerHTML != "Question2" && questions[1].innerHTML != "" && questions[1].innerHTML != "undefined")
-                        || (questions[2].innerHTML != "Question3" && questions[2].innerHTML != "" && questions[2].innerHTML != "undefined")
-                        || (questions[3].innerHTML != "Question4" && questions[3].innerHTML != "" && questions[3].innerHTML != "undefined")) {
-                            $(".dropdown-TOP10QA").removeClass("hidden");
-                            $(".dropdown-TOP10QA").show();
-                            for (i=0;i<questions.length;i++) {
-                                if (questions[i].innerHTML != "Question1" && questions[i].innerHTML != "" && questions[i].innerHTML != "undefined") {
-                                    input_group[i].classList.remove("hidden");
-                                    if (data['disable']) {
-                                        form_control[i].value = answers[i];
-                                        form_control[i].disabled = true;
-                                        ok_button[0].disabled = true
-                                        ok_button[0].innerHTML = "Déjà répondu !"
-                                    }else{
-                                        form_control[i].disabled = false;
-                                        form_control[i].value = "";
-                                    }
-                                }
-                                else {
-                                    input_group[i].classList.remove("hidden");
-                                    input_group[i].className += " hidden";
-                                }
+    if ($(".btn-previous").attr("href")=="#expe_choice") {
+        questions = $(".dropdown-TOP10QA .input-group-addon-label");
+        input_group = $(".dropdown-TOP10QA .input-group");
+        form_control = $(".dropdown-TOP10QA .form-control");
+        ok_button = $(".dropdown-TOP10QA .write-task-form-top10-set");
+        ok_button[0].disabled = false;
+        ok_button[0].innerHTML = "Répondre"
+        answers=[]
+        mb_id = $('.list-dut-item.active').data('motherboard-id');
+        page_id = $('.sub-page#'+window.location.hash.substr(1))[0].id
+        //changes the number and value of the questions
+        $.ajax({
+            url: ROOT_URL+'json/query_top10_question/',
+            dataType: "json",
+            type: "POST",
+            data: {mb_id:mb_id, page:page_id},
+            success: function (data) {
+                questions[0].innerHTML = data['question1'];
+                questions[1].innerHTML = data['question2'];
+                questions[2].innerHTML = data['question3'];
+                questions[3].innerHTML = data['question4'];
+                answers[0] = data['answer1'];
+                answers[1] = data['answer2'];
+                answers[2] = data['answer3'];
+                answers[3] = data['answer4'];
+                if ((questions[0].innerHTML != "Question1" && questions[0].innerHTML != "" && questions[0].innerHTML != "undefined")
+                || (questions[1].innerHTML != "Question2" && questions[1].innerHTML != "" && questions[1].innerHTML != "undefined")
+                || (questions[2].innerHTML != "Question3" && questions[2].innerHTML != "" && questions[2].innerHTML != "undefined")
+                || (questions[3].innerHTML != "Question4" && questions[3].innerHTML != "" && questions[3].innerHTML != "undefined")) {
+                    $(".dropdown-TOP10QA").removeClass("hidden");
+                    $(".dropdown-TOP10QA").show();
+                    for (i=0;i<questions.length;i++) {
+                        if (questions[i].innerHTML != "Question1" && questions[i].innerHTML != "" && questions[i].innerHTML != "undefined") {
+                            input_group[i].classList.remove("hidden");
+                            if (data['disable']) {
+                                form_control[i].value = answers[i];
+                                form_control[i].disabled = true;
+                                ok_button[0].disabled = true
+                                ok_button[0].innerHTML = "Déjà répondu !"
+                            }else{
+                                form_control[i].disabled = false;
+                                form_control[i].value = "";
                             }
-                        }else {
-                            $(".dropdown-TOP10QA").hide();
                         }
-                    },
-                    error: function(data) {
-                        console.log("query top10 question failed");
-                        add_notification('query top10 question failed',3);
+                        else {
+                            input_group[i].classList.remove("hidden");
+                            input_group[i].className += " hidden";
+                        }
                     }
-                });
-            }else {
-                $(".dropdown-TOP10QA").hide();
+                }else {
+                    $(".dropdown-TOP10QA").hide();
+                }
+            },
+            error: function(data) {
+                console.log("query top10 question failed");
+                add_notification('query top10 question failed',3);
             }
-        }
+        });
+    }else {
+        $(".dropdown-TOP10QA").hide();
     }
 };
 
@@ -812,7 +790,7 @@ $( document ).ready(function() {
         refresh_top10_qa();
     });
 
-    // Remove id
+    // Remove connection id
     $('.remove_id_btn').on('click', function() {
         remove_id();
     })
@@ -876,6 +854,24 @@ $( document ).ready(function() {
         //change_base_selected_element($($this[0]).parents(".dropdown-robot")[0].id, $this[0].id)
         query_previous_and_next_btn();
         if (base_empty === 'no') {$(".btn-next").show();}
+    });
+
+    $('.btn-next-previous').on('click', function() {
+        id = $(".sub-page#"+window.location.hash.substr(1)).attr("page_position");
+        lower_id = id - 1;
+        higher_id = id + 1;
+        if ($(".sub-page[page_position=" + lower_id + "]").length == 1) {
+            $(".btn-previous").attr("href", "#" + $(".sub-page[page_position=" + lower_id + "]")[0].id);
+            $(".btn-previous").show();
+        }else {
+            $(".btn-previous").hide();
+        }
+        if ($(".sub-page[page_position=" + higher_id + "]").length == 1) {
+            $(".btn-next").attr("href", "#" + $(".sub-page[page_position=" + higher_id + "]")[0].id);
+            $(".btn-next").show();
+        }else {
+            $(".btn-next").hide();
+        }
     });
 
     // Send answer for TOP10

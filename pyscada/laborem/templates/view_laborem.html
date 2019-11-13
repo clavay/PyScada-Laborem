@@ -7,8 +7,8 @@
     {% for page in page_list %}
         <li class="hidden"><a href="#{{page.link_title}}">{{page.title}}</a></li>
     {% endfor %}
-    <li><a href="#" style="color: lightcoral; font-size: 16px;" class="btn-previous">Précédent <span class="glyphicon glyphicon-chevron-left"></span></a></li>
-    <li><a href="#" style="color: lightgreen; font-size: 16px;" class="btn-next"><span class="glyphicon glyphicon-chevron-right"></span> Suivant</a></li>
+    <li><a href="#" style="color: lightcoral; font-size: 16px;" class="btn-previous btn-next-previous">Précédent <span class="glyphicon glyphicon-chevron-left"></span></a></li>
+    <li><a href="#" style="color: lightgreen; font-size: 16px;" class="btn-next btn-next-previous"><span class="glyphicon glyphicon-chevron-right"></span> Suivant</a></li>
 {% endblock %}
 
 {% block top_menu_right %}

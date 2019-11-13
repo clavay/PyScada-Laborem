@@ -166,7 +166,7 @@ def script(self):
 
         bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
         if bode and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
-            logger.debug("Bode running...")
+            logger.debug("Bode experience is running...")
             logger.debug("MDO timeout : %d" % self.instruments.inst_mdo.inst.timeout)
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
@@ -258,7 +258,7 @@ def script(self):
                                                                     property_name='BODE_5_LOOP_COMPARE'))
         if bode_compare_instruments and self.instruments.inst_mdo is not None \
                 and self.instruments.inst_afg is not None and self.instruments.inst_mdo2 is not None:
-            logger.debug("Bode running...")
+            logger.debug("Bode comparison experience is running...")
             logger.debug("MDO1 timeout : %d" % self.instruments.inst_mdo.inst.timeout)
             logger.debug("MDO2 timeout : %d" % self.instruments.inst_mdo2.inst.timeout)
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
@@ -365,7 +365,7 @@ def script(self):
 
         waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
         if waveform:
-            logger.debug("Waveform running...")
+            logger.debug("Waveform and FFT experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem", "Analyse spectrale en cours d'acquisition...",
@@ -462,9 +462,9 @@ def script(self):
         # Expe oscilloscope
         ###########################################
 
-        oscilloscope = bool(RecordedData.objects.last_element(variable_name="zzz_signal"))
+        oscilloscope = bool(RecordedData.objects.last_element(variable__name="zzz_signal"))
         if oscilloscope and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
-            logger.debug("Waveform running...")
+            logger.debug("Oscilloscope experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem", "Signaux en cours d'acquisition...",
@@ -572,8 +572,10 @@ def connect_check_visa(config, idn=True):
                 break
             except visa.VisaIOError:
                 logger.error("%s - visa.VisaIOError for device : %s" % (i, config))
-                if i == max(range_i):
-                    inst = None
+                # if i == max(range_i):
+                #    inst = None
+                inst = None
+                return inst
             except AttributeError as e:
                 logger.error("%s - visa.AttributeError for device : %s - %s" % (i, config, e))
                 if i == max(range_i):
