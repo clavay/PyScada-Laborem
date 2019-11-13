@@ -76,10 +76,14 @@ def shutdown(self):
                                  timestamp=now())
 
     try:
-        self.instruments.inst_mdo.inst.close()
-        self.instruments.inst_afg.inst.close()
-        self.instruments.inst_robot.inst.close()
-        self.instruments.inst_mdo2.inst.close()
+        if self.instruments.inst_mdo is not None:
+            self.instruments.inst_mdo.inst.close()
+        if self.instruments.inst_afg is not None:
+            self.instruments.inst_afg.inst.close()
+        if self.instruments.inst_robot is not None:
+            self.instruments.inst_robot.inst.close()
+        if self.instruments.inst_mdo2 is not None:
+            self.instruments.inst_mdo2.inst.close()
     except visa.VisaIOError as e:
         logger.error(e)
 
@@ -186,7 +190,7 @@ def script(self):
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.instruments.inst_mdo.mdo_prepare(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare()
             self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
             self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
@@ -280,10 +284,10 @@ def script(self):
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.instruments.inst_mdo.mdo_prepare(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare()
             self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
             self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
-            self.instruments.inst_mdo2.mdo_prepare(vpp=vepp)
+            self.instruments.inst_mdo2.mdo_prepare()
             self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
             self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
@@ -384,7 +388,7 @@ def script(self):
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.instruments.inst_mdo.mdo_prepare(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare()
             self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
             self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
@@ -404,10 +408,13 @@ def script(self):
             self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
 
             resolution = 10000
-            scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
-                ch=1, points_resolution=resolution, frequency=f, refresh=True)
-            scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
-                ch=2, points_resolution=resolution, frequency=f, refresh=False)
+            try:
+                scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
+                    ch=1, points_resolution=resolution, frequency=f, refresh=True)
+                scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
+                    ch=2, points_resolution=resolution, frequency=f, refresh=False)
+            except visa.VisaIOError as e:
+                logger.debug("%s while querying waveform" % e)
 
             scaled_wave_ch1_mini = list()
             scaled_wave_ch2_mini = list()
@@ -462,8 +469,8 @@ def script(self):
         # Expe oscilloscope
         ###########################################
 
-        oscilloscope = bool(RecordedData.objects.last_element(variable__name="zzz_signal"))
-        if oscilloscope and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
+        oscilloscope = RecordedData.objects.last_element(variable__name="zzz_signal")
+        if oscilloscope is not None and oscilloscope.value() and bool(oscilloscope.value()) and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
             logger.debug("Oscilloscope experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
@@ -483,21 +490,20 @@ def script(self):
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.instruments.inst_mdo.mdo_prepare(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare()
 
             # Set MDO vertical scale
-            vertical_scale = RecordedData.objects.last_element(variable_name="scale_y")
-            self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=float(vertical_scale))
+            vertical_scale = RecordedData.objects.last_element(variable__name="scale_y")
+            self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=float(vertical_scale.value()))
 
             # Set MDO horizontal scale
-            horizontal_scale = RecordedData.objects.last_element(variable_name="scale_x")
-            self.instruments.inst_mdo2.mdo_set_horizontal_scale(ch=1, value=float(horizontal_scale))
+            horizontal_scale = RecordedData.objects.last_element(variable__name="scale_x")
+            self.instruments.inst_mdo.mdo_set_horizontal_scale(ch=1, time_per_div=float(horizontal_scale.value()))
 
             # Set MDO trigger level and trigger source
-            trigger_level = RecordedData.objects.last_element(variable_name="trigger_level")
-            trigger_source = self.read_variable_property(variable_name='LABOREM',
-                                                     property_name='trigger_source')
-            self.instruments.inst_mdo2.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level))
+            trigger_level = RecordedData.objects.last_element(variable__name="trigger_level")
+            trigger_source = self.read_variable_property(variable_name='LABOREM', property_name='trigger_source')
+            self.instruments.inst_mdo.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level.value()))
 
             # Set generator function shape
             func_shape = self.read_variable_property(variable_name='Spectre_run',
@@ -535,8 +541,8 @@ def script(self):
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=now())
                 self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-                cwt = DeviceWriteTask(variable_name="zzz_signal", value=0, start=time.time(),
-                                      user=None)
+                key = Variable.objects.get(name="zzz_signal").id
+                cwt = DeviceWriteTask(variable_id=key, value=0, start=time.time(), user=None)
                 cwt.save()
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
                 return
@@ -548,9 +554,10 @@ def script(self):
                                          timestamp=now())
             time.sleep(4)
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-            cwt = DeviceWriteTask(variable_name="zzz_signal", value=0, start=time.time(),
-                                  user=None)
+            key = Variable.objects.get(name="zzz_signal").id
+            cwt = DeviceWriteTask(variable_id=key, value=0, start=time.time(), user=None)
             cwt.save()
+            time.sleep(2)
 
         self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
 
