@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from pyscada.models import Device, Variable, DeviceProtocol, Unit
+from pyscada.models import Device, Variable, DeviceProtocol, Unit, RecordedData, DeviceWriteTask
 from pyscada.laborem.models import LaboremRobotBase, LaboremMotherboardDevice
 import logging
 import visa
@@ -160,6 +160,10 @@ def script(self):
                                          value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
+        ###########################################
+        # Expe bode
+        ###########################################
+
         bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
         if bode and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
             logger.debug("Bode running...")
@@ -182,7 +186,9 @@ def script(self):
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.instruments.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare(vpp=vepp)
+            self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
+            self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
             fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
             fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
@@ -244,6 +250,10 @@ def script(self):
                                          value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
+        ###########################################
+        # Expe bode compare
+        ###########################################
+
         bode_compare_instruments = bool(self.read_variable_property(variable_name='Bode_run',
                                                                     property_name='BODE_5_LOOP_COMPARE'))
         if bode_compare_instruments and self.instruments.inst_mdo is not None \
@@ -270,8 +280,12 @@ def script(self):
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.instruments.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
-            self.instruments.inst_mdo2.mdo_prepare_for_bode(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare(vpp=vepp)
+            self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
+            self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
+            self.instruments.inst_mdo2.mdo_prepare(vpp=vepp)
+            self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
+            self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
             fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
             fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
@@ -345,6 +359,10 @@ def script(self):
                                          value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
+        ###########################################
+        # Expe waveform
+        ###########################################
+
         waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
         if waveform:
             logger.debug("Waveform running...")
@@ -366,7 +384,9 @@ def script(self):
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
-            self.instruments.inst_mdo.mdo_prepare_for_bode(vpp=vepp)
+            self.instruments.inst_mdo.mdo_prepare(vpp=vepp)
+            self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
+            self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
             # Set generator function shape
             func_shape = self.read_variable_property(variable_name='Spectre_run',
@@ -437,6 +457,100 @@ def script(self):
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
             self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
                                          value_class='BOOLEAN')
+
+        ###########################################
+        # Expe oscilloscope
+        ###########################################
+
+        oscilloscope = bool(RecordedData.objects.last_element(variable_name="zzz_signal"))
+        if oscilloscope and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
+            logger.debug("Waveform running...")
+            self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                         timestamp=now())
+            self.write_variable_property("LABOREM", "message_laborem", "Signaux en cours d'acquisition...",
+                                         value_class='string')
+
+            # Send *RST to all instruments
+            self.instruments.inst_afg.reset_instrument()
+            self.instruments.inst_mdo.reset_instrument()
+            time.sleep(2)
+
+            # Prepare AFG for Bode : output1 on, output imp max
+            self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
+
+            # Set generator Vpp
+            vepp = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP')
+            self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+
+            # Prepare MDO trigger, channel 1 vertical scale, bandwidth
+            self.instruments.inst_mdo.mdo_prepare(vpp=vepp)
+
+            # Set MDO vertical scale
+            vertical_scale = RecordedData.objects.last_element(variable_name="scale_y")
+            self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=float(vertical_scale))
+
+            # Set MDO horizontal scale
+            horizontal_scale = RecordedData.objects.last_element(variable_name="scale_x")
+            self.instruments.inst_mdo2.mdo_set_horizontal_scale(ch=1, value=float(horizontal_scale))
+
+            # Set MDO trigger level and trigger source
+            trigger_level = RecordedData.objects.last_element(variable_name="trigger_level")
+            trigger_source = self.read_variable_property(variable_name='LABOREM',
+                                                     property_name='trigger_source')
+            self.instruments.inst_mdo2.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level))
+
+            # Set generator function shape
+            func_shape = self.read_variable_property(variable_name='Spectre_run',
+                                                     property_name='SPECTRE_3_FUNCTION_SHAPE')
+            self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=func_shape)
+
+            # Set the generator frequency to f
+            f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
+            self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
+
+            resolution = 10000
+            scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
+                ch=1, points_resolution=resolution, frequency=f, refresh=True)
+            scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
+                ch=2, points_resolution=resolution, frequency=f, refresh=False)
+
+            scaled_wave_ch1_mini = list()
+            scaled_wave_ch2_mini = list()
+            time_values = list()
+            time_values_to_show = list()
+            time_now = time.time()
+
+            # Prepare the lists to save
+            save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
+            logger.debug('save_resolution : %s' % save_resolution)
+            for i in range(0, save_resolution):
+                # store one value each ms
+                time_values.append(time_now + 0.001 * i)
+                # store time in ms
+                time_values_to_show.append(0.001 * i * self.instruments.inst_mdo.mdo_horizontal_time() * 1000 * 10)
+                scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
+                scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
+
+            if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                             timestamp=now())
+                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+                cwt = DeviceWriteTask(variable_name="zzz_signal", value=0, start=time.time(),
+                                      user=None)
+                cwt.save()
+                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                return
+
+            self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
+            self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
+            self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+            self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
+                                         timestamp=now())
+            time.sleep(4)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            cwt = DeviceWriteTask(variable_name="zzz_signal", value=0, start=time.time(),
+                                  user=None)
+            cwt.save()
 
         self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
 
