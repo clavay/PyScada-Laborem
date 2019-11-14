@@ -243,7 +243,8 @@ def form_write_plug(request):
                                                           laboremgroupinputpermission__hmi_group__in=request.user.
                                                           groups.exclude(name='teacher').iterator())
             except LaboremMotherboardDevice.DoesNotExist:
-                logger.warning("In form_write_plug  : LaboremMotherboardDevice.DoesNotExist - mb_id : %s" % mb_id)
+                logger.warning("In form_write_plug  : LaboremMotherboardDevice.DoesNotExist - mb_id : %s - group : %s" %
+                               (mb_id, request.user.groups.exclude(name='teacher')))
                 return HttpResponse(status=200)
         if mb is not None:
             mb.change_selected_plug(plug_id)
@@ -313,7 +314,8 @@ def form_write_property(request):
                     VariableProperty.objects.update_property(variable_property=vpgetbyname, value=value)
                 except VariableProperty.DoesNotExist:
                     logger.debug("form_write_property - vp as str - "
-                                 "VariableProperty.DoesNotExist or group permission error : %s" % variable_property)
+                                 "VariableProperty.DoesNotExist or group permission error : %s - group : %s" %
+                                 (variable_property, request.user.groups.exclude(name='teacher')))
                     return HttpResponse(status=200)
             # else:
             #    return HttpResponse(status=404)

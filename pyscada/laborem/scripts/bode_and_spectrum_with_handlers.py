@@ -395,7 +395,7 @@ def script(self):
             # Set generator function shape
             func_shape = self.read_variable_property(variable_name='Spectre_run',
                                                      property_name='SPECTRE_3_FUNCTION_SHAPE')
-            self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=func_shape)
+            self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=int(func_shape))
 
             # Set the generator frequency to f
             f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
@@ -470,7 +470,8 @@ def script(self):
         ###########################################
 
         oscilloscope = RecordedData.objects.last_element(variable__name="zzz_signal")
-        if oscilloscope is not None and oscilloscope.value() and bool(oscilloscope.value()) and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
+        if oscilloscope is not None and oscilloscope.value() and bool(oscilloscope.value()) and \
+                self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
             logger.debug("Oscilloscope experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
@@ -486,33 +487,32 @@ def script(self):
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
 
             # Set generator Vpp
-            vepp = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP')
+            vepp = RecordedData.objects.last_element(variable__name="AFG_VEPP")
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+
+            # Set generator function shape
+            func_shape = RecordedData.objects.last_element(variable__name="AFG_FUNCTION_SHAPE")
+            self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=int(func_shape))
+
+            # Set the generator frequency to f
+            f = RecordedData.objects.last_element(variable__name="AFG_FREQ")
+            self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
 
             # Set MDO vertical scale
-            vertical_scale = RecordedData.objects.last_element(variable__name="scale_y")
+            vertical_scale = RecordedData.objects.last_element(variable__name="MDO_SCALE_Y")
             self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=float(vertical_scale.value()))
 
             # Set MDO horizontal scale
-            horizontal_scale = RecordedData.objects.last_element(variable__name="scale_x")
+            horizontal_scale = RecordedData.objects.last_element(variable__name="MDO_SCALE_X")
             self.instruments.inst_mdo.mdo_set_horizontal_scale(ch=1, time_per_div=float(horizontal_scale.value()))
 
             # Set MDO trigger level and trigger source
-            trigger_level = RecordedData.objects.last_element(variable__name="trigger_level")
-            trigger_source = self.read_variable_property(variable_name='LABOREM', property_name='trigger_source')
+            trigger_level = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_LEVEL")
+            trigger_source = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_SOURCE")
             self.instruments.inst_mdo.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level.value()))
-
-            # Set generator function shape
-            func_shape = self.read_variable_property(variable_name='Spectre_run',
-                                                     property_name='SPECTRE_3_FUNCTION_SHAPE')
-            self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=func_shape)
-
-            # Set the generator frequency to f
-            f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
-            self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
             resolution = 10000
             scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
