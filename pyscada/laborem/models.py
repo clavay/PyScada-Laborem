@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from pyscada.models import Device, Unit, Variable, VariableProperty
+from pyscada.models import Device, Unit, Variable, VariableProperty, DeviceWriteTask, RecordedData
 from pyscada.gpio.models import GPIOVariable
 from pyscada.visa.models import VISADevice
 from pyscada.hmi.models import WidgetContentModel, Page
@@ -13,6 +13,7 @@ from django.contrib.auth.models import User, Group
 
 from datetime import datetime
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -46,47 +47,52 @@ class LaboremMotherboardDevice(WidgetContentModel):
         return self.laboremmotherboard_device.short_name
 
     def change_selected_plug(self, plug):
-        self.plug = self.plug_choices[plug][0]
-        self.save()
+        # self.plug = self.plug_choices[plug][0]
+        # self.save()
+
+        key = Variable.objects.get(name="plug_selected").id
+        cwt = DeviceWriteTask(variable_id=key, value=plug, start=time.time(), user=None)
+        cwt.save()
         return True
 
     def visible(self):
         return True
 
     def get_selected_plug(self):
-        if self.plug == '1':
+        plug = str(RecordedData.objects.last_element(variable__name="plug_selected").value())
+        if plug == '1':
             return self.MotherboardIOConfig.plug1
-        elif self.plug == '2':
+        elif plug == '2':
             return self.MotherboardIOConfig.plug2
-        elif self.plug == '3':
+        elif plug == '3':
             return self.MotherboardIOConfig.plug3
-        elif self.plug == '4':
+        elif plug == '4':
             return self.MotherboardIOConfig.plug4
-        elif self.plug == '5':
+        elif plug == '5':
             return self.MotherboardIOConfig.plug5
-        elif self.plug == '6':
+        elif plug == '6':
             return self.MotherboardIOConfig.plug6
-        elif self.plug == '7':
+        elif plug == '7':
             return self.MotherboardIOConfig.plug7
-        elif self.plug == '8':
+        elif plug == '8':
             return self.MotherboardIOConfig.plug8
-        elif self.plug == '9':
+        elif plug == '9':
             return self.MotherboardIOConfig.plug9
-        elif self.plug == '10':
+        elif plug == '10':
             return self.MotherboardIOConfig.plug10
-        elif self.plug == '11':
+        elif plug == '11':
             return self.MotherboardIOConfig.plug11
-        elif self.plug == '12':
+        elif plug == '12':
             return self.MotherboardIOConfig.plug12
-        elif self.plug == '13':
+        elif plug == '13':
             return self.MotherboardIOConfig.plug13
-        elif self.plug == '14':
+        elif plug == '14':
             return self.MotherboardIOConfig.plug14
-        elif self.plug == '15':
+        elif plug == '15':
             return self.MotherboardIOConfig.plug15
-        elif self.plug == '16':
+        elif plug == '16':
             return self.MotherboardIOConfig.plug16
-        elif self.plug == '0':
+        elif plug == '0':
             return None
 
     def gen_html(self, **kwargs):

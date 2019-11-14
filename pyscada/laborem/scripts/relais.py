@@ -4,7 +4,7 @@
 import os
 import logging
 import time
-# from pyscada.models import Device
+from pyscada.models import RecordedData
 from pyscada.laborem.models import LaboremMotherboardDevice
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,9 @@ def script(self):
 #        device_laborem = Device.objects.get(pk=8)
 #        plug_selected = int(device_laborem.laboremmotherboarddevice.plug)
         device_laborem = LaboremMotherboardDevice.objects.first()
-        plug_selected = int(device_laborem.plug)
+        # plug_selected = int(device_laborem.plug)
+
+        plug_selected = int(RecordedData.objects.last_element(variable__name="plug_selected").value())
 
         if plug_selected:
             plug_selected = plug_selected - 1

@@ -338,7 +338,7 @@ def query_top10_question(request):
     mb_id = int(request.POST['mb_id'])
     page = request.POST['page']
 
-    plug = LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id))
+    plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
     if plug is None:
         logger.error("Cannot select plug in query_top10_question")
         return HttpResponse(status=404)
@@ -394,7 +394,7 @@ def validate_top10_answers(request):
     mb_id = int(request.POST['mb_id'])
     page = request.POST['page']
 
-    plug = LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id))
+    plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
     if plug is None:
         logger.error("Cannot select plug in validate_top10_answers")
         return HttpResponse(status=404)
@@ -530,7 +530,7 @@ def reset_selected_plug(request):
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
                 try:
-                    LaboremMotherboardDevice.change_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id), 0)
+                    LaboremMotherboardDevice.objects.get(pk=mb_id).change_selected_plug(0)
                     logger.debug("Reset selected plug - user %s - mb_id %s" % (request.user, mb_id))
                 except LaboremMotherboardDevice.DoesNotExist:
                     logger.error("request : %s - mb_id : %s - group : %s" % (request, mb_id, group))
@@ -720,7 +720,7 @@ def check_users(request):
                 str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds % 60)
             wu += 1
     try:
-        selected_plug = LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id))
+        selected_plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
         data['plug'] = {}
         if selected_plug is not None:
             data['plug']['name'] = selected_plug.name
