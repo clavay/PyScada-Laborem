@@ -471,20 +471,17 @@ def script(self):
         # Expe oscilloscope
         ###########################################
 
-        # oscilloscope = RecordedData.objects.last_element(variable__name="zzz_signal")
-        oscilloscope = self.read_values_from_db(variable_names=['zzz_signal'], current_value_only=True).\
-            get('zzz_signal', False)
-        if oscilloscope is not None and bool(oscilloscope) and \
-                self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
+        AFG = self.read_values_from_db(variable_names=['zzz_afg'], current_value_only=True).\
+            get('zzz_afg', False)
+        if AFG is not None and bool(AFG) and self.instruments.inst_afg is not None:
             logger.debug("Oscilloscope experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
-            self.write_variable_property("LABOREM", "message_laborem", "Signaux en cours d'acquisition...",
+            self.write_variable_property("LABOREM", "message_laborem", "Réglage GBF en cours...",
                                          value_class='string')
 
             # Send *RST to all instruments
             self.instruments.inst_afg.reset_instrument()
-            self.instruments.inst_mdo.reset_instrument()
             time.sleep(2)
 
             # Prepare AFG for Bode : output1 on, output imp max
@@ -506,30 +503,38 @@ def script(self):
             f = self.read_values_from_db(variable_names=['AFG_FREQ'], current_value_only=True).get('AFG_FREQ', 1000)
             self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
+        oscilloscope = self.read_values_from_db(variable_names=['zzz_oscillo'], current_value_only=True).\
+            get('zzz_oscillo', False)
+        if oscilloscope is not None and bool(oscilloscope) and self.instruments.inst_mdo is not None:
+            logger.debug("Oscilloscope experience is running...")
+            self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                         timestamp=now())
+            self.write_variable_property("LABOREM", "message_laborem",
+                                         "Signaux en cours d'acquisition sur l'oscilloscope...", value_class='string')
+
+            # Send *RST to all instruments
+            self.instruments.inst_mdo.reset_instrument()
+            time.sleep(2)
+
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
 
             # Set MDO vertical scale
-            # vertical_scale_ch1 = RecordedData.objects.last_element(variable__name="MDO_SCALE_Y_CH1").value()
             vertical_scale_ch1 = self.read_values_from_db(variable_names=['MDO_SCALE_Y_CH1'],
                                                           current_value_only=True).get('MDO_SCALE_Y_CH1', 1)
             self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=float(vertical_scale_ch1))
-            # vertical_scale_ch2 = RecordedData.objects.last_element(variable__name="MDO_SCALE_Y_CH2").value()
             vertical_scale_ch2 = self.read_values_from_db(variable_names=['MDO_SCALE_Y_CH2'],
                                                           current_value_only=True).get('MDO_SCALE_Y_CH2', 1)
             self.instruments.inst_mdo.mdo_set_vertical_scale(ch=2, value=float(vertical_scale_ch2))
 
             # Set MDO horizontal scale
-            # horizontal_scale = RecordedData.objects.last_element(variable__name="MDO_SCALE_X").value()
             horizontal_scale = self.read_values_from_db(variable_names=['MDO_SCALE_X'],
                                                         current_value_only=True).get('MDO_SCALE_X', 1)
             self.instruments.inst_mdo.mdo_set_horizontal_scale(ch=1, time_per_div=float(horizontal_scale))
 
             # Set MDO trigger level and trigger source
-            # trigger_level = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_LEVEL").value()
             trigger_level = self.read_values_from_db(variable_names=['MDO_TRIGGER_LEVEL'],
                                                      current_value_only=True).get('MDO_TRIGGER_LEVEL', 0)
-            # trigger_source = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_SOURCE").value()
             trigger_source = self.read_values_from_db(variable_names=['MDO_TRIGGER_SOURCE'],
                                                       current_value_only=True).get('MDO_TRIGGER_SOURCE', 1)
             self.instruments.inst_mdo.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level))
