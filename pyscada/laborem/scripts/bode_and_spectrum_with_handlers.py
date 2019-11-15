@@ -472,8 +472,9 @@ def script(self):
         ###########################################
 
         # oscilloscope = RecordedData.objects.last_element(variable__name="zzz_signal")
-        oscilloscope = self.read_values_from_db(variable_names=['zzz_signal'], current_value_only=True)['zzz_signal']
-        if oscilloscope is not None and oscilloscope.value() and bool(oscilloscope.value()) and \
+        oscilloscope = self.read_values_from_db(variable_names=['zzz_signal'], current_value_only=True).\
+            get('zzz_signal', False)
+        if oscilloscope is not None and bool(oscilloscope) and \
                 self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
             logger.debug("Oscilloscope experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
@@ -491,18 +492,18 @@ def script(self):
 
             # Set generator Vpp
             # vepp = RecordedData.objects.last_element(variable__name="AFG_VEPP").value()
-            vepp = self.read_values_from_db(variable_names=['AFG_VEPP'], current_value_only=True)['AFG_VEPP']
+            vepp = self.read_values_from_db(variable_names=['AFG_VEPP'], current_value_only=True).get('AFG_VEPP', 1)
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Set generator function shape
             # func_shape = RecordedData.objects.last_element(variable__name="AFG_FUNCTION_SHAPE").value()
             func_shape = self.read_values_from_db(variable_names=['AFG_FUNCTION_SHAPE'],
-                                                  curret_value_only=True)['AFG_FUNCTION_SHAPE']
+                                                  current_value_only=True).get('AFG_FUNCTION_SHAPE', 0)
             self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=int(func_shape))
 
             # Set the generator frequency to f
             # f = RecordedData.objects.last_element(variable__name="AFG_FREQ").value()
-            f = self.read_values_from_db(variable_names=['AFG_FREQ'], current_value_only=True)['AFG_FREQ']
+            f = self.read_values_from_db(variable_names=['AFG_FREQ'], current_value_only=True).get('AFG_FREQ', 1000)
             self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
@@ -511,26 +512,26 @@ def script(self):
             # Set MDO vertical scale
             # vertical_scale_ch1 = RecordedData.objects.last_element(variable__name="MDO_SCALE_Y_CH1").value()
             vertical_scale_ch1 = self.read_values_from_db(variable_names=['MDO_SCALE_Y_CH1'],
-                                                          current_value_only=True)['MDO_SCALE_Y_CH1']
+                                                          current_value_only=True).get('MDO_SCALE_Y_CH1', 1)
             self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=float(vertical_scale_ch1))
             # vertical_scale_ch2 = RecordedData.objects.last_element(variable__name="MDO_SCALE_Y_CH2").value()
             vertical_scale_ch2 = self.read_values_from_db(variable_names=['MDO_SCALE_Y_CH2'],
-                                                          current_value_only=True)['MDO_SCALE_Y_CH2']
+                                                          current_value_only=True).get('MDO_SCALE_Y_CH2', 1)
             self.instruments.inst_mdo.mdo_set_vertical_scale(ch=2, value=float(vertical_scale_ch2))
 
             # Set MDO horizontal scale
             # horizontal_scale = RecordedData.objects.last_element(variable__name="MDO_SCALE_X").value()
             horizontal_scale = self.read_values_from_db(variable_names=['MDO_SCALE_X'],
-                                                        current_value_only=True)['MDO_SCALE_X']
+                                                        current_value_only=True).get('MDO_SCALE_X', 1)
             self.instruments.inst_mdo.mdo_set_horizontal_scale(ch=1, time_per_div=float(horizontal_scale))
 
             # Set MDO trigger level and trigger source
             # trigger_level = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_LEVEL").value()
             trigger_level = self.read_values_from_db(variable_names=['MDO_TRIGGER_LEVEL'],
-                                                     current_value_only=True)['MDO_TRIGGER_LEVEL']
+                                                     current_value_only=True).get('MDO_TRIGGER_LEVEL', 0)
             # trigger_source = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_SOURCE").value()
             trigger_source = self.read_values_from_db(variable_names=['MDO_TRIGGER_SOURCE'],
-                                                      current_value_only=True)['MDO_TRIGGER_SOURCE']
+                                                      current_value_only=True).get('MDO_TRIGGER_SOURCE', 1)
             self.instruments.inst_mdo.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level))
 
             resolution = 10000
