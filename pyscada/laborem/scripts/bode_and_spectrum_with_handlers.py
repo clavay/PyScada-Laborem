@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from pyscada.models import Device, Variable, DeviceProtocol, Unit, RecordedData, DeviceWriteTask
+from pyscada.models import Device, Variable, DeviceProtocol, Unit, RecordedData
 from pyscada.laborem.models import LaboremRobotBase, LaboremMotherboardDevice
 import logging
 import visa
@@ -191,8 +191,8 @@ def script(self):
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
-            self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
-            self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
+            self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
+            self.instruments.inst_mdo.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
             fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
             fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
@@ -285,8 +285,8 @@ def script(self):
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
-            self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
-            self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
+            self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
+            self.instruments.inst_mdo.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
             self.instruments.inst_mdo2.mdo_prepare()
             self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
             self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
@@ -389,8 +389,8 @@ def script(self):
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
-            self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
-            self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
+            self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
+            self.instruments.inst_mdo.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
             # Set generator function shape
             func_shape = self.read_variable_property(variable_name='Spectre_run',
@@ -408,6 +408,8 @@ def script(self):
             self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
 
             resolution = 10000
+            scaled_wave_ch1 = list()
+            scaled_wave_ch2 = list()
             try:
                 scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=1, points_resolution=resolution, frequency=f, refresh=True)
@@ -469,7 +471,8 @@ def script(self):
         # Expe oscilloscope
         ###########################################
 
-        oscilloscope = RecordedData.objects.last_element(variable__name="zzz_signal")
+        # oscilloscope = RecordedData.objects.last_element(variable__name="zzz_signal")
+        oscilloscope = self.read_values_from_db(variable_names=['zzz_signal'], current_value_only=True)['zzz_signal']
         if oscilloscope is not None and oscilloscope.value() and bool(oscilloscope.value()) and \
                 self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
             logger.debug("Oscilloscope experience is running...")
@@ -487,38 +490,59 @@ def script(self):
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
 
             # Set generator Vpp
-            vepp = RecordedData.objects.last_element(variable__name="AFG_VEPP")
+            # vepp = RecordedData.objects.last_element(variable__name="AFG_VEPP").value()
+            vepp = self.read_values_from_db(variable_names=['AFG_VEPP'], current_value_only=True)['AFG_VEPP']
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
 
             # Set generator function shape
-            func_shape = RecordedData.objects.last_element(variable__name="AFG_FUNCTION_SHAPE")
+            # func_shape = RecordedData.objects.last_element(variable__name="AFG_FUNCTION_SHAPE").value()
+            func_shape = self.read_values_from_db(variable_names=['AFG_FUNCTION_SHAPE'],
+                                                  curret_value_only=True)['AFG_FUNCTION_SHAPE']
             self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=int(func_shape))
 
             # Set the generator frequency to f
-            f = RecordedData.objects.last_element(variable__name="AFG_FREQ")
+            # f = RecordedData.objects.last_element(variable__name="AFG_FREQ").value()
+            f = self.read_values_from_db(variable_names=['AFG_FREQ'], current_value_only=True)['AFG_FREQ']
             self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
 
             # Set MDO vertical scale
-            vertical_scale = RecordedData.objects.last_element(variable__name="MDO_SCALE_Y")
-            self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=float(vertical_scale.value()))
+            # vertical_scale_ch1 = RecordedData.objects.last_element(variable__name="MDO_SCALE_Y_CH1").value()
+            vertical_scale_ch1 = self.read_values_from_db(variable_names=['MDO_SCALE_Y_CH1'],
+                                                          current_value_only=True)['MDO_SCALE_Y_CH1']
+            self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=float(vertical_scale_ch1))
+            # vertical_scale_ch2 = RecordedData.objects.last_element(variable__name="MDO_SCALE_Y_CH2").value()
+            vertical_scale_ch2 = self.read_values_from_db(variable_names=['MDO_SCALE_Y_CH2'],
+                                                          current_value_only=True)['MDO_SCALE_Y_CH2']
+            self.instruments.inst_mdo.mdo_set_vertical_scale(ch=2, value=float(vertical_scale_ch2))
 
             # Set MDO horizontal scale
-            horizontal_scale = RecordedData.objects.last_element(variable__name="MDO_SCALE_X")
-            self.instruments.inst_mdo.mdo_set_horizontal_scale(ch=1, time_per_div=float(horizontal_scale.value()))
+            # horizontal_scale = RecordedData.objects.last_element(variable__name="MDO_SCALE_X").value()
+            horizontal_scale = self.read_values_from_db(variable_names=['MDO_SCALE_X'],
+                                                        current_value_only=True)['MDO_SCALE_X']
+            self.instruments.inst_mdo.mdo_set_horizontal_scale(ch=1, time_per_div=float(horizontal_scale))
 
             # Set MDO trigger level and trigger source
-            trigger_level = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_LEVEL")
-            trigger_source = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_SOURCE")
-            self.instruments.inst_mdo.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level.value()))
+            # trigger_level = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_LEVEL").value()
+            trigger_level = self.read_values_from_db(variable_names=['MDO_TRIGGER_LEVEL'],
+                                                     current_value_only=True)['MDO_TRIGGER_LEVEL']
+            # trigger_source = RecordedData.objects.last_element(variable__name="MDO_TRIGGER_SOURCE").value()
+            trigger_source = self.read_values_from_db(variable_names=['MDO_TRIGGER_SOURCE'],
+                                                      current_value_only=True)['MDO_TRIGGER_SOURCE']
+            self.instruments.inst_mdo.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level))
 
             resolution = 10000
-            scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
-                ch=1, points_resolution=resolution, frequency=f, refresh=True)
-            scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
-                ch=2, points_resolution=resolution, frequency=f, refresh=False)
+            try:
+                scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
+                    ch=1, points_resolution=resolution, frequency=f, refresh=True)
+                scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
+                    ch=2, points_resolution=resolution, frequency=f, refresh=False)
+            except visa.VisaIOError:
+                scaled_wave_ch1 = list()
+                scaled_wave_ch2 = list()
+                logger.debug("Empty signals from MDO")
 
             scaled_wave_ch1_mini = list()
             scaled_wave_ch2_mini = list()
@@ -541,9 +565,7 @@ def script(self):
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=now())
                 self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-                key = Variable.objects.get(name="zzz_signal").id
-                cwt = DeviceWriteTask(variable_id=key, value=0, start=time.time(), user=None)
-                cwt.save()
+                self.write_values_to_db(data={'zzz_signal': [0]})
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
                 return
 
@@ -552,13 +574,10 @@ def script(self):
             self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
+            self.write_values_to_db(data={'zzz_signal': [0]})
             time.sleep(4)
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-            key = Variable.objects.get(name="zzz_signal").id
-            cwt = DeviceWriteTask(variable_id=key, value=0, start=time.time(), user=None)
-            cwt.save()
-            time.sleep(2)
-
+            logger.debug("Oscilloscope done")
         self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
 
 
@@ -591,4 +610,3 @@ def connect_check_visa(config, idn=True):
                 logger.error("Script Laborem - Device %s - UnicodeDecodeError" % config)
         time.sleep(10)
     return inst
-
