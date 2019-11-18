@@ -18,6 +18,8 @@ def startup(self):
     :return:
     """
 
+    logger.debug('Experiences script starting')
+
     # Wait for the instruments to wake up
     if not Device.objects.filter(short_name="generic_device"):
         Device.objects.create(short_name="generic_device", protocol=DeviceProtocol.objects.get(protocol="generic"),
@@ -55,11 +57,13 @@ def startup(self):
     self.instruments.inst_mdo = connect_check_visa(io_conf.mdo1)
     self.instruments.inst_afg = connect_check_visa(io_conf.afg1)
     self.instruments.inst_robot = connect_check_visa(io_conf.robot1, False)
-    self.instruments.inst_mdo2 = connect_check_visa(io_conf.mdo2)
+    #self.instruments.inst_mdo2 = connect_check_visa(io_conf.mdo2)
+    self.instruments.inst_mdo2 = None
 
     self.instruments.inst_robot.init() if self.instruments.inst_robot is not None else True
 
     self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+    logger.debug('Experiences script started')
 
     return True
 
@@ -474,7 +478,7 @@ def script(self):
         AFG = self.read_values_from_db(variable_names=['zzz_afg'], current_value_only=True).\
             get('zzz_afg', False)
         if AFG is not None and bool(AFG) and self.instruments.inst_afg is not None:
-            logger.debug("Oscilloscope experience is running...")
+            logger.debug("AFG experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem", "Réglage GBF en cours...",
@@ -486,22 +490,48 @@ def script(self):
 
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
+            self.instruments.inst_afg.afg_prepare_for_bode(ch=2)
+
+            # Set output state
+            state = self.read_values_from_db(variable_names=['AFG_OUTPUT_STATE_1'],
+                                             current_value_only=True).get('AFG_OUTPUT_STATE_1', False)
+            self.afg_set_output_state(ch=1, state=state)
+            state = self.read_values_from_db(variable_names=['AFG_OUTPUT_STATE_2'],
+                                             current_value_only=True).get('AFG_OUTPUT_STATE_2', False)
+            self.afg_set_output_state(ch=2, state=state)
+
+            # Set output offset
+            offset = self.read_values_from_db(variable_names=['AFG_OFFSET_1'],
+                                              current_value_only=True).get('AFG_OFFSET_1', 0)
+            self.afg_set_offset(ch=1, offset=offset)
+            offset = self.read_values_from_db(variable_names=['AFG_OFFSET_2'],
+                                              current_value_only=True).get('AFG_OFFSET_2', 0)
+            self.afg_set_offset(ch=2, offset=offset)
 
             # Set generator Vpp
-            # vepp = RecordedData.objects.last_element(variable__name="AFG_VEPP").value()
-            vepp = self.read_values_from_db(variable_names=['AFG_VEPP'], current_value_only=True).get('AFG_VEPP', 1)
+            vepp = self.read_values_from_db(variable_names=['AFG_VEPP_1'], current_value_only=True).get('AFG_VEPP_1', 1)
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+            vepp = self.read_values_from_db(variable_names=['AFG_VEPP_2'], current_value_only=True).get('AFG_VEPP_2', 1)
+            self.instruments.inst_afg.afg_set_vpp(ch=2, vpp=vepp)
 
             # Set generator function shape
-            # func_shape = RecordedData.objects.last_element(variable__name="AFG_FUNCTION_SHAPE").value()
-            func_shape = self.read_values_from_db(variable_names=['AFG_FUNCTION_SHAPE'],
-                                                  current_value_only=True).get('AFG_FUNCTION_SHAPE', 0)
+            func_shape = self.read_values_from_db(variable_names=['AFG_FUNCTION_SHAPE_1'],
+                                                  current_value_only=True).get('AFG_FUNCTION_SHAPE_1', 0)
             self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=int(func_shape))
+            func_shape = self.read_values_from_db(variable_names=['AFG_FUNCTION_SHAPE_2'],
+                                                  current_value_only=True).get('AFG_FUNCTION_SHAPE_2', 0)
+            self.instruments.inst_afg.afg_set_function_shape(ch=2, function_shape=int(func_shape))
 
             # Set the generator frequency to f
-            # f = RecordedData.objects.last_element(variable__name="AFG_FREQ").value()
-            f = self.read_values_from_db(variable_names=['AFG_FREQ'], current_value_only=True).get('AFG_FREQ', 1000)
+            f = self.read_values_from_db(variable_names=['AFG_FREQ_1'], current_value_only=True).get('AFG_FREQ_1', 1000)
             self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
+            f = self.read_values_from_db(variable_names=['AFG_FREQ_2'], current_value_only=True).get('AFG_FREQ_2', 1000)
+            self.instruments.inst_afg.afg_set_frequency(ch=2, frequency=f)
+
+            self.write_values_to_db(data={'zzz_afg': [0]})
+            time.sleep(2)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            logger.debug("AFG done")
 
         oscilloscope = self.read_values_from_db(variable_names=['zzz_oscillo'], current_value_only=True).\
             get('zzz_oscillo', False)
@@ -515,6 +545,9 @@ def script(self):
             # Send *RST to all instruments
             self.instruments.inst_mdo.reset_instrument()
             time.sleep(2)
+
+            # Set the generator frequency to f
+            f = self.read_values_from_db(variable_names=['AFG_FREQ'], current_value_only=True).get('AFG_FREQ', 1000)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
@@ -571,7 +604,7 @@ def script(self):
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=now())
                 self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-                self.write_values_to_db(data={'zzz_signal': [0]})
+                self.write_values_to_db(data={'zzz_oscillo': [0]})
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
                 return
 
@@ -580,7 +613,7 @@ def script(self):
             self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
-            self.write_values_to_db(data={'zzz_signal': [0]})
+            self.write_values_to_db(data={'zzz_oscillo': [0]})
             time.sleep(4)
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
             logger.debug("Oscilloscope done")

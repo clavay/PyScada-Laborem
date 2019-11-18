@@ -24,7 +24,7 @@ def startup(self):
                   1: LED(6),
                   2: LED(13),
                   3: LED(19),
-                  4: LED(26)}  # in my opinion this is more reliable
+                  4: LED(26)}
         self.d[4].on()
     except Exception as e:
         logger.error("Error importing gpiozero in script - Exception : %s" % e)
