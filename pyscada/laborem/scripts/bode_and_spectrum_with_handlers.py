@@ -192,6 +192,8 @@ def script(self):
             # Set generator Vpp
             vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+            self.instruments.inst_afg.afg_set_output_state(ch=1, state=True)
+            self.instruments.inst_afg.afg_set_offset(ch=1, offset=0)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
@@ -286,6 +288,8 @@ def script(self):
             # Set generator Vpp
             vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+            self.instruments.inst_afg.afg_set_output_state(ch=1, state=True)
+            self.instruments.inst_afg.afg_set_offset(ch=1, offset=0)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
@@ -390,6 +394,8 @@ def script(self):
             # Set generator Vpp
             vepp = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP')
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
+            self.instruments.inst_afg.afg_set_output_state(ch=1, state=True)
+            self.instruments.inst_afg.afg_set_offset(ch=1, offset=0)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
@@ -475,9 +481,9 @@ def script(self):
         # Expe oscilloscope
         ###########################################
 
-        AFG = self.read_values_from_db(variable_names=['zzz_afg'], current_value_only=True).\
+        afg = self.read_values_from_db(variable_names=['zzz_afg'], current_value_only=True).\
             get('zzz_afg', False)
-        if AFG is not None and bool(AFG) and self.instruments.inst_afg is not None:
+        if afg is not None and bool(afg) and self.instruments.inst_afg is not None:
             logger.debug("AFG experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
@@ -492,45 +498,46 @@ def script(self):
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
             self.instruments.inst_afg.afg_prepare_for_bode(ch=2)
 
+            # Read all values from DB
+            values = self.read_values_from_db(variable_names=['AFG_OUTPUT_STATE_1', 'AFG_OUTPUT_STATE_2',
+                                                              'AFG_OFFSET_1', 'AFG_OFFSET_2', 'AFG_VEPP_1',
+                                                              'AFG_VEPP_2', 'AFG_FUNCTION_SHAPE_1',
+                                                              'AFG_FUNCTION_SHAPE_2', 'AFG_FREQ_1', 'AFG_FREQ_2'],
+                                              current_value_only=True)
+
             # Set output state
-            state = self.read_values_from_db(variable_names=['AFG_OUTPUT_STATE_1'],
-                                             current_value_only=True).get('AFG_OUTPUT_STATE_1', False)
-            self.afg_set_output_state(ch=1, state=state)
-            state = self.read_values_from_db(variable_names=['AFG_OUTPUT_STATE_2'],
-                                             current_value_only=True).get('AFG_OUTPUT_STATE_2', False)
-            self.afg_set_output_state(ch=2, state=state)
+            state = values.get('AFG_OUTPUT_STATE_1', False)
+            self.instruments.inst_afg.afg_set_output_state(ch=1, state=state)
+            state = values.get('AFG_OUTPUT_STATE_2', False)
+            self.instruments.inst_afg.afg_set_output_state(ch=2, state=state)
 
             # Set output offset
-            offset = self.read_values_from_db(variable_names=['AFG_OFFSET_1'],
-                                              current_value_only=True).get('AFG_OFFSET_1', 0)
-            self.afg_set_offset(ch=1, offset=offset)
-            offset = self.read_values_from_db(variable_names=['AFG_OFFSET_2'],
-                                              current_value_only=True).get('AFG_OFFSET_2', 0)
-            self.afg_set_offset(ch=2, offset=offset)
+            offset = values.get('AFG_OFFSET_1', 0)
+            self.instruments.inst_afg.afg_set_offset(ch=1, offset=offset)
+            offset = values.get('AFG_OFFSET_2', 0)
+            self.instruments.inst_afg.afg_set_offset(ch=2, offset=offset)
 
             # Set generator Vpp
-            vepp = self.read_values_from_db(variable_names=['AFG_VEPP_1'], current_value_only=True).get('AFG_VEPP_1', 1)
+            vepp = values.get('AFG_VEPP_1', 1)
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
-            vepp = self.read_values_from_db(variable_names=['AFG_VEPP_2'], current_value_only=True).get('AFG_VEPP_2', 1)
+            vepp = values.get('AFG_VEPP_2', 1)
             self.instruments.inst_afg.afg_set_vpp(ch=2, vpp=vepp)
 
             # Set generator function shape
-            func_shape = self.read_values_from_db(variable_names=['AFG_FUNCTION_SHAPE_1'],
-                                                  current_value_only=True).get('AFG_FUNCTION_SHAPE_1', 0)
+            func_shape = values.get('AFG_FUNCTION_SHAPE_1', 0)
             self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=int(func_shape))
-            func_shape = self.read_values_from_db(variable_names=['AFG_FUNCTION_SHAPE_2'],
-                                                  current_value_only=True).get('AFG_FUNCTION_SHAPE_2', 0)
+            func_shape = values.get('AFG_FUNCTION_SHAPE_2', 0)
             self.instruments.inst_afg.afg_set_function_shape(ch=2, function_shape=int(func_shape))
 
             # Set the generator frequency to f
-            f = self.read_values_from_db(variable_names=['AFG_FREQ_1'], current_value_only=True).get('AFG_FREQ_1', 1000)
+            f = values.get('AFG_FREQ_1', 1000)
             self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
-            f = self.read_values_from_db(variable_names=['AFG_FREQ_2'], current_value_only=True).get('AFG_FREQ_2', 1000)
+            f = values.get('AFG_FREQ_2', 1000)
             self.instruments.inst_afg.afg_set_frequency(ch=2, frequency=f)
 
             self.write_values_to_db(data={'zzz_afg': [0]})
-            time.sleep(2)
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            time.sleep(4)
             logger.debug("AFG done")
 
         oscilloscope = self.read_values_from_db(variable_names=['zzz_oscillo'], current_value_only=True).\
@@ -546,30 +553,31 @@ def script(self):
             self.instruments.inst_mdo.reset_instrument()
             time.sleep(2)
 
+            # Read all values from DB
+            values = self.read_values_from_db(variable_names=['AFG_FREQ', 'MDO_SCALE_Y_CH1',
+                                                              'MDO_SCALE_Y_CH2', 'MDO_SCALE_X', 'MDO_TRIGGER_LEVEL',
+                                                              'MDO_TRIGGER_SOURCE'],
+                                              current_value_only=True)
+
             # Set the generator frequency to f
-            f = self.read_values_from_db(variable_names=['AFG_FREQ'], current_value_only=True).get('AFG_FREQ', 1000)
+            f = values.get('AFG_FREQ', 1000)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
 
             # Set MDO vertical scale
-            vertical_scale_ch1 = self.read_values_from_db(variable_names=['MDO_SCALE_Y_CH1'],
-                                                          current_value_only=True).get('MDO_SCALE_Y_CH1', 1)
+            vertical_scale_ch1 = values.get('MDO_SCALE_Y_CH1', 1)
             self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=float(vertical_scale_ch1))
-            vertical_scale_ch2 = self.read_values_from_db(variable_names=['MDO_SCALE_Y_CH2'],
-                                                          current_value_only=True).get('MDO_SCALE_Y_CH2', 1)
+            vertical_scale_ch2 = values.get('MDO_SCALE_Y_CH2', 1)
             self.instruments.inst_mdo.mdo_set_vertical_scale(ch=2, value=float(vertical_scale_ch2))
 
             # Set MDO horizontal scale
-            horizontal_scale = self.read_values_from_db(variable_names=['MDO_SCALE_X'],
-                                                        current_value_only=True).get('MDO_SCALE_X', 1)
+            horizontal_scale = values.get('MDO_SCALE_X', 1)
             self.instruments.inst_mdo.mdo_set_horizontal_scale(ch=1, time_per_div=float(horizontal_scale))
 
             # Set MDO trigger level and trigger source
-            trigger_level = self.read_values_from_db(variable_names=['MDO_TRIGGER_LEVEL'],
-                                                     current_value_only=True).get('MDO_TRIGGER_LEVEL', 0)
-            trigger_source = self.read_values_from_db(variable_names=['MDO_TRIGGER_SOURCE'],
-                                                      current_value_only=True).get('MDO_TRIGGER_SOURCE', 1)
+            trigger_level = values.get('MDO_TRIGGER_LEVEL', 0)
+            trigger_source = values.get('MDO_TRIGGER_SOURCE', 1)
             self.instruments.inst_mdo.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level))
 
             resolution = 10000
