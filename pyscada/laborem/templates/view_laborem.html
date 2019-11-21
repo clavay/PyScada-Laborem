@@ -14,9 +14,9 @@
 {% block top_menu_right %}
     <li class="dropdown dropdown-WaitingList">
         <a class="dropdown-toggle dropdown-WaitingList-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-time"></span> File d'attente <strong class="caret"></strong></a>
-        <div class="dropdown-menu" style="padding: 15px;">
+        <div class="dropdown-menu" style="padding: 15px;background-color: white;width:300px;">
             <div class="control-panel">
-                <table class="table table-condensed table-striped table-responsive table-activeuser" style="width: 300px;">
+                <table class="table table-condensed table-striped table-responsive table-activeuser">
                   <tr class="activeuser-header">
                       <th style="text-align: center; width: 150px;">Utilisateur actif</th>
                       <th style="text-align: center; width: 150px;">Temps restant à manipuler</th>
@@ -33,7 +33,7 @@
     </li>
     <li class="dropdown dropdown-TOP10Results">
         <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-stats"></span> TOP10 Résultats <strong class="caret"></strong></a>
-        <div class="dropdown-menu" style="padding: 15px; width: auto;">
+        <div class="dropdown-menu" style="padding: 15px; width: auto;background-color: white;">
             <div class="control-panel">
                 <table class="table table-condensed table-striped table-responsive table-top10">
                   <tr class="top10-header">
@@ -46,7 +46,7 @@
     </li>
     <li class="dropdown dropdown-TOP10QA hidden">
         <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-pencil" style="color: orange"></span> TOP10 Questions/Réponses <strong class="caret"></strong></a>
-        <div class="dropdown-menu" style="padding: 15px; width: auto;">
+        <div class="dropdown-menu" style="padding: 15px; width: auto;background-color: white;">
             <div class="control-panel">
                 {% include "form_TOP10.html" with form=form_top10qa %}
             </div>
