@@ -14,9 +14,9 @@
 {% block top_menu_right %}
     <li class="dropdown dropdown-WaitingList">
         <a class="dropdown-toggle dropdown-WaitingList-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-time"></span> File d'attente <strong class="caret"></strong></a>
-        <div class="dropdown-menu" style="padding: 15px;">
+        <div class="dropdown-menu" style="padding: 15px;background-color: white;width:300px;">
             <div class="control-panel">
-                <table class="table table-condensed table-striped table-responsive table-activeuser" style="width: 300px;">
+                <table class="table table-condensed table-striped table-responsive table-activeuser">
                   <tr class="activeuser-header">
                       <th style="text-align: center; width: 150px;">Utilisateur actif</th>
                       <th style="text-align: center; width: 150px;">Temps restant à manipuler</th>
@@ -33,7 +33,7 @@
     </li>
     <li class="dropdown dropdown-TOP10Results">
         <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-stats"></span> TOP10 Résultats <strong class="caret"></strong></a>
-        <div class="dropdown-menu" style="padding: 15px; width: auto;">
+        <div class="dropdown-menu" style="padding: 15px; width: auto;background-color: white;">
             <div class="control-panel">
                 <table class="table table-condensed table-striped table-responsive table-top10">
                   <tr class="top10-header">
@@ -46,7 +46,7 @@
     </li>
     <li class="dropdown dropdown-TOP10QA hidden">
         <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-pencil" style="color: orange"></span> TOP10 Questions/Réponses <strong class="caret"></strong></a>
-        <div class="dropdown-menu" style="padding: 15px; width: auto;">
+        <div class="dropdown-menu" style="padding: 15px; width: auto;background-color: white;">
             <div class="control-panel">
                 {% include "form_TOP10.html" with form=form_top10qa %}
             </div>
@@ -149,8 +149,8 @@
     <div class="camera side-menu left hidden">
         <ul class="status-panel">
             <li>Camera</li>
-            <img class="camera-img" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
-            <img class="pi-camera-img" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
+            <img class="camera-img usb-camera" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
+            <img class="camera-img pi-camera" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
         </ul>
     </div>
     <div class="summary side-menu right hidden col-md-3" style="width: 300px; list-style: circle;">
@@ -192,8 +192,8 @@
                     <ul class="status-panel">
                         <li class="col-md-2">Camera</li>
                         <br>
-                        <img class="camera-img col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
-                        <img class="pi-camera-img col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
+                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
+                        <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
                     </ul>
                 </div>
                 <div class="summary-modal col-md-6">
@@ -243,8 +243,8 @@
                     <ul class="status-panel">
                         <li class="col-md-2">Caméra</li>
                         <br>
-                        <img class="camera-img col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
-                        <img class="pi-camera-img col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view">
+                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
+                        <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
                     </ul>
                 </div>
                 <div class="summary-modal col-md-6">
@@ -304,12 +304,15 @@
             // Load camera image
             window.onload = function() {
                 function updateImage() {
-                    $(".camera-img").each(function(){
-                        $(this)[0].src = window.location.origin + "/camera/?action=stream"
-                    });
-                    $(".pi-camera-img").each(function(){
-                        $(this)[0].src = window.location.origin + "/picamera/stream.mjpg"
-                    });
+                    $.each($('.camera-img'),function(key,val){
+                        if ($(this).is(':visible')) {
+                            if ($(this).attr("src") !== $(this).data("src")) {
+                                $(this).attr("src",$(this).data("src"));
+                            }
+                        }else {
+                            $(this).attr("src","");
+                        }
+                    })
                 }
                 setInterval(updateImage, 3000);
             }

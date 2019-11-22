@@ -246,7 +246,7 @@ function move_robot(mov) {
         url: ROOT_URL+'form/move_robot/',
         data: {move:mov},
         success: function (data) {
-            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '' && window.location.hash.substr(1) != "waiting") {
+            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '' && window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "loading" && window.location.hash.substr(1) != "disconnect") {
                 $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
                 $(".user_stop_btn").hide()
                 $('#MessageModal').modal('show');

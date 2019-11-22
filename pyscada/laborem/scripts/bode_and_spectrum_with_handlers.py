@@ -172,8 +172,9 @@ def script(self):
         # Expe bode
         ###########################################
 
-        bode = bool(self.read_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP'))
-        if bode and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
+        bode = self.read_values_from_db(variable_names=['zzz_bode'], current_value_only=True).get('zzz_bode', False)
+        if bode is not None and bool(bode) \
+                and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
             logger.debug("Bode experience is running...")
             logger.debug("MDO timeout : %d" % self.instruments.inst_mdo.inst.timeout)
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
@@ -186,11 +187,14 @@ def script(self):
             self.instruments.inst_mdo.reset_instrument()
             time.sleep(2)
 
+            values = self.read_values_from_db(variable_names=['AFG_VEPP_1', 'AFG_FREQ_1_MIN', 'AFG_FREQ_1_MAX',
+                                                              'POINTS'], current_value_only=True)
+
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
 
             # Set generator Vpp
-            vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
+            vepp = values.get('AFG_VEPP_1', 1)
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
             self.instruments.inst_afg.afg_set_output_state(ch=1, state=True)
             self.instruments.inst_afg.afg_set_offset(ch=1, offset=0)
@@ -200,9 +204,9 @@ def script(self):
             self.instruments.inst_mdo.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
             self.instruments.inst_mdo.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
-            fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
-            fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
-            nb_points = self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS')
+            fmin = values.get('AFG_FREQ_1_MIN', 1000)
+            fmax = values.get('AFG_FREQ_1_MAX', 10000)
+            nb_points = values.get('NB_POINTS', 5)
 
             # Progress bar
             n = 0
@@ -264,9 +268,10 @@ def script(self):
         # Expe bode compare
         ###########################################
 
-        bode_compare_instruments = bool(self.read_variable_property(variable_name='Bode_run',
-                                                                    property_name='BODE_5_LOOP_COMPARE'))
-        if bode_compare_instruments and self.instruments.inst_mdo is not None \
+        bode_compare_instruments = self.read_values_from_db(variable_names=['zzz_bode_compare'],
+                                                            current_value_only=True).get('zzz_bode_compare', False)
+        if bode_compare_instruments is not None and bool(bode_compare_instruments) \
+                and self.instruments.inst_mdo is not None \
                 and self.instruments.inst_afg is not None and self.instruments.inst_mdo2 is not None:
             logger.debug("Bode comparison experience is running...")
             logger.debug("MDO1 timeout : %d" % self.instruments.inst_mdo.inst.timeout)
@@ -282,11 +287,15 @@ def script(self):
             self.instruments.inst_mdo2.reset_instrument()
             time.sleep(2)
 
+            # Read all values from DB
+            values = self.read_values_from_db(variable_names=['AFG_VEPP_1', 'AFG_FREQ_1_MIN', 'AFG_FREQ_1_MAX',
+                                                              'POINTS'], current_value_only=True)
+
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
 
             # Set generator Vpp
-            vepp = self.read_variable_property(variable_name='Bode_run', property_name='BODE_1_VEPP')
+            vepp = values.get('AFG_VEPP_1', 1)
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
             self.instruments.inst_afg.afg_set_output_state(ch=1, state=True)
             self.instruments.inst_afg.afg_set_offset(ch=1, offset=0)
@@ -299,9 +308,9 @@ def script(self):
             self.instruments.inst_mdo2.mdo_set_vertical_scale(ch=1, value=1.2 * float(vepp) / (2 * 4))
             self.instruments.inst_mdo2.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
-            fmin = self.read_variable_property(variable_name='Bode_run', property_name='BODE_2_FMIN')
-            fmax = self.read_variable_property(variable_name='Bode_run', property_name='BODE_3_FMAX')
-            nb_points = self.read_variable_property(variable_name='Bode_run', property_name='BODE_4_NB_POINTS')
+            fmin = values.get('AFG_FREQ_1_MIN', 1000)
+            fmax = values.get('AFG_FREQ_1_MAX', 10000)
+            nb_points = values.get('POINTS', 5)
 
             # Progress bar
             n = 0
@@ -375,8 +384,10 @@ def script(self):
         # Expe waveform
         ###########################################
 
-        waveform = bool(self.read_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform'))
-        if waveform:
+        waveform = self.read_values_from_db(variable_names=['zzz_spectrum'], current_value_only=True).\
+            get('zzz_spectrum', False)
+        if waveform is not None and bool(waveform) and self.instruments.inst_afg is not None \
+                and self.instruments.inst_mdo is not None:
             logger.debug("Waveform and FFT experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
@@ -388,11 +399,15 @@ def script(self):
             self.instruments.inst_mdo.reset_instrument()
             time.sleep(2)
 
+            # Read all values from DB
+            values = self.read_values_from_db(variable_names=['AFG_VEPP_1', 'AFG_FUNCTION_SHAPE_1', 'AFG_FREQ_1'],
+                                              current_value_only=True)
+
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
 
             # Set generator Vpp
-            vepp = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_2_VEPP')
+            vepp = values.get('AFG_VEPP_1', 1)
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
             self.instruments.inst_afg.afg_set_output_state(ch=1, state=True)
             self.instruments.inst_afg.afg_set_offset(ch=1, offset=0)
@@ -403,12 +418,11 @@ def script(self):
             self.instruments.inst_mdo.mdo_set_trigger_level(ch=1, level=float(vepp) / 4)
 
             # Set generator function shape
-            func_shape = self.read_variable_property(variable_name='Spectre_run',
-                                                     property_name='SPECTRE_3_FUNCTION_SHAPE')
+            func_shape = values.get('AFG_FUNCTION_SHAPE_1', 1)
             self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=int(func_shape))
 
             # Set the generator frequency to f
-            f = self.read_variable_property(variable_name='Spectre_run', property_name='SPECTRE_1_F')
+            f = values.get('AFG_FREQ_1', 1000)
             self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
             # Set the oscilloscope horizontal scale and vertical scale for the output
@@ -426,7 +440,9 @@ def script(self):
                 scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=2, points_resolution=resolution, frequency=f, refresh=False)
             except visa.VisaIOError as e:
-                logger.debug("%s while querying waveform" % e)
+                scaled_wave_ch1 = list()
+                scaled_wave_ch2 = list()
+                logger.debug("Empty signals from MDO")
 
             scaled_wave_ch1_mini = list()
             scaled_wave_ch2_mini = list()
@@ -578,7 +594,8 @@ def script(self):
             # Set MDO trigger level and trigger source
             trigger_level = values.get('MDO_TRIGGER_LEVEL', 0)
             trigger_source = values.get('MDO_TRIGGER_SOURCE', 1)
-            self.instruments.inst_mdo.mdo_set_trigger_level(ch=trigger_source, level=float(trigger_level))
+            self.instruments.inst_mdo.mdo_set_trigger_level(ch=int(trigger_source), level=float(trigger_level))
+            self.instruments.inst_mdo.mdo_set_trigger_source(ch=int(trigger_source))
 
             resolution = 10000
             try:
