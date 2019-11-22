@@ -220,8 +220,7 @@ def script(self):
                     self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                                  timestamp=now())
                     self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-                    self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
-                                                 value_class='BOOLEAN')
+                    self.write_values_to_db(data={'zzz_bode': [0]})
                     self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
                     return
@@ -258,10 +257,9 @@ def script(self):
             logger.debug("Bode end")
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
+            self.write_values_to_db(data={'zzz_bode': [0]})
             time.sleep(2)
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-            self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
-                                         value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
         ###########################################
@@ -325,8 +323,7 @@ def script(self):
                     self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                                  timestamp=now())
                     self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-                    self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP', value=0,
-                                                 value_class='BOOLEAN')
+                    self.write_values_to_db(data={'zzz_bode_compare': [0]})
                     self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
                     return
@@ -374,10 +371,9 @@ def script(self):
             logger.debug("Bode end")
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
+            self.write_values_to_db(data={'zzz_bode_compare': [0]})
             time.sleep(2)
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-            self.write_variable_property(variable_name='Bode_run', property_name='BODE_5_LOOP_COMPARE', value=0,
-                                         value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
         ###########################################
@@ -488,10 +484,9 @@ def script(self):
             self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
+            self.write_values_to_db(data={'zzz_spectrum': [0]})
             time.sleep(4)
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-            self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
-                                         value_class='BOOLEAN')
 
         ###########################################
         # Expe oscilloscope
