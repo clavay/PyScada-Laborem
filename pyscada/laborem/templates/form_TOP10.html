@@ -1,3 +1,6 @@
+<h3>Vous devez répondre à toutes les questions d'un coup.</h3>
+<p>Vous ne pourrez pas y répondre par la suite</p>
+<br>
 <form name="{{ form.title }}" class="form" id="{{ form.web_id }}">
     {% for item in form.hidden_control_items_to_true.all %}
         {% if item.active == 1 %}

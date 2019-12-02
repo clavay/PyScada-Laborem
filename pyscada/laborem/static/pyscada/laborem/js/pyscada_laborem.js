@@ -12,6 +12,11 @@ var USER_TYPE = ""
 var CONNECTION_ACCEPTED = 0
 var WAITING_USERS_DATA = {}
 
+//var for blinking option of wainting list
+var d = $(".dropdown-WaitingList-toggle")
+var c = d.css("color")
+
+
 function reload_top10_ranking() {
     $.ajax({
         type: 'post',
@@ -201,7 +206,7 @@ function reset_page(page_name) {
         $(".user_stop_btn").hide()
         change_bases();
         change_plug_selected_motherboard();
-        update_plots(true);
+        //update_plots(true);
         reset_selected_expe();
         move_robot("put");
         $("#tooltip").hide();
@@ -602,6 +607,24 @@ function check_users() {
                 }
             }
 
+            //blink if less than 1 min
+            if ( d.text().search("min")==-1 && d.text().search("illi")==-1 && typeof blink == 'undefined') {
+            blink = setInterval(function () {
+                d.css("background-color", function () {
+                    this.switch = !this.switch
+                    return this.switch ? "red" : ""
+                });
+                d.css("color", function () {
+                    this.switch2 = !this.switch2
+                    return this.switch2 ? "white" : ""
+                });
+            }, 500)
+            }else if (typeof blink !== 'undefined'){
+              clearInterval(blink);
+              d.css("background-color", "" );
+              d.css("color", c )
+            }
+
             // Timeline part
             if (data['timeline_start'] != DATA_FROM_TIMESTAMP && data['timeline_start'] != '' && typeof data['timeline_start'] != 'undefined') {
                 //DATA={}
@@ -892,6 +915,11 @@ $( document ).ready(function() {
                     $(tabinputs[i]).parents(".input-group").addClass("has-error");
                     $(tabinputs[i]).parents(".input-group").find('.help-block').remove()
                     $(tabinputs[i]).parents(".input-group").append('<span id="helpBlock-' + id + '" class="help-block">Please provide a value !</span>');
+                    err = true;
+                }else if (isNaN(value)) {
+                    $(tabinputs[i]).parents(".input-group").addClass("has-error");
+                    $(tabinputs[i]).parents(".input-group").find('.help-block').remove()
+                    $(tabinputs[i]).parents(".input-group").append('<span id="helpBlock-' + id + '" class="help-block">The value must be a number ! Use dot not coma.</span>');
                     err = true;
                 }else {
                     $(tabinputs[i]).parents(".input-group").find('.help-block').remove()

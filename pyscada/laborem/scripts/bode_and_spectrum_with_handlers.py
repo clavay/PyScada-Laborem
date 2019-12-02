@@ -188,7 +188,7 @@ def script(self):
             time.sleep(2)
 
             values = self.read_values_from_db(variable_names=['AFG_VEPP_1', 'AFG_FREQ_1_MIN', 'AFG_FREQ_1_MAX',
-                                                              'POINTS'], current_value_only=True)
+                                                              'NB_POINTS'], current_value_only=True)
 
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
@@ -489,7 +489,7 @@ def script(self):
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
 
         ###########################################
-        # Expe oscilloscope
+        # Expe signals
         ###########################################
 
         afg = self.read_values_from_db(variable_names=['zzz_afg'], current_value_only=True).\
@@ -517,10 +517,15 @@ def script(self):
                                               current_value_only=True)
 
             # Set output state
-            state = values.get('AFG_OUTPUT_STATE_1', False)
-            self.instruments.inst_afg.afg_set_output_state(ch=1, state=state)
-            state = values.get('AFG_OUTPUT_STATE_2', False)
-            self.instruments.inst_afg.afg_set_output_state(ch=2, state=state)
+            state1 = values.get('AFG_OUTPUT_STATE_1', False)
+            self.instruments.inst_afg.afg_set_output_state(ch=1, state=state1)
+            state2 = values.get('AFG_OUTPUT_STATE_2', False)
+            self.instruments.inst_afg.afg_set_output_state(ch=2, state=state2)
+
+            if not state1:
+                self.write_variable_property("LABOREM", "message_laborem",
+                                             "Attention, la voie 1 du GBF n'a pas été activée...", value_class='string')
+                time.sleep(4)
 
             # Set output offset
             offset = values.get('AFG_OFFSET_1', 0)

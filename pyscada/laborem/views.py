@@ -460,6 +460,11 @@ def validate_top10_answers(request):
 
 
 def calculate_note(level, answer, student_answer):
+    try:
+        float(answer)
+        float(student_answer)
+    except ValueError:
+        logger.error("TOP10 answer is not a float")
     return level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))*2)
 
 
@@ -699,7 +704,8 @@ def check_users(request):
     # Send viewer list
     # LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
     data['request_user'] = str(request.user)
-    td = timedelta(minutes=5)
+    td = timedelta(minutes=int(VariableProperty.objects.get_property(Variable.objects.get(
+        name="LABOREM"), "working_time").value_int16))
     waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
         order_by('connection_time')
     working_user = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").first()

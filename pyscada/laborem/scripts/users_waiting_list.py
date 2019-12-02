@@ -36,6 +36,8 @@ def script(self):
     :return:
     """
     time_before_remove_group = 12
+    working_time = VariableProperty.objects.get_property(Variable.objects.get(
+        name="LABOREM"), "working_time").value_int16
     # check if the 3 groups exist
     if LaboremGroupInputPermission.objects.filter(Q(hmi_group__name="viewer") | Q(hmi_group__name="worker") |
                                                   Q(hmi_group__name="teacher")).count() == 3:
@@ -60,11 +62,11 @@ def script(self):
         LaboremUser.objects.filter(last_check__lte=now() - timedelta(seconds=time_before_remove_group)).\
             exclude(laborem_group_input__hmi_group__name="teacher").\
             update(laborem_group_input=None, start_time=None, connection_id=None)
-        # move worker to viewer if start > 5 min and viewer list count > 0
+        # move worker to viewer if start > working_time min and viewer list count > 0
         # if no viewer, actualize the start time each time
         if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").count() > 0:
             LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker",
-                                       start_time__lte=now() - timedelta(minutes=5)).\
+                                       start_time__lte=now() - timedelta(minutes=working_time)).\
                 update(laborem_group_input=None, start_time=None, connection_time=now())
         else:
             LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").update(start_time=now())
