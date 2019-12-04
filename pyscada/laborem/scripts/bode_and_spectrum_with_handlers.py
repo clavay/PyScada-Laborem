@@ -642,6 +642,89 @@ def script(self):
             time.sleep(4)
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
             logger.debug("Oscilloscope done")
+
+        autoset_oscilloscope = self.read_values_from_db(variable_names=['zzz_autoset_oscillo'],
+                                                        current_value_only=True).get('zzz_autoset_oscillo', False)
+        if autoset_oscilloscope is not None and bool(autoset_oscilloscope) and self.instruments.inst_mdo is not None:
+            logger.debug("Autoset Oscilloscope experience is running...")
+            self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                         timestamp=now())
+            self.write_variable_property("LABOREM", "message_laborem",
+                                         "Signaux en cours d'acquisition sur l'oscilloscope via autoset...",
+                                         value_class='string')
+
+            # Send *RST to all instruments
+            self.instruments.inst_mdo.reset_instrument()
+            time.sleep(2)
+
+            # Read all values from DB
+            values = self.read_values_from_db(variable_names=['AFG_FREQ', 'AFG_VEPP'],
+                                              current_value_only=True)
+
+            vepp = f = values.get('AFG_VEPP', 5)
+
+            # Set the generator frequency to f
+            f = values.get('AFG_FREQ', 1000)
+
+            # Prepare MDO trigger, channel 1 vertical scale, bandwidth
+            self.instruments.inst_mdo.mdo_prepare()
+
+            # Set the oscilloscope horizontal scale and vertical scale for the output
+            range_i = None
+            self.instruments.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i)
+
+            self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
+
+            # Set MDO trigger level and trigger source
+            self.instruments.inst_mdo.mdo_set_trigger_level(ch=int(1), level=float(vepp/2.0))
+            self.instruments.inst_mdo.mdo_set_trigger_source(ch=int(1))
+
+            resolution = 10000
+            try:
+                scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
+                    ch=1, points_resolution=resolution, frequency=f, refresh=True)
+                scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
+                    ch=2, points_resolution=resolution, frequency=f, refresh=False)
+            except visa.VisaIOError:
+                scaled_wave_ch1 = list()
+                scaled_wave_ch2 = list()
+                logger.debug("Empty signals from MDO")
+
+            scaled_wave_ch1_mini = list()
+            scaled_wave_ch2_mini = list()
+            time_values = list()
+            time_values_to_show = list()
+            time_now = time.time()
+
+            # Prepare the lists to save
+            save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
+            logger.debug('save_resolution : %s' % save_resolution)
+            for i in range(0, save_resolution):
+                # store one value each ms
+                time_values.append(time_now + 0.001 * i)
+                # store time in ms
+                time_values_to_show.append(0.001 * i * self.instruments.inst_mdo.mdo_horizontal_time() * 1000 * 10)
+                scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
+                scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
+
+            if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                             timestamp=now())
+                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+                self.write_values_to_db(data={'zzz_oscillo': [0]})
+                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                return
+
+            self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
+            self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
+            self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+            self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
+                                         timestamp=now())
+            self.write_values_to_db(data={'zzz_autoset_oscillo': [0]})
+            time.sleep(4)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            logger.debug("Autoset Oscilloscope done")
+
         self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
 
 

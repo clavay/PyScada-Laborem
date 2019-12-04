@@ -54,9 +54,9 @@ def unauthenticated_redirect(func):
 def index(request):
     try:
         if LaboremUser.objects.get(user=request.user).laborem_group_input is None:
-            LaboremUser.objects.filter(user=request.user).exclude(laborem_group_input__hmi_group__name="teacher").update(
-                laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"),
-                last_check=now(), connection_time=now())
+            LaboremUser.objects.filter(user=request.user).exclude(laborem_group_input__hmi_group__name="teacher").\
+                update(laborem_group_input=LaboremGroupInputPermission.objects.get(hmi_group__name="viewer"),
+                       last_check=now(), connection_time=now())
             time.sleep(3)
             return redirect('/')
     except LaboremGroupInputPermission.DoesNotExist:
@@ -461,11 +461,12 @@ def validate_top10_answers(request):
 
 def calculate_note(level, answer, student_answer):
     try:
-        float(answer)
-        float(student_answer)
+        float(answer.replace(',', '.'))
+        float(student_answer.replace(',', '.'))
     except ValueError:
-        logger.error("TOP10 answer is not a float")
-    return level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))*2)
+        logger.error("TOP10 answer is not a float : %s - %s" % (answer, student_answer))
+    # return level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))*2)
+    return min(level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))+0.2), level)
 
 
 @unauthenticated_redirect
@@ -532,8 +533,10 @@ def reset_selected_plug(request):
         logger.debug("mb_id not in request.POST for reset_selected_plug fonction. Request : %s" % request)
         return HttpResponse(status=404)
     if LaboremGroupInputPermission.objects.count() > 0:
+        plug_selected = Variable.objects.get(name="plug_selected", laboremgroupinputpermission__hmi_group__in=request.
+                                             user.groups.exclude(name='teacher').iterator())
         for group in request.user.groups.iterator():
-            if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
+            if LaboremGroupInputPermission.objects.get(hmi_group=group, variables__pk=plug_selected.pk):
                 try:
                     LaboremMotherboardDevice.objects.get(pk=mb_id).change_selected_plug(0)
                     logger.debug("Reset selected plug - user %s - mb_id %s" % (request.user, mb_id))
@@ -833,7 +836,7 @@ def check_users(request):
 @unauthenticated_redirect
 def get_experience_list(request):
     if LaboremGroupInputPermission.objects.count() == 0:
-        visible_experience_list = LaboremExperience.objects.all().values_list('pk', flat=True)
+        visible_experience_list = LaboremExperience.objects.all().values_list('laborem_experiences', flat=True)
     else:
         visible_experience_list = LaboremGroupInputPermission.objects.filter(
             hmi_group__in=request.user.groups.iterator()).values_list('laborem_experiences', flat=True)

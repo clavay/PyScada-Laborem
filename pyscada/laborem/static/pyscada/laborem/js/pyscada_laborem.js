@@ -619,7 +619,7 @@ function check_users() {
                     return this.switch2 ? "white" : ""
                 });
             }, 500)
-            }else if (typeof blink !== 'undefined'){
+            }else if ((d.text().search("min")!==-1 || d.text().search("illi")!==-1) && typeof blink !== 'undefined'){
               clearInterval(blink);
               d.css("background-color", "" );
               d.css("color", c )

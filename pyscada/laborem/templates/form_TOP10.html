@@ -29,7 +29,7 @@
                     {% else %}
                         <div class="input-group set_value">
                             <span class="input-group-addon input-group-addon-label">{{ item.label }}</span>
-                            <input type="text" class="form-control {{ item.web_class_str }}" name="{{ item.name }}" id="{{ item.web_id }}-value" placeholder="">
+                            <input type="text" class="form-control {{ item.web_class_str }}" name="{{ item.name }}" id="{{ item.web_id }}-value" placeholder="" style="min-width:80px;">
                             {% if item.unit %}<span class="input-group-addon">{{ item.unit }}</span>{% endif %}
                         </div>
                     {% endif %}
@@ -48,7 +48,7 @@
                     {% else %}
                         <div class="input-group set_value">
                             <span class="input-group-addon input-group-addon-label">{{ item.label }}</span>
-                            <input type="text" class="form-control {{ item.web_class_str }}" name="{{ item.name }}" id="{{ item.web_id }}-value" placeholder="">
+                            <input type="text" class="form-control {{ item.web_class_str }}" name="{{ item.name }}" id="{{ item.web_id }}-value" placeholder="" style="min-width:80px;">
                             {% if item.unit %}<span class="input-group-addon">{{ item.unit }}</span>{% endif %}
                         </div>
                     {% endif %}
