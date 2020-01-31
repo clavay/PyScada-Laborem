@@ -90,18 +90,27 @@ def script(self):
             pass
         except AttributeError:
             pass
+        try:
+            User.objects.filter(groups__name__startswith="teacher").exclude(groups__name__startswith="worker")\
+                .exclude(groups__name__startswith="viewer").first().groups.add(Group.objects.get(name="viewer"))
+        except User.DoesNotExist:
+            pass
+        except AttributeError:
+            pass
 
-        # update the user group to the group selected in LaboremUser
-        for U in User.objects.exclude(laboremuser__laborem_group_input__isnull=True).exclude(
-                laboremuser__laborem_group_input__hmi_group=F('groups')):
+        # remove worker user group if not in LaboremUser
+        for U in User.objects.exclude(laboremuser__laborem_group_input__hmi_group__name="worker")\
+                .filter(groups__name__startswith="worker"):
             try:
-                U.groups.remove(Group.objects.get(name='viewer'), Group.objects.get(name='worker'))
-                U.groups.add(U.laboremuser.laborem_group_input.hmi_group)
+                U.groups.remove(Group.objects.get(name='worker'))
                 # logger.debug("User with different laborem group : %s" % U)
             except LaboremUser.DoesNotExist:
                 pass
             except AttributeError:
                 pass
+        for U in User.objects.filter(laboremuser__laborem_group_input__hmi_group__name="worker") \
+                .exclude(groups__name__startswith="worker"):
+            U.groups.add(U.laboremuser.laborem_group_input.hmi_group)
     else:
         logger.error("Please create the 3 groups for the user list")
     # logger.debug("Total time : %s - start : %s - without group to viewer : %s - remove group : %s -

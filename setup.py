@@ -32,6 +32,9 @@ setup(
     classifiers=CLASSIFIERS,
     install_requires=[
         'pyscada',
+        'numpy',
+        'pyvisa>= 1.9.1',
+        'pyvisa-py>0.3'
     ],
     packages=find_packages(exclude=["project", "project.*"]),
     include_package_data=True,

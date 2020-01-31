@@ -19,7 +19,7 @@ from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import requires_csrf_token, csrf_exempt
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.utils.timezone import now, timedelta
 from django.utils.dateformat import format
 from django.conf import settings
@@ -452,10 +452,10 @@ def validate_top10_answers(request):
         note_max += calculate_note(level_plug, top10qa.answer4, top10qa.answer4)
     VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
                                                        "Vous avez eu " + str(round(note, 2)) + "/" + str(note_max),
-                                                       value_class='string')
+                                                       value_class='string', timestamp=now())
     time.sleep(3)
     VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
-                                                       "", value_class='string')
+                                                       "", value_class='string', timestamp=now())
     return HttpResponse(status=200)
 
 
@@ -466,7 +466,8 @@ def calculate_note(level, answer, student_answer):
     except ValueError:
         logger.error("TOP10 answer is not a float : %s - %s" % (answer, student_answer))
     # return level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))*2)
-    return min(level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))+0.2), level)
+    return min(level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))+0.2),
+               level)
 
 
 @unauthenticated_redirect
@@ -533,16 +534,16 @@ def reset_selected_plug(request):
         logger.debug("mb_id not in request.POST for reset_selected_plug fonction. Request : %s" % request)
         return HttpResponse(status=404)
     if LaboremGroupInputPermission.objects.count() > 0:
-        plug_selected = Variable.objects.get(name="plug_selected", laboremgroupinputpermission__hmi_group__in=request.
-                                             user.groups.exclude(name='teacher').iterator())
-        for group in request.user.groups.iterator():
-            if LaboremGroupInputPermission.objects.get(hmi_group=group, variables__pk=plug_selected.pk):
-                try:
-                    LaboremMotherboardDevice.objects.get(pk=mb_id).change_selected_plug(0)
-                    logger.debug("Reset selected plug - user %s - mb_id %s" % (request.user, mb_id))
-                except LaboremMotherboardDevice.DoesNotExist:
-                    logger.error("request : %s - mb_id : %s - group : %s" % (request, mb_id, group))
-                return HttpResponse(status=200)
+        plug_selected = Variable.objects.get(name="plug_selected")
+        if LaboremGroupInputPermission.objects.filter(
+                hmi_group__in=request.user.groups.exclude(name='teacher').iterator(),
+                variables__pk=plug_selected.pk):
+            try:
+                LaboremMotherboardDevice.objects.get(pk=mb_id).change_selected_plug(0)
+                logger.debug("Reset selected plug - user %s - mb_id %s" % (request.user, mb_id))
+            except LaboremMotherboardDevice.DoesNotExist:
+                logger.error("request : %s - mb_id : %s" % (request, mb_id))
+            return HttpResponse(status=200)
     return HttpResponse(status=200)
 
 
@@ -568,8 +569,11 @@ def move_robot(request):
                                 VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
                                                                                    "message_laborem",
                                                                                    "Le robot place les éléments...",
-                                                                                   value_class='string')
-                                data['message_laborem'] = "Le robot place les éléments..."
+                                                                                   value_class='string',
+                                                                                   timestamp=now())
+                                data['message_laborem'] = {}
+                                data['message_laborem']['message'] = "Le robot place les éléments..."
+                                data['message_laborem']['timestamp'] = int(format(now(), 'U')) * 1000
                         cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
                         cwt.save()
                         return HttpResponse(json.dumps(data), content_type='application/json')
@@ -583,8 +587,11 @@ def move_robot(request):
                                 VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
                                                                                    "message_laborem",
                                                                                    "Le robot retire les éléments...",
-                                                                                   value_class='string')
-                                data['message_laborem'] = "Le robot retire les éléments..."
+                                                                                   value_class='string',
+                                                                                   timestamp=now())
+                                data['message_laborem'] = {}
+                                data['message_laborem']['message'] = "Le robot retire les éléments..."
+                                data['message_laborem']['timestamp'] = int(format(now(), 'U')) * 1000
                         cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
                         cwt.save()
                         VariableProperty.objects.update_or_create_property(variable=Variable.objects.get(
@@ -683,10 +690,14 @@ def check_users(request):
 
     # Send message for robot, experience or laborem state
     try:
-        data['message_laborem'] = VariableProperty.objects.get_property(Variable.objects.get(
-            name="LABOREM"), "message_laborem").value_string
+        vp = VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"), "message_laborem")
+        data['message_laborem'] = {}
+        data['message_laborem']['message'] = vp.value_string
+        data['message_laborem']['timestamp'] = int(format(vp.timestamp, 'U')) * 1000
     except (Variable.DoesNotExist, AttributeError):
-        data['message_laborem'] = ''
+        data['message_laborem'] = {}
+        data['message_laborem']['message'] = ''
+        data['message_laborem']['timestamp'] = ''
 
     # Change the % of the progress bar for the MessageModal
     try:
@@ -752,94 +763,17 @@ def check_users(request):
     except (Variable.DoesNotExist, AttributeError):
         pass
 
-    '''
-    if laborem_working_user is not None:
-        current_user = LaboremUser.objects.filter(user=request.user).first()
-        data['titletime'] = "illimité"
-        data['waitingusers'] = ""
-        i = 0
-        j = 0
-        title_time = ""
-        td = timedelta(minutes=5)
-        for item in laborem_waiting_users_list:
-            data['waitingusers'] += '<tr class="waitingusers-item"><td>' + str(item.user.username) + \
-                                    '</td><td style="text-align: center">'
-            if (td - (now() - laborem_working_user.start_time) + i * td).seconds // 60 > 0:
-                data['waitingusers'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
-                                        + ' min '
-            data['waitingusers'] += str((td - (now() - laborem_working_user.start_time) + i * td).seconds
-                                        % 60) + ' sec' + '</td></tr>'
-            if current_user == item:
-                j = i + 1
-                data['titletime'] = ""
-                if (td - (now() - laborem_working_user.start_time) + i * td).seconds // 60 > 0:
-                    title_time += str((td - (now() - laborem_working_user.start_time) + i * td).seconds // 60) \
-                                         + ' min '
-                title_time += str((td - (now() - laborem_working_user.start_time) + i * td).seconds % 60) + ' sec'
-                data['titletime'] += title_time
-            i += 1
-        time_left = ' illimité '
-        if i > 0:
-            if (td - (now() - laborem_working_user.start_time)).seconds // 60 > 0:
-                time_left = str((td - (now() - laborem_working_user.start_time)).seconds // 60) + ' min ' \
-                            + str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
-                if current_user == laborem_working_user:
-                    data['titletime'] = ""
-                    data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds
-                                             // 60) + ' min ' + \
-                        str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
-            else:
-                time_left = str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
-                if current_user == laborem_working_user:
-                    data['titletime'] = ""
-                    data['titletime'] += str((td - (now() - laborem_working_user.start_time)).seconds % 60) + ' sec'
-        data['activeuser'] = '<tr class="waitingusers-item"><td>' + str(laborem_working_user.user.username) + \
-                             '</td><td style="text-align: center">' + time_left + '</td></tr>'
-        data['summary'] = ''
-        data['summary'] += '<h3>Résumé</h3>'
-        data['summary'] += '<li>En train de manipuler : ' + str(laborem_working_user) + '</li>'
-        if j > 0:
-            data['summary'] += "<li>File d'attente :<ul><li>Rang : " + str(j) + "</li>"
-            data['summary'] += "<li>Temps d'attente : " + str(title_time) + '</li></ul></li>'
-            data['viewer_rank'] = str(j)
-        try:
-            data['summary'] += "<li>Montage en cours : <ul><li>" \
-                               + LaboremMotherboardDevice.get_selected_plug(
-                LaboremMotherboardDevice.objects.get(pk=mb_id)).name \
-                               + "</li>"
-            data['plug_name'] = LaboremMotherboardDevice.get_selected_plug(
-                LaboremMotherboardDevice.objects.get(pk=mb_id)).name
-            data['plug_description'] = LaboremMotherboardDevice.get_selected_plug(
-                LaboremMotherboardDevice.objects.get(pk=mb_id)).description
-            if LaboremMotherboardDevice.get_selected_plug(LaboremMotherboardDevice.objects.get(pk=mb_id)).robot:
-                data['summary'] += "<li>Modifiable via le robot</li>"
-                for base in LaboremRobotBase.objects.all():
-                    if base.element is not None:
-                        data['summary'] += "<li>" + str(base) + " : " + str(base.element) + "</li>"
-                data['summary'] += "</ul>"
-            else:
-                data['summary'] += "<li>Précablé</li></ul>"
-            try:
-                vp = VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),
-                                                           "EXPERIENCE").value_string.capitalize()
-                if vp != "":
-                    data['summary'] += "<li>Expérience en cours : " + vp + "</li>"
-            except (Variable.DoesNotExist, AttributeError):
-                pass
-        except (LaboremMotherboardDevice.DoesNotExist, AttributeError):
-            pass
-    '''
-
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
 @unauthenticated_redirect
 def get_experience_list(request):
     if LaboremGroupInputPermission.objects.count() == 0:
-        visible_experience_list = LaboremExperience.objects.all().values_list('laborem_experiences', flat=True)
+        visible_experience_list = LaboremExperience.objects.all().values_list('pk', flat=True)
     else:
-        visible_experience_list = LaboremGroupInputPermission.objects.filter(
-            hmi_group__in=request.user.groups.iterator()).values_list('laborem_experiences', flat=True)
+        visible_experience_list = LaboremExperience.objects.filter(laboremgroupinputpermission__hmi_group__in=request.
+                                                                   user.groups.exclude(name='teacher').
+                                                                   iterator()).values_list('pk', flat=True)
     data = dict()
     for e in visible_experience_list:
         if e is not None:

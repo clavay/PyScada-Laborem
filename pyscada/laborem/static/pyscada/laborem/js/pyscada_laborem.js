@@ -189,18 +189,21 @@ function reset_page(page_name) {
         reset_robot_bases();
         reset_selected_plug();
         reset_selected_expe();
+        get_experience_list();
         $("#tooltip").hide();
     }else if (page_name === "plugs") {
         $(".user_stop_btn").hide()
         reset_robot_bases();
         reset_selected_plug();
         reset_selected_expe();
+        get_experience_list();
         $("#tooltip").hide();
     }else if (page_name === "preconf" || page_name === "robot") {
         $(".user_stop_btn").hide()
         change_plug_selected_motherboard();
         reset_robot_bases();
         reset_selected_expe();
+        get_experience_list();
         $("#tooltip").hide();
     }else if (page_name === "expe_choice") {
         $(".user_stop_btn").hide()
@@ -208,6 +211,7 @@ function reset_page(page_name) {
         change_plug_selected_motherboard();
         //update_plots(true);
         reset_selected_expe();
+        get_experience_list();
         move_robot("put");
         $("#tooltip").hide();
     }else if (page_name === "bode" || page_name === "signals" || page_name === "spectrum") {
@@ -251,10 +255,21 @@ function move_robot(mov) {
         url: ROOT_URL+'form/move_robot/',
         data: {move:mov},
         success: function (data) {
-            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '' && window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "loading" && window.location.hash.substr(1) != "disconnect") {
-                $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
-                $(".user_stop_btn").hide()
-                $('#MessageModal').modal('show');
+            if (typeof data['message_laborem'] != 'undefined' && typeof data['message_laborem']['message'] != 'undefined' && typeof data['message_laborem']['timestamp'] != 'undefined' && window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "loading" && window.location.hash.substr(1) != "disconnect") {
+                if (data['message_laborem']['timestamp'] > $(".message-laborem").attr('data-timestamp')) {
+                    if (data['message_laborem']['message'] != '') {
+                        $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem']['message'];
+                        $(".user_stop_btn").hide()
+                        $('#MessageModal').modal('show');
+                        $(".message-laborem").attr('data-timestamp', data['message_laborem']['timestamp'])
+                    }else {
+                        $('#MessageModal').modal('hide');
+                        $(".user_stop_btn").removeClass("disabled")
+                        $(".user_stop_btn").html("Arrêter")
+                        $(".message-laborem h2")[0].innerHTML = '';
+                        $(".message-laborem").attr('data-timestamp', data['message_laborem']['timestamp'])
+                    }
+                }
             }else {
                 $('#MessageModal').modal('hide');
                 $(".user_stop_btn").removeClass("disabled")
@@ -459,11 +474,12 @@ function check_time() {
                 $('#ViewerModal').modal('hide');
                 window.location.href = "#disconnect";
                 REFRESH_RATE = 30000;
-                //setTimeout(function() {check_time()}, data['setTimeout']);
+                setTimeout(function() {check_time()}, REFRESH_RATE);
             }
         },
         error: function(data) {
             console.log('check time failed');
+            setTimeout(function() {check_time()}, 30000);
         }
     })
 }
@@ -648,9 +664,20 @@ function check_users() {
             }
 
             //Message Modal part
-            if (typeof data['message_laborem'] != 'undefined' && data['message_laborem'] != '' && window.location.hash.substr(1) != "waiting") {
-                $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem'];
-                $('#MessageModal').modal('show');
+            if (typeof data['message_laborem'] != 'undefined' && typeof data['message_laborem']['message'] != 'undefined' && typeof data['message_laborem']['timestamp'] != 'undefined' && window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "loading" && window.location.hash.substr(1) != "disconnect") {
+                if (data['message_laborem']['timestamp'] > $(".message-laborem").attr('data-timestamp')) {
+                    if (data['message_laborem']['message'] != '') {
+                        $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem']['message'];
+                        $('#MessageModal').modal('show');
+                        $(".message-laborem").attr('data-timestamp', data['message_laborem']['timestamp'])
+                    }else {
+                        $('#MessageModal').modal('hide');
+                        $(".user_stop_btn").removeClass("disabled")
+                        $(".user_stop_btn").html("Arrêter")
+                        $(".message-laborem h2")[0].innerHTML = '';
+                        $(".message-laborem").attr('data-timestamp', data['message_laborem']['timestamp'])
+                    }
+                }
             }else {
                 $('#MessageModal').modal('hide');
                 $(".user_stop_btn").removeClass("disabled")
@@ -730,49 +757,53 @@ function check_users() {
                 setTimeout(function() {check_users()}, data['setTimeout']);
             }else {
                 REFRESH_RATE = 30000;
+                setTimeout(function() {check_users()}, REFRESH_RATE);
             }
         },
         error: function(data) {
             console.log('check user failed');
+            setTimeout(function() {check_users()}, 30000);
         }
     });
 }
 
 function get_experience_list() {
-    $.ajax({
-        type: 'post',
-        url: ROOT_URL+'form/get_experience_list/',
-        data: {},
-        success: function (data) {
-            for (var key in data){
-                $(".expe_list").append('<a href="javascript:;" class="list-group-item expe_list_item" name=' + key + '>' + data[key] + '</a>')
-            };
-            // Change next button and save experience in Variable Property
-            $('.expe_list_item').on('click', function() {
-                var $this = $(this);
-                $('.expe_list_item.active').removeClass('active');
-                $this.addClass('active');
-                if (typeof $('.expe_list_item.active').attr('name') != 'undefined') {
-                    expe = $('.expe_list_item.active').attr('name')
-                    $.ajax({
-                        type: 'post',
-                        url: ROOT_URL+'form/write_property/',
-                        data: {variable_property:"EXPERIENCE",value:expe},
-                        success: function (data) {
+    if (!$(".expe_list_item").length) {
+        $.ajax({
+            type: 'post',
+            url: ROOT_URL+'form/get_experience_list/',
+            data: {},
+            success: function (data) {
+                for (var key in data){
+                    $(".expe_list").append('<a href="javascript:;" class="list-group-item expe_list_item" name=' + key + '>' + data[key] + '</a>')
+                };
+                // Change next button and save experience in Variable Property
+                $('.expe_list_item').on('click', function() {
+                    var $this = $(this);
+                    $('.expe_list_item.active').removeClass('active');
+                    $this.addClass('active');
+                    if (typeof $('.expe_list_item.active').attr('name') != 'undefined') {
+                        expe = $('.expe_list_item.active').attr('name')
+                        $.ajax({
+                            type: 'post',
+                            url: ROOT_URL+'form/write_property/',
+                            data: {variable_property:"EXPERIENCE",value:expe},
+                            success: function (data) {
 
-                        },
-                        error: function(data) {
-                            add_notification('write expe failed',3);
-                        }
-                    });
-                }
-                query_previous_and_next_btn();
-            });
-        },
-        error: function(data) {
-            console.log('get_experience_list failed');
-        }
-    })
+                            },
+                            error: function(data) {
+                                add_notification('write expe failed',3);
+                            }
+                        });
+                    }
+                    query_previous_and_next_btn();
+                });
+            },
+            error: function(data) {
+                console.log('get_experience_list failed');
+            }
+        })
+    }
 }
 
 $( document ).ready(function() {
@@ -797,7 +828,7 @@ $( document ).ready(function() {
     reload_top10_ranking();
 
     // Load experience list at start
-    get_experience_list();
+    //get_experience_list();
 
     // Reset the pages settings at start
     reset_page(window.location.hash.substr(1));
@@ -816,6 +847,92 @@ $( document ).ready(function() {
     // Remove connection id
     $('.remove_id_btn').on('click', function() {
         remove_id();
+    })
+
+    // Show waiting message on form click
+    $('button.write-task-form-set').click(function(){
+        err = false;
+        id_form = $(this.form).attr('id');
+        tabinputs = $.merge($('#'+id_form+ ' :text'),$('#'+id_form+ ' :input:hidden'));
+        for (i=0;i<tabinputs.length;i++){ //test if there is an empty or non numeric value
+            value = $(tabinputs[i]).val();
+            id = $(tabinputs[i]).attr('id');
+            var_name = $(tabinputs[i]).attr("name");
+            $.each($('.variable-config'),function(kkey,val){
+                name_var = $(val).data('name');
+                if (name_var==var_name){
+                    key = parseInt($(val).data('key'));
+                    item_type = $(val).data('type');
+                    value_class = $(val).data('value-class');
+                    min = $(val).data('min');
+                    max = $(val).data('max');
+                    min_type = $(val).data('min-type');
+                    max_type = $(val).data('max-type');
+                    if (min_type == 'lte') {min_type_char = ">="} else {min_type_char = ">"};
+                    if (max_type == 'gte') {max_type_char = "<="} else {max_type_char = "<"};
+                }
+            });
+            if (value == "" || value == null){
+                err = true;
+            }else {
+                check_mm = check_min_max(parseFloat(value), parseFloat(min), parseFloat(max), min_type, max_type)
+                if (check_mm == -1) {
+                    err = true;
+                }else if (check_mm == 1) {
+                    err = true;
+                }else if (check_mm == 0) {
+                    if (isNaN(value)) {
+                        if (item_type == "variable_property" && value_class == 'STRING') {
+                        }else {
+                            err = true;
+                        }
+                    }
+                }
+            }
+        };
+        tabselects = $('#'+id_form+ ' .select');
+        for (i=0;i<tabselects.length;i++){ //test if there is an empty value
+            value = $(tabselects[i]).val();
+            id = $(tabselects[i]).attr('id');
+            var_name = $(tabselects[i]).data("name");
+            $.each($('.variable-config'),function(kkey,val){
+                name_var = $(val).data('name');
+                if (name_var==var_name){
+                    key = parseInt($(val).data('key'));
+                    item_type = $(val).data('type');
+                    value_class = $(val).data('value-class');
+                    min = $(val).data('min');
+                    max = $(val).data('max');
+                    min_type = $(val).data('min-type');
+                    max_type = $(val).data('max-type');
+                    if (min_type == 'lte') {min_type_char = ">="} else {min_type_char = ">"};
+                    if (max_type == 'gte') {max_type_char = "<="} else {max_type_char = "<"};
+                }
+            });
+            if (value == "" || value == null){
+                err = true;
+            }else {
+                check_mm = check_min_max(parseFloat(value), parseFloat(min), parseFloat(max), min_type, max_type)
+                if (check_mm == -1) {
+                    err = true;
+                }else if (check_mm == 1) {
+                    err = true;
+                }else if (check_mm == 0) {
+                    $(tabselects[i]).parents(".input-group").removeClass("has-error")
+                    if (isNaN(value)) {
+                        if (item_type == "variable_property" && value_class == 'STRING') {
+                        }else {
+                            err = true;
+                        }
+                    }
+                }
+            }
+        };
+        if (err) {return;}
+
+        $(".message-laborem h2")[0].innerHTML = ' ' + 'Veuillez patienter...';
+        $('#MessageModal').modal('show');
+        $(".message-laborem").attr('data-timestamp', Number($(".message-laborem").attr('data-timestamp')) + 1)
     })
 
     // Stop experience on stop user btn click

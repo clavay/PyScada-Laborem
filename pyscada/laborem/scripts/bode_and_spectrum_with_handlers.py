@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from pyscada.models import Device, Variable, DeviceProtocol, Unit, RecordedData
+from pyscada.models import Device, Variable, DeviceProtocol, Unit
 from pyscada.laborem.models import LaboremRobotBase, LaboremMotherboardDevice
 import logging
-import visa
-import time
+import pyvisa
+from time import time, sleep
 from django.utils.timezone import now
 import numpy as np
 
@@ -45,7 +45,7 @@ def startup(self):
     self.write_variable_property("LABOREM", "EXPERIENCE", '', value_class='string')
 
     self.write_variable_property("LABOREM", "message_laborem", "Laborem is starting. Please Wait...",
-                                 value_class='string')
+                                 value_class='string', timestamp=now())
 
     try:
         io_conf = LaboremMotherboardDevice.objects.first().MotherboardIOConfig
@@ -57,12 +57,12 @@ def startup(self):
     self.instruments.inst_mdo = connect_check_visa(io_conf.mdo1)
     self.instruments.inst_afg = connect_check_visa(io_conf.afg1)
     self.instruments.inst_robot = connect_check_visa(io_conf.robot1, False)
-    #self.instruments.inst_mdo2 = connect_check_visa(io_conf.mdo2)
+    # self.instruments.inst_mdo2 = connect_check_visa(io_conf.mdo2)
     self.instruments.inst_mdo2 = None
 
     self.instruments.inst_robot.init() if self.instruments.inst_robot is not None else True
 
-    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
     logger.debug('Experiences script started')
 
     return True
@@ -73,7 +73,8 @@ def shutdown(self):
     write your code shutdown code here, don't change the name of this function
     :return:
     """
-    self.write_variable_property("LABOREM", "message_laborem", "Laborem is down.", value_class='string')
+    self.write_variable_property("LABOREM", "message_laborem", "Laborem is down.", value_class='string',
+                                 timestamp=now())
     self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                  timestamp=now())
     self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
@@ -88,7 +89,9 @@ def shutdown(self):
             self.instruments.inst_robot.inst.close()
         if self.instruments.inst_mdo2 is not None:
             self.instruments.inst_mdo2.inst.close()
-    except visa.VisaIOError as e:
+    except pyvisa.VisaIOError as e:
+        logger.error(e)
+    except AttributeError as e:
         logger.error(e)
 
     return True
@@ -101,20 +104,30 @@ def script(self):
     :return:
     """
     if self.instruments.inst_afg.inst is not None and self.instruments.inst_mdo.inst is not None:
-        # and self.instruments.inst_robot.inst is not None:
+
+        # Get all the variables that start an experience
+        experiences = self.read_values_from_db(variable_names=['zzz_bode', 'zzz_bode_compare', 'zzz_spectrum',
+                                                               'zzz_afg', 'zzz_oscillo', 'zzz_autoset_oscillo'],
+                                               current_value_only=True, time_from=time()-10, time_to=time())
+        for key, item in experiences.items():
+            experiences[key] = item[-1]
+
+        ###########################################
+        # Robot part
+        ###########################################
         put_on_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON'))
         if put_on_robot:
             if self.instruments.inst_robot is None:
                 self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
-                                             value_class='string')
-                time.sleep(5)
+                                             value_class='string', timestamp=now())
+                sleep(5)
             else:
                 logger.debug("Putting on Elements...")
                 # Move the robot
                 for base in LaboremRobotBase.objects.all():
                     if base.element is not None and str(base.element.active) == '0':
                         self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
-                                                     value_class='string')
+                                                     value_class='string', timestamp=now())
                         r_element = base.element.R
                         theta_element = base.element.theta
                         z_element = base.element.z
@@ -132,21 +145,21 @@ def script(self):
                                          (base, base.element, base.element.active))
             self.write_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON', value=0,
                                          value_class='BOOLEAN')
-            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
 
         take_off_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_TAKE_OFF'))
         if take_off_robot:
             if self.instruments.inst_robot is None:
                 # self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
-                #                             value_class='string')
-                # time.sleep(5)
+                #                             value_class='string', timestamp=now())
+                # sleep(5)
                 pass
             else:
                 for base in LaboremRobotBase.objects.all():
                     if base.element is not None and str(base.element.active) != '0':
                         logger.debug("Taking off Elements...")
                         self.write_variable_property("LABOREM", "message_laborem", "Le robot retire les éléments...",
-                                                     value_class='string')
+                                                     value_class='string', timestamp=now())
                         r_element = base.element.R
                         theta_element = base.element.theta
                         z_element = base.element.z
@@ -166,13 +179,12 @@ def script(self):
                     base.change_selected_element(None)
             self.write_variable_property(variable_name='LABOREM', property_name='ROBOT_TAKE_OFF', value=0,
                                          value_class='BOOLEAN')
-            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
 
         ###########################################
         # Expe bode
         ###########################################
-
-        bode = self.read_values_from_db(variable_names=['zzz_bode'], current_value_only=True).get('zzz_bode', False)
+        bode = experiences.get('zzz_bode', False)
         if bode is not None and bool(bode) \
                 and self.instruments.inst_mdo is not None and self.instruments.inst_afg is not None:
             logger.debug("Bode experience is running...")
@@ -180,15 +192,17 @@ def script(self):
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem", "Diagrammes de Bode en cours d'acquisition...",
-                                         value_class='string')
+                                         value_class='string', timestamp=now())
 
             # Send *RST to all instruments
-            self.instruments.inst_afg.reset_instrument()
+            # self.instruments.inst_afg.reset_instrument()
             self.instruments.inst_mdo.reset_instrument()
-            time.sleep(2)
+            sleep(2)
 
             values = self.read_values_from_db(variable_names=['AFG_VEPP_1', 'AFG_FREQ_1_MIN', 'AFG_FREQ_1_MAX',
                                                               'NB_POINTS'], current_value_only=True)
+            for key, item in values.items():
+                values[key] = item[-1]
 
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
@@ -198,6 +212,7 @@ def script(self):
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
             self.instruments.inst_afg.afg_set_output_state(ch=1, state=True)
             self.instruments.inst_afg.afg_set_offset(ch=1, offset=0)
+            self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=0)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
@@ -219,7 +234,8 @@ def script(self):
                 if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                     self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                                  timestamp=now())
-                    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+                    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string',
+                                                 timestamp=now())
                     self.write_values_to_db(data={'zzz_bode': [0]})
                     self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
@@ -233,22 +249,25 @@ def script(self):
 
                 period = 4.0
 
-                # Set the oscilloscope horizontal scale and find the vertical scale for channel 2
-                range_i = self.instruments.inst_mdo.mdo_find_vertical_scale(
-                    ch=2, frequency=f, range_i=range_i, period=period)
+                try:
+                    # Set the oscilloscope horizontal scale and find the vertical scale for channel 2
+                    range_i = self.instruments.inst_mdo.mdo_find_vertical_scale(
+                        ch=2, frequency=f, range_i=range_i, period=period)
 
-                # Start reading the phase
-                phase_osc, phase_np = self.instruments.inst_mdo.mdo_get_phase(
-                    source1=1, source2=2, frequency=f, period=period)
+                    # Start reading the phase
+                    phase_osc, phase_np = self.instruments.inst_mdo.mdo_get_phase(
+                        source1=1, source2=2, frequency=f, period=period)
 
-                # Start reading the gain
-                period = 2.0
-                self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=period, frequency=f)
-                gain = self.instruments.inst_mdo.mdo_gain(source1=1, source2=2, frequency=f, period=period)
-
+                    # Start reading the gain
+                    period = 2.0
+                    self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=period, frequency=f)
+                    gain = self.instruments.inst_mdo.mdo_gain(source1=1, source2=2, frequency=f, period=period)
+                except pyvisa.VisaIOError:
+                    logger.debug("Empty signals from MDO")
+                    continue
                 logger.debug("Freq : %s - Gain : %s - Phase Osc : %s - Phase Np : %s" % (f, gain, phase_osc, phase_np))
 
-                timevalues = time.time()
+                timevalues = time()
                 self.write_values_to_db(data={'Bode_Freq': [f], 'timevalues': [timevalues]})
                 self.write_values_to_db(data={'Bode_Gain': [gain], 'timevalues': [timevalues]})
                 self.write_values_to_db(data={'Bode_Phase': [phase_osc], 'timevalues': [timevalues]})
@@ -258,16 +277,14 @@ def script(self):
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_bode': [0]})
-            time.sleep(2)
-            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            # sleep(2)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
             self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
         ###########################################
         # Expe bode compare
         ###########################################
-
-        bode_compare_instruments = self.read_values_from_db(variable_names=['zzz_bode_compare'],
-                                                            current_value_only=True).get('zzz_bode_compare', False)
+        bode_compare_instruments = experiences.get('zzz_bode_compare', False)
         if bode_compare_instruments is not None and bool(bode_compare_instruments) \
                 and self.instruments.inst_mdo is not None \
                 and self.instruments.inst_afg is not None and self.instruments.inst_mdo2 is not None:
@@ -277,17 +294,19 @@ def script(self):
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem", "Diagrammes de Bode en cours d'acquisition...",
-                                         value_class='string')
+                                         value_class='string', timestamp=now())
 
             # Send *RST to all instruments
-            self.instruments.inst_afg.reset_instrument()
+            # self.instruments.inst_afg.reset_instrument()
             self.instruments.inst_mdo.reset_instrument()
             self.instruments.inst_mdo2.reset_instrument()
-            time.sleep(2)
+            sleep(2)
 
             # Read all values from DB
             values = self.read_values_from_db(variable_names=['AFG_VEPP_1', 'AFG_FREQ_1_MIN', 'AFG_FREQ_1_MAX',
                                                               'POINTS'], current_value_only=True)
+            for key, item in values.items():
+                values[key] = item[-1]
 
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
@@ -297,6 +316,7 @@ def script(self):
             self.instruments.inst_afg.afg_set_vpp(ch=1, vpp=vepp)
             self.instruments.inst_afg.afg_set_output_state(ch=1, state=True)
             self.instruments.inst_afg.afg_set_offset(ch=1, offset=0)
+            self.instruments.inst_afg.afg_set_function_shape(ch=1, function_shape=0)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
@@ -322,7 +342,8 @@ def script(self):
                 if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                     self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                                  timestamp=now())
-                    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+                    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string',
+                                                 timestamp=now())
                     self.write_values_to_db(data={'zzz_bode_compare': [0]})
                     self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
@@ -336,30 +357,34 @@ def script(self):
 
                 period = 4.0
 
-                # Set the oscilloscope horizontal scale and find the vertical scale for channel 2
-                range_i = self.instruments.inst_mdo.mdo_find_vertical_scale(
-                    ch=2, frequency=f, range_i=range_i, period=period)
-                range_i_2 = self.instruments.inst_mdo2.mdo_find_vertical_scale(
-                    ch=2, frequency=f, range_i=range_i_2, period=period)
+                try:
+                    # Set the oscilloscope horizontal scale and find the vertical scale for channel 2
+                    range_i = self.instruments.inst_mdo.mdo_find_vertical_scale(
+                        ch=2, frequency=f, range_i=range_i, period=period)
+                    range_i_2 = self.instruments.inst_mdo2.mdo_find_vertical_scale(
+                        ch=2, frequency=f, range_i=range_i_2, period=period)
 
-                # Start reading the phase
-                phase_osc, phase_np = self.instruments.inst_mdo.mdo_get_phase(
-                    source1=1, source2=2, frequency=f, period=period)
-                phase_osc2, phase_np2 = self.instruments.inst_mdo2.mdo_get_phase(
-                    source1=1, source2=2, frequency=f, period=period)
+                    # Start reading the phase
+                    phase_osc, phase_np = self.instruments.inst_mdo.mdo_get_phase(
+                        source1=1, source2=2, frequency=f, period=period)
+                    phase_osc2, phase_np2 = self.instruments.inst_mdo2.mdo_get_phase(
+                        source1=1, source2=2, frequency=f, period=period)
 
-                # Start reading the gain
-                period = 2.0
-                self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=period, frequency=f)
-                gain = self.instruments.inst_mdo.mdo_gain(source1=1, source2=2, frequency=f, period=period)
-                self.instruments.inst_mdo2.mdo_horizontal_scale_in_period(period=period, frequency=f)
-                gain2 = self.instruments.inst_mdo2.mdo_gain(source1=1, source2=2, frequency=f, period=period)
+                    # Start reading the gain
+                    period = 2.0
+                    self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=period, frequency=f)
+                    gain = self.instruments.inst_mdo.mdo_gain(source1=1, source2=2, frequency=f, period=period)
+                    self.instruments.inst_mdo2.mdo_horizontal_scale_in_period(period=period, frequency=f)
+                    gain2 = self.instruments.inst_mdo2.mdo_gain(source1=1, source2=2, frequency=f, period=period)
+                except pyvisa.VisaIOError:
+                    logger.debug("Empty signals from MDO")
+                    continue
 
                 logger.debug("Freq : %s - Gain : %s - Phase Osc : %s - Phase Np : %s" % (f, gain, phase_osc, phase_np))
                 logger.debug("Freq : %s - Gain2 : %s - Phase2 Osc : %s - Phase2 Np : %s" %
                              (f, gain2, phase_osc2, phase_np2))
 
-                timevalues = time.time()
+                timevalues = time()
                 self.write_values_to_db(data={'Bode_Freq': [f], 'timevalues': [timevalues]})
                 self.write_values_to_db(data={'Bode_Gain': [gain], 'timevalues': [timevalues]})
                 self.write_values_to_db(data={'Bode_Phase': [phase_osc], 'timevalues': [timevalues]})
@@ -372,32 +397,32 @@ def script(self):
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_bode_compare': [0]})
-            time.sleep(2)
-            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            # sleep(2)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
             self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
 
         ###########################################
         # Expe waveform
         ###########################################
-
-        waveform = self.read_values_from_db(variable_names=['zzz_spectrum'], current_value_only=True).\
-            get('zzz_spectrum', False)
+        waveform = experiences.get('zzz_spectrum', False)
         if waveform is not None and bool(waveform) and self.instruments.inst_afg is not None \
                 and self.instruments.inst_mdo is not None:
             logger.debug("Waveform and FFT experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem", "Analyse spectrale en cours d'acquisition...",
-                                         value_class='string')
+                                         value_class='string', timestamp=now())
 
             # Send *RST to all instruments
-            self.instruments.inst_afg.reset_instrument()
+            # self.instruments.inst_afg.reset_instrument()
             self.instruments.inst_mdo.reset_instrument()
-            time.sleep(2)
+            sleep(2)
 
             # Read all values from DB
             values = self.read_values_from_db(variable_names=['AFG_VEPP_1', 'AFG_FUNCTION_SHAPE_1', 'AFG_FREQ_1'],
                                               current_value_only=True)
+            for key, item in values.items():
+                values[key] = item[-1]
 
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
@@ -421,21 +446,22 @@ def script(self):
             f = values.get('AFG_FREQ_1', 1000)
             self.instruments.inst_afg.afg_set_frequency(ch=1, frequency=f)
 
-            # Set the oscilloscope horizontal scale and vertical scale for the output
-            range_i = None
-            self.instruments.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i)
-
-            self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
-
-            resolution = 10000
-            scaled_wave_ch1 = list()
-            scaled_wave_ch2 = list()
             try:
+                # Set the oscilloscope horizontal scale and vertical scale for the output
+                range_i = None
+                self.instruments.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i)
+
+                self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
+
+                resolution = 10000
+                scaled_wave_ch1 = list()
+                scaled_wave_ch2 = list()
+
                 scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=1, points_resolution=resolution, frequency=f, refresh=True)
                 scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=2, points_resolution=resolution, frequency=f, refresh=False)
-            except visa.VisaIOError as e:
+            except pyvisa.VisaIOError:
                 scaled_wave_ch1 = list()
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
@@ -444,7 +470,7 @@ def script(self):
             scaled_wave_ch2_mini = list()
             time_values = list()
             time_values_to_show = list()
-            time_now = time.time()
+            time_now = time()
 
             # Prepare the lists to save
             save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
@@ -470,7 +496,7 @@ def script(self):
             if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=now())
-                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
                 self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
                                              value_class='BOOLEAN')
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
@@ -485,25 +511,23 @@ def script(self):
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_spectrum': [0]})
-            time.sleep(4)
-            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            # sleep(4)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
 
         ###########################################
         # Expe signals
         ###########################################
-
-        afg = self.read_values_from_db(variable_names=['zzz_afg'], current_value_only=True).\
-            get('zzz_afg', False)
+        afg = experiences.get('zzz_afg', False)
         if afg is not None and bool(afg) and self.instruments.inst_afg is not None:
             logger.debug("AFG experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem", "Réglage GBF en cours...",
-                                         value_class='string')
+                                         value_class='string', timestamp=now())
 
             # Send *RST to all instruments
-            self.instruments.inst_afg.reset_instrument()
-            time.sleep(2)
+            # self.instruments.inst_afg.reset_instrument()
+            sleep(2)
 
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
@@ -515,6 +539,8 @@ def script(self):
                                                               'AFG_VEPP_2', 'AFG_FUNCTION_SHAPE_1',
                                                               'AFG_FUNCTION_SHAPE_2', 'AFG_FREQ_1', 'AFG_FREQ_2'],
                                               current_value_only=True)
+            for key, item in values.items():
+                values[key] = item[-1]
 
             # Set output state
             state1 = values.get('AFG_OUTPUT_STATE_1', False)
@@ -524,8 +550,9 @@ def script(self):
 
             if not state1:
                 self.write_variable_property("LABOREM", "message_laborem",
-                                             "Attention, la voie 1 du GBF n'a pas été activée...", value_class='string')
-                time.sleep(4)
+                                             "Attention, la voie 1 du GBF n'a pas été activée...", value_class='string',
+                                             timestamp=now())
+                sleep(4)
 
             # Set output offset
             offset = values.get('AFG_OFFSET_1', 0)
@@ -552,28 +579,30 @@ def script(self):
             self.instruments.inst_afg.afg_set_frequency(ch=2, frequency=f)
 
             self.write_values_to_db(data={'zzz_afg': [0]})
-            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
-            time.sleep(4)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
+            # sleep(4)
             logger.debug("AFG done")
 
-        oscilloscope = self.read_values_from_db(variable_names=['zzz_oscillo'], current_value_only=True).\
-            get('zzz_oscillo', False)
+        oscilloscope = experiences.get('zzz_oscillo', False)
         if oscilloscope is not None and bool(oscilloscope) and self.instruments.inst_mdo is not None:
             logger.debug("Oscilloscope experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem",
-                                         "Signaux en cours d'acquisition sur l'oscilloscope...", value_class='string')
+                                         "Signaux en cours d'acquisition sur l'oscilloscope...", value_class='string',
+                                         timestamp=now())
 
             # Send *RST to all instruments
             self.instruments.inst_mdo.reset_instrument()
-            time.sleep(2)
+            sleep(2)
 
             # Read all values from DB
             values = self.read_values_from_db(variable_names=['AFG_FREQ', 'MDO_SCALE_Y_CH1',
                                                               'MDO_SCALE_Y_CH2', 'MDO_SCALE_X', 'MDO_TRIGGER_LEVEL',
                                                               'MDO_TRIGGER_SOURCE'],
                                               current_value_only=True)
+            for key, item in values.items():
+                values[key] = item[-1]
 
             # Set the generator frequency to f
             f = values.get('AFG_FREQ', 1000)
@@ -603,7 +632,7 @@ def script(self):
                     ch=1, points_resolution=resolution, frequency=f, refresh=True)
                 scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=2, points_resolution=resolution, frequency=f, refresh=False)
-            except visa.VisaIOError:
+            except pyvisa.VisaIOError:
                 scaled_wave_ch1 = list()
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
@@ -612,7 +641,7 @@ def script(self):
             scaled_wave_ch2_mini = list()
             time_values = list()
             time_values_to_show = list()
-            time_now = time.time()
+            time_now = time()
 
             # Prepare the lists to save
             save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
@@ -628,7 +657,7 @@ def script(self):
             if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=now())
-                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
                 self.write_values_to_db(data={'zzz_oscillo': [0]})
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
                 return
@@ -639,53 +668,56 @@ def script(self):
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_oscillo': [0]})
-            time.sleep(4)
-            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            # sleep(4)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
             logger.debug("Oscilloscope done")
 
-        autoset_oscilloscope = self.read_values_from_db(variable_names=['zzz_autoset_oscillo'],
-                                                        current_value_only=True).get('zzz_autoset_oscillo', False)
+        autoset_oscilloscope = experiences.get('zzz_autoset_oscillo', False)
         if autoset_oscilloscope is not None and bool(autoset_oscilloscope) and self.instruments.inst_mdo is not None:
             logger.debug("Autoset Oscilloscope experience is running...")
             self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_variable_property("LABOREM", "message_laborem",
                                          "Signaux en cours d'acquisition sur l'oscilloscope via autoset...",
-                                         value_class='string')
+                                         value_class='string', timestamp=now())
 
             # Send *RST to all instruments
             self.instruments.inst_mdo.reset_instrument()
-            time.sleep(2)
+            sleep(2)
 
             # Read all values from DB
-            values = self.read_values_from_db(variable_names=['AFG_FREQ', 'AFG_VEPP'],
+            values = self.read_values_from_db(variable_names=['AFG_FREQ_1', 'AFG_VEPP_1'],
                                               current_value_only=True)
+            for key, item in values.items():
+                values[key] = item[-1]
 
-            vepp = f = values.get('AFG_VEPP', 5)
+            vepp = values.get('AFG_VEPP_1', 5)
 
             # Set the generator frequency to f
-            f = values.get('AFG_FREQ', 1000)
+            f = values.get('AFG_FREQ_1', 1000)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
 
-            # Set the oscilloscope horizontal scale and vertical scale for the output
-            range_i = None
-            self.instruments.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i)
-
-            self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
-
-            # Set MDO trigger level and trigger source
-            self.instruments.inst_mdo.mdo_set_trigger_level(ch=int(1), level=float(vepp/2.0))
-            self.instruments.inst_mdo.mdo_set_trigger_source(ch=int(1))
-
-            resolution = 10000
             try:
+                # Set the oscilloscope horizontal scale and vertical scale for the output
+                range_i = None
+                self.instruments.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i)
+                range_i = None
+                self.instruments.inst_mdo.mdo_find_vertical_scale(ch=1, frequency=f, range_i=range_i)
+
+                self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
+
+                # Set MDO trigger level and trigger source
+                self.instruments.inst_mdo.mdo_set_trigger_level(ch=int(1), level=float(vepp/2.0))
+                self.instruments.inst_mdo.mdo_set_trigger_source(ch=int(1))
+
+                resolution = 10000
                 scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=1, points_resolution=resolution, frequency=f, refresh=True)
                 scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=2, points_resolution=resolution, frequency=f, refresh=False)
-            except visa.VisaIOError:
+            except pyvisa.VisaIOError:
                 scaled_wave_ch1 = list()
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
@@ -694,7 +726,7 @@ def script(self):
             scaled_wave_ch2_mini = list()
             time_values = list()
             time_values_to_show = list()
-            time_now = time.time()
+            time_now = time()
 
             # Prepare the lists to save
             save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
@@ -710,7 +742,7 @@ def script(self):
             if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=now())
-                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
                 self.write_values_to_db(data={'zzz_oscillo': [0]})
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
                 return
@@ -721,10 +753,11 @@ def script(self):
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_autoset_oscillo': [0]})
-            time.sleep(4)
-            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string')
+            # sleep(4)
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
             logger.debug("Autoset Oscilloscope done")
 
+        # Reset stop button value
         self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
 
 
@@ -743,7 +776,7 @@ def connect_check_visa(config, idn=True):
                 if idn:
                     logger.debug(inst.inst.query("*IDN?"))
                 break
-            except visa.VisaIOError:
+            except pyvisa.VisaIOError:
                 logger.error("%s - visa.VisaIOError for device : %s" % (i, config))
                 # if i == max(range_i):
                 #    inst = None
@@ -755,5 +788,5 @@ def connect_check_visa(config, idn=True):
                     inst = None
             except UnicodeDecodeError:
                 logger.error("Script Laborem - Device %s - UnicodeDecodeError" % config)
-        time.sleep(10)
+        sleep(10)
     return inst
