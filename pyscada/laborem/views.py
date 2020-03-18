@@ -169,6 +169,13 @@ def view_laborem(request, link_title):
     except Form.DoesNotExist or Form.MultipleObjectsReturned:
         return HttpResponse(status=404)
 
+    if LaboremGroupInputPermission.objects.count() == 0:
+        visible_experience_list = LaboremExperience.objects.all().values_list('pk', flat=True)
+    else:
+        visible_experience_list = LaboremExperience.objects.filter(laboremgroupinputpermission__hmi_group__in=request.
+                                                                   user.groups.exclude(name='teacher').
+                                                                   iterator()).values_list('pk', flat=True)
+
     c = {
         'page_list': page_list,
         'pages_html': pages_html,
@@ -183,6 +190,7 @@ def view_laborem(request, link_title):
         'version_string': core_version,
         'laborem_version_string': laborem_version,
         'form_top10qa': form_top10qa,
+        'visible_experience_list': visible_experience_list,
     }
 
     return TemplateResponse(request, 'view_laborem.html', c)

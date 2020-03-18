@@ -45,6 +45,7 @@ echo 'KERNEL=="ttyS[0-9]", GROUP="dialout", MODE="0777"' | sudo tee -a /etc/udev
 sudo usermod -a -G pyscada www-data
 sudo usermod -a -G dialout pyscada
 sudo adduser pyscada i2c
+sudo adduser pyscada gpio
 
 #Mjpeg-streamer
 cd ~

@@ -4,11 +4,27 @@
 {% block title %}{{ view_title }} - PyScada-Laborem Control Center{% endblock %}
 {% block body_confic_data %} data-data-file="json/cache_data/" {% endblock %}
 {% block top_menu_left %}
-    {% for page in page_list %}
-        <li class="hidden"><a href="#{{page.link_title}}">{{page.title}}</a></li>
-    {% endfor %}
-    <li><a href="#" style="color: lightcoral; font-size: 16px;" class="btn-previous btn-next-previous">Précédent <span class="glyphicon glyphicon-chevron-left"></span></a></li>
-    <li><a href="#" style="color: lightgreen; font-size: 16px;" class="btn-next btn-next-previous"><span class="glyphicon glyphicon-chevron-right"></span> Suivant</a></li>
+    {% if view_title == "laborem" %}
+        {% for page in page_list %}
+            <li class="hidden"><a href="#{{page.link_title}}">{{page.title}}</a></li>
+        {% endfor %}
+        <li><a href="#" style="color: lightcoral; font-size: 16px;" class="btn-previous btn-next-previous">Précédent <span class="glyphicon glyphicon-chevron-left"></span></a></li>
+        <li><a href="#" style="color: lightgreen; font-size: 16px;" class="btn-next btn-next-previous"><span class="glyphicon glyphicon-chevron-right"></span> Suivant</a></li>
+    {% else %}
+        <li><a href="#plugs"><span class="glyphicon glyphicon-cog"></span> Configuration du circuit</a></li>
+        <li class="dropdown"><!-- Experiences -->
+            <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-blackboard"></span> Acquisition & Analyse <strong class="caret"></strong></a>
+            <div class="dropdown-menu" style="padding: 15px; padding-bottom: 15px; width:70%; min-width:380px;">
+                <ul>
+                    {% for experience in visible_experience_list %}
+                        <li>
+                            <a href="#{{experience.page.link_title}}">{{experience.page.title}}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </li>
+    {% endif %}
 {% endblock %}
 
 {% block top_menu_right %}
@@ -194,6 +210,8 @@
                         <br>
                         <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
                         <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
+                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" alt="Camera view" data-src="/motionpicam/stream.mjpg">
+                        <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" alt="Camera view" data-src="/motionpicam/stream2.mjpg">
                     </ul>
                 </div>
                 <div class="summary-modal col-md-6">

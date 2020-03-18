@@ -5,7 +5,7 @@ from pyscada.laborem import PROTOCOL_ID
 from pyscada.laborem.models import LaboremMotherboardDevice, LaboremMotherboardIOConfig, LaboremMotherboardIOElement
 from pyscada.laborem.models import ExtendedLaboremMotherboardDevice, LaboremExperience
 from pyscada.laborem.models import LaboremPlugDevice, LaboremRobotElement, LaboremRobotBase, LaboremUser
-from pyscada.laborem.models import LaboremTOP10 , LaboremTOP10Score, LaboremTOP10Ranking, LaboremGroupInputPermission
+from pyscada.laborem.models import LaboremTOP10, LaboremTOP10Score, LaboremTOP10Ranking, LaboremGroupInputPermission
 from pyscada.admin import DeviceAdmin
 from pyscada.admin import admin_site
 from pyscada.models import DeviceProtocol

@@ -60,7 +60,10 @@ def startup(self):
     # self.instruments.inst_mdo2 = connect_check_visa(io_conf.mdo2)
     self.instruments.inst_mdo2 = None
 
-    self.instruments.inst_robot.init() if self.instruments.inst_robot is not None else True
+    try:
+        self.instruments.inst_robot.init() if self.instruments.inst_robot is not None else True
+    except pyvisa.VisaIOError:
+        self.instruments.inst_robot = None
 
     self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
     logger.debug('Experiences script started')
