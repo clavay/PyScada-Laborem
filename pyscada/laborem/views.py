@@ -170,11 +170,11 @@ def view_laborem(request, link_title):
         return HttpResponse(status=404)
 
     if LaboremGroupInputPermission.objects.count() == 0:
-        visible_experience_list = LaboremExperience.objects.all().values_list('pk', flat=True)
+        visible_experience_list = LaboremExperience.objects.all()
     else:
         visible_experience_list = LaboremExperience.objects.filter(laboremgroupinputpermission__hmi_group__in=request.
                                                                    user.groups.exclude(name='teacher').
-                                                                   iterator()).values_list('pk', flat=True)
+                                                                   iterator())
 
     c = {
         'page_list': page_list,

@@ -121,9 +121,10 @@ def script(self):
         put_on_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON'))
         if put_on_robot:
             if self.instruments.inst_robot is None:
-                self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
-                                             value_class='string', timestamp=now())
-                sleep(5)
+                # self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
+                #                             value_class='string', timestamp=now())
+                # sleep(5)
+                pass
             else:
                 logger.debug("Putting on Elements...")
                 # Move the robot
