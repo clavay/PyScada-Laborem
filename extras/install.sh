@@ -11,24 +11,45 @@ function validate_url(){
 sudo apt-get update
 sudo apt-get -y upgrade
 sudo apt-get -y install mariadb-server python3-mysqldb
-sudo apt-get install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx
-sudo apt-get install libatlas-base-dev
-sudo apt-get install libopenjp2-7
-
+sudo apt-get install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx libffi-dev
+sudo apt-get install -y libatlas-base-dev
+sudo apt-get install -y libopenjp2-7
 sudo pip3 install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvisa-py
-sudo pip3 install https://github.com/clavay/PyScada/tarball/hmi_tmp
+
+read -p "Install PyScada clavay fork ? [y/n]: " answer
+if [[ "$answer" == "y" ]]; then
+  sudo pip3 install https://github.com/clavay/PyScada/tarball/master
+else
+  sudo pip3 install https://github.com/trombastic/PyScada/tarball/master
+fi
+
 sudo apt-get -y install owfs
 sudo pip3 install pyownet
-sudo apt-get -y install libffi-dev
 sudo pip3 install smbus-cffi
 sudo pip3 install psutil
-sudo pip3 install pyusb gpiozero https://github.com/clavay/PyScada-Laborem/tarball/master https://github.com/trombastic/PyScada-GPIO/tarball/master https://github.com/trombastic/PyScada-Scripting/tarball/master
+sudo pip3 install pyusb gpiozero
+
+read -p "Install PyScada-Laborem ? [y/n]: " answer
+if [[ "$answer" == "y" ]]; then
+  sudo pip3 install https://github.com/clavay/PyScada-Laborem/tarball/master
+fi
+read -p "Install PyScada-GPIO ? [y/n]: " answer
+if [[ "$answer" == "y" ]]; then
+  sudo pip3 install https://github.com/clavay/PyScada-GPIO/tarball/master
+fi
+read -p "Install PyScada-Scripting ? [y/n]: " answer
+if [[ "$answer" == "y" ]]; then
+  sudo pip3 install https://github.com/trombastic/PyScada-Scripting/tarball/master
+fi
 sudo pip3 install --upgrade mysqlclient
 
 #CAS
-sudo apt-get -y install libxml2-dev libxslt-dev python-dev
-sudo pip3 install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
-sudo pip3 install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
+read -p "Install CAS ? [y/n]: " answer
+if [[ "$answer" == "y" ]]; then
+  sudo apt-get -y install libxml2-dev libxslt-dev python-dev
+  sudo pip3 install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
+  sudo pip3 install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
+fi
 
 #Create pyscada user
 sudo useradd -r pyscada
@@ -48,20 +69,23 @@ sudo adduser pyscada i2c
 sudo adduser pyscada gpio
 
 #Mjpeg-streamer
-cd ~
-url='https://github.com/jacksonliam/mjpg-streamer/archive/master.zip'
-if `validate_url $url >/dev/null`; then
-    wget $url
-    sudo apt-get -y install cmake libjpeg62-turbo-dev
-    unzip mjpg-streamer-master.zip
-    cd mjpg-streamer-experimental/
-    make
-    sudo make install
-    sudo usermod -a -G video pyscada
-    sudo wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/service/systemd/laborem_camera.service -O /etc/systemd/system/laborem_camera.service
-    sudo systemctl enable laborem_camera
-    sudo systemctl restart laborem_camera;
-else echo $url "does not exist"; exit 1; fi
+read -p "Install mjpeg-streamer ? [y/n]: " answer
+if [[ "$answer" == "y" ]]; then
+  cd ~
+  url='https://github.com/jacksonliam/mjpg-streamer/archive/master.zip'
+  if `validate_url $url >/dev/null`; then
+      wget $url
+      sudo apt-get -y install cmake libjpeg62-turbo-dev
+      unzip mjpg-streamer-master.zip
+      cd mjpg-streamer-experimental/
+      make
+      sudo make install
+      sudo usermod -a -G video pyscada
+      sudo wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/service/systemd/laborem_camera.service -O /etc/systemd/system/laborem_camera.service
+      sudo systemctl enable laborem_camera
+      sudo systemctl restart laborem_camera;
+  else echo $url "does not exist"; exit 1; fi
+fi
 
 #create DB
 sudo mysql -uroot -p -e "CREATE DATABASE PyScada_db CHARACTER SET utf8;GRANT ALL PRIVILEGES ON PyScada_db.* TO 'PyScada-user'@'localhost' IDENTIFIED BY 'PyScada-user-password';"
@@ -136,4 +160,4 @@ sudo systemctl restart gunicorn
 sudo systemctl enable pyscada
 sudo systemctl restart pyscada
 
-echo "PyScada Laborem installed"
+echo "PyScada installed"

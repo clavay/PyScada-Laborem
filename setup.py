@@ -31,9 +31,9 @@ setup(
     platforms=['OS Independent'],
     classifiers=CLASSIFIERS,
     install_requires=[
-        'pyscada',
+        'pyscada>=0.7.0rc17'
         'numpy',
-        'pyvisa>= 1.9.1',
+        'pyvisa>=1.9.1',
         'pyvisa-py>0.3'
     ],
     packages=find_packages(exclude=["project", "project.*"]),

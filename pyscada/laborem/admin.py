@@ -40,6 +40,8 @@ class LaboremMotherboardDeviceAdmin(DeviceAdmin):
 class LaboremTOP10ScoreAdmin(admin.ModelAdmin):
     list_display = ('user', 'TOP10QA', 'note', 'active')
     list_display_links = ('user', 'TOP10QA')
+    list_filter = ('user', 'TOP10QA',)
+    search_fields = ['user__username', 'TOP10QA__name', ]
 
 
 class LaboremTOP10RankingAdmin(admin.ModelAdmin):
@@ -47,7 +49,11 @@ class LaboremTOP10RankingAdmin(admin.ModelAdmin):
 
 
 class LaboremTOP10Admin(admin.ModelAdmin):
-    list_display = ('name', 'page', 'plug', 'robot_base1', 'robot_base2')
+    list_display = [field.name for field in LaboremTOP10._meta.fields]
+    list_filter = ('page', 'plug',)
+    list_editable = [field.name for field in LaboremTOP10._meta.fields if field.name != "id"]
+    search_fields = ['page__title', 'plug__name', 'name', ]
+    list_per_page = 20
 
 
 class LaboremPlugDeviceAdmin(admin.ModelAdmin):

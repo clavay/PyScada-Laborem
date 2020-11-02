@@ -47,11 +47,39 @@ INSTALLED_APPS = [
     'pyscada.export',
     'pyscada.onewire',
     'pyscada.smbus',
-    'pyscada.gpio',
-    'pyscada.scripting',
-    'pyscada.laborem',
-    'django_cas_ng',
 ]
+
+try:
+    import pyscada.gpio
+    INSTALLED_APPS += [
+        'pyscada.gpio',
+    ]
+except ImportError:
+    pass
+
+try:
+    import pyscada.scripting
+    INSTALLED_APPS += [
+        'pyscada.scripting',
+    ]
+except ImportError:
+    pass
+
+try:
+    import pyscada.laborem
+    INSTALLED_APPS += [
+        'pyscada.laborem',
+    ]
+except ImportError:
+    pass
+
+try:
+    import django_cas_ng
+    INSTALLED_APPS += [
+        'django_cas_ng',
+    ]
+except ImportError:
+    pass
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -66,14 +94,23 @@ MIDDLEWARE = [
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'django_cas_ng.backends.CASBackend',
 ]
 
-UNAUTHENTICATED_REDIRECT = '/accounts/choose_login/'
+try:
+    import django_cas_ng
+    AUTHENTICATION_BACKENDS += [
+        'django_cas_ng.backends.CASBackend',
+    ]
+    CAS_SERVER_URL = 'https://sso.univ-pau.fr/cas/'
+    CAS_VERSION = '2'
+    # CAS_EXTRA_LOGIN_KWARGS = {'proxies': {'https': 'http://cache.iutbayonne.univ-pau.fr:3128'}, 'timeout': 5}
 
-CAS_SERVER_URL = 'https://sso.univ-pau.fr/cas/'
-CAS_VERSION = '2'
-# CAS_EXTRA_LOGIN_KWARGS = {'proxies': {'https': 'http://cache.iutbayonne.univ-pau.fr:3128'}, 'timeout': 5}
+    # UNAUTHENTICATED_REDIRECT = '/accounts/choose_login/'
+except ImportError:
+    pass
+
+
+
 
 ROOT_URLCONF = 'PyScadaServer.urls'
 

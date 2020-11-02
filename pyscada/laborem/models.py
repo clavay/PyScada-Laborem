@@ -59,7 +59,10 @@ class LaboremMotherboardDevice(WidgetContentModel):
         return True
 
     def get_selected_plug(self):
-        plug = str(RecordedData.objects.last_element(variable__name="plug_selected").value())
+        try:
+            plug = str(RecordedData.objects.last_element(variable__name="plug_selected").value())
+        except AttributeError:
+            return None
         if plug == '1':
             return self.MotherboardIOConfig.plug1
         elif plug == '2':
@@ -284,17 +287,21 @@ class LaboremTOP10(models.Model):
     page = models.ForeignKey(Page, default=1, null=True, on_delete=models.SET_NULL)
     plug = models.ForeignKey(LaboremPlugDevice, null=True, on_delete=models.SET_NULL)
     robot_base1 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base1',
-                                    on_delete=models.SET_NULL)
+                                    on_delete=models.SET_NULL, verbose_name='Robot base vert')
     robot_base2 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base2',
-                                    on_delete=models.SET_NULL)
+                                    on_delete=models.SET_NULL, verbose_name='Robot base rouge')
     question1 = models.CharField(default='', max_length=255, blank=True, null=True)
     answer1 = models.CharField(default='', max_length=255, blank=True, null=True)
+    score1 = models.FloatField(default=1)
     question2 = models.CharField(default='', max_length=255, blank=True, null=True)
     answer2 = models.CharField(default='', max_length=255, blank=True, null=True)
+    score2 = models.FloatField(default=1)
     question3 = models.CharField(default='', max_length=255, blank=True, null=True)
     answer3 = models.CharField(default='', max_length=255, blank=True, null=True)
+    score3 = models.FloatField(default=1)
     question4 = models.CharField(default='', max_length=255, blank=True, null=True)
     answer4 = models.CharField(default='', max_length=255, blank=True, null=True)
+    score4 = models.FloatField(default=1)
     active = models.BooleanField(default=True, blank=True)
 
     def __str__(self):

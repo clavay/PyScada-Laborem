@@ -1,5 +1,5 @@
-<div class="dropdown dropdown-robot" id="{{ base.pk }}">
-    Composant {{ base.description }} :<br>
+<div class="dropdown dropdown-robot" id="{{ base.pk }}" style="display: inline; padding-left: 15px">
+    <!--Composant {{ base.description }} :<br>-->
     {% if base.description == "vert" %}
         <button class="btn btn-success dropdown-toggle dropdown-robot-btn" type="button" data-toggle="dropdown">
     {% elif base.description == "rouge" %}
@@ -7,7 +7,7 @@
     {% else %}
         <button class="btn btn-primary dropdown-toggle dropdown-robot-btn" type="button" data-toggle="dropdown">
     {% endif %}
-    <span class="ui-dropdown-robot-bnt">------- </span>
+    <span class="ui-dropdown-robot-bnt" data-name="Composant {{ base.description }} ">Composant {{ base.description }} </span>
     <span class="caret"></span></button>
     <ul class="dropdown-menu">
         {% for Element in visible_robot_element_list %}

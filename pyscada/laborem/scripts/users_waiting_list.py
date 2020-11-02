@@ -35,7 +35,7 @@ def script(self):
     write your code loop code here, don't change the name of this function
     :return:
     """
-    time_before_remove_group = 12
+    time_before_remove_group = 30
     working_time = VariableProperty.objects.get_property(Variable.objects.get(
         name="LABOREM"), "working_time").value_int16
     # check if the 3 groups exist

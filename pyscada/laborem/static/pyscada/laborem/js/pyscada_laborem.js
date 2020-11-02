@@ -1,16 +1,18 @@
 /* Javascript library for the PyScada-Laborem web client based on jquery,
 
-version 0.7.4
+version 0.7.5
 
 Copyright (c) 2018 Camille Lavayssière
 Licensed under the GPL.
 
 */
-var version = "0.7.4";
+var version = "0.7.5";
 var CONNECTION_ID = "";
 var USER_TYPE = "";
 var CONNECTION_ACCEPTED = 0;
 var WAITING_USERS_DATA = {};
+var LAST_UPDATED_IMAGES_TIME = 0
+var LAST_DUT_ITEM_SELECTED = null
 
 var experiences = []
 
@@ -96,6 +98,8 @@ function redirect_to_page(page_name) {
         return 1;
     }else if (USER_TYPE == "viewer") {
         window.location.href = "#viewer";
+    }else if (USER_TYPE == "waiting") {
+        window.location.href = "#waiting";
     }
     if (page_name === "preconf") {
         if ($('.list-dut-item.active .badge.robot').length || !$('.list-dut-item.active').length) { window.location.href = "#plugs";}
@@ -110,7 +114,7 @@ function redirect_to_page(page_name) {
                 // Finding if all robot bases are selected
                 base_empty = 'no'
                 $('.sub-page#plugs .ui-dropdown-robot-bnt').each(function() {
-                    if ($(this)[0].innerHTML === "------- ") {
+                    if ($(this)[0].innerHTML === $(this).data('name')) {
                         base_empty = 'yes'
                     }
                 })
@@ -129,7 +133,7 @@ function redirect_to_page(page_name) {
                 // Finding if all robot bases are selected
                 base_empty = 'no'
                 $('.sub-page#plugs .ui-dropdown-robot-bnt').each(function() {
-                    if ($(this)[0].innerHTML === "------- ") {
+                    if ($(this)[0].innerHTML === $(this).data('name')) {
                         base_empty = 'yes'
                     }
                 })
@@ -281,6 +285,7 @@ function move_robot(mov) {
 function reset_selected_plug() {
     $('.list-dut-item.active').removeClass('active');
     $(".img-plug").attr("src",$(".img-plug").data("img"));
+    $('.img-plug').hide();
     if(typeof $('.list-dut-item').data('motherboard-id') == 'undefined'){mb_id = 0}else{mb_id = $('.list-dut-item').data('motherboard-id')};
     $.ajax({
         type: 'post',
@@ -314,7 +319,7 @@ function reset_robot_bases() {
     $('.dropdown-base').removeClass('active');
     $('.dropdown-base').show();
     $('.ui-dropdown-robot-bnt').each(function() {
-        $(this)[0].innerHTML = "------- ";
+        $(this)[0].innerHTML = $(this).data('name');
     })
 };
 
@@ -347,13 +352,13 @@ function change_bases() {
 }
 
 function refresh_top10_qa() {
+    questions = $(".dropdown-TOP10QA .input-group-addon-label");
+    input_group = $(".dropdown-TOP10QA .input-group");
+    form_control = $(".dropdown-TOP10QA .form-control");
+    ok_button = $(".dropdown-TOP10QA .write-task-form-top10-set");
     if (experiences.indexOf(window.location.hash.substr(1)) >= 0) {
-        questions = $(".dropdown-TOP10QA .input-group-addon-label");
-        input_group = $(".dropdown-TOP10QA .input-group");
-        form_control = $(".dropdown-TOP10QA .form-control");
-        ok_button = $(".dropdown-TOP10QA .write-task-form-top10-set");
-        ok_button[0].disabled = false;
-        ok_button[0].innerHTML = "Répondre"
+        //ok_button[0].disabled = false;
+        //ok_button[0].innerHTML = "Répondre"
         answers=[]
         mb_id = $('.list-dut-item.active').data('motherboard-id');
         page_id = $('.sub-page#'+window.location.hash.substr(1))[0].id
@@ -387,11 +392,16 @@ function refresh_top10_qa() {
                                 ok_button[0].disabled = true
                                 ok_button[0].innerHTML = "Déjà répondu !"
                             }else{
-                                form_control[i].disabled = false;
-                                form_control[i].value = "";
+                                if(form_control[i].disabled) {
+                                    form_control[i].disabled = false;
+                                    form_control[i].value = "";
+                                }
+                                if(ok_button[0].disabled) {
+                                    ok_button[0].disabled = false
+                                    ok_button[0].innerHTML = "Répondre"
+                                }
                             }
-                        }
-                        else {
+                        }else {
                             input_group[i].classList.remove("hidden");
                             input_group[i].className += " hidden";
                         }
@@ -562,12 +572,12 @@ function check_users() {
             // Update wainting list drop down
             if (typeof data['user_type'] != 'undefined') {
                 if (data['user_type'] == "viewer") {
-                    USER_TYPE = "viewer"
                     $(".dropdown-WaitingList-toggle")[0].innerHTML = " Temps d'attente : ";
                     $(".dropdown-WaitingList-toggle").append(title_time);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
                     if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6) {
+                        USER_TYPE = "viewer"
                         if (data['viewer_refresh_rate'] == 1) {
                             data['setTimeout'] = 1000;
                             REFRESH_RATE = 1000;
@@ -583,6 +593,7 @@ function check_users() {
                             }
                         }
                     }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > 5) {
+                        USER_TYPE = "waiting"
                         data['setTimeout'] = 30000;
                         REFRESH_RATE = 30000;
                         if (window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "disconnect") {
@@ -668,12 +679,14 @@ function check_users() {
                         $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem']['message'];
                         $('#MessageModal').modal('show');
                         $(".message-laborem").attr('data-timestamp', data['message_laborem']['timestamp'])
+                        updateImage();
                     }else {
                         $('#MessageModal').modal('hide');
                         $(".user_stop_btn").removeClass("disabled")
                         $(".user_stop_btn").html("Arrêter")
                         $(".message-laborem h2")[0].innerHTML = '';
                         $(".message-laborem").attr('data-timestamp', data['message_laborem']['timestamp'])
+                        updateImage();
                     }
                 }
             }else {
@@ -805,6 +818,32 @@ function get_experience_list() {
     }
 }
 
+function updateImage() {
+    ready_to_update = true
+    $.each($('.camera-img'),function(key,val){
+        if ($(this).is(':visible') && $(this).attr("data-loaded") == 0) {
+            ready_to_update = false
+        }
+    })
+    now = new Date().getTime()
+    if (ready_to_update || now - LAST_UPDATED_IMAGES_TIME > 30000){
+        console.log("update images")
+        console.log(now - LAST_UPDATED_IMAGES_TIME)
+        LAST_UPDATED_IMAGES_TIME = now
+        $.each($('.camera-img'),function(key,val){
+            if ($(this).is(':visible')) {
+                if ($(this).attr('data-loaded') == 1) {
+                //if ($(this).attr("src") !== $(this).data("src")) {
+                    $(this).attr("data-loaded", 0)
+                    $(this).attr("src",$(this).data("src") + "?" + LAST_UPDATED_IMAGES_TIME);
+                }
+            }else {
+                $(this).attr("src","");
+            }
+        })
+    }
+}
+
 $( document ).ready(function() {
     // Change text and link of PyScada in navbar
     $(".navbar-brand").attr("href", "#start");
@@ -841,6 +880,15 @@ $( document ).ready(function() {
 
         // Reset the pages settings to force the user to interact with
         reset_page(window.location.hash.substr(1));
+
+        //Update images
+        updateImage();
+
+        //Reset zoom on visible charts
+        e = jQuery.Event( "click" );
+        $.each(PyScadaPlots,function(plot_id){
+            jQuery(PyScadaPlots[plot_id].getChartContainerId() + " .btn.btn-default.chart-ResetSelection").trigger(e);
+        })
     });
 
     // Remove connection id
@@ -850,6 +898,12 @@ $( document ).ready(function() {
 
     // Show waiting message on form click
     $('button.write-task-form-set').click(function(){
+        //Reset zoom on visible charts
+        e = jQuery.Event( "click" );
+        $.each(PyScadaPlots,function(plot_id){
+            jQuery(PyScadaPlots[plot_id].getChartContainerId() + " .btn.btn-default.chart-ResetSelection").trigger(e);
+        })
+
         err = false;
         id_form = $(this.form).attr('id');
         tabinputs = $.merge($('#'+id_form+ ' :text'),$('#'+id_form+ ' :input:hidden'));
@@ -881,7 +935,7 @@ $( document ).ready(function() {
                     err = true;
                 }else if (check_mm == 0) {
                     if (isNaN(value)) {
-                        if (item_type == "variable_property" && value_class == 'STRING') {
+                        if (item_type == "variable_property" && value_class == 'STRING') {
                         }else {
                             err = true;
                         }
@@ -919,7 +973,7 @@ $( document ).ready(function() {
                 }else if (check_mm == 0) {
                     $(tabselects[i]).parents(".input-group").removeClass("has-error")
                     if (isNaN(value)) {
-                        if (item_type == "variable_property" && value_class == 'STRING') {
+                        if (item_type == "variable_property" && value_class == 'STRING') {
                         }else {
                             err = true;
                         }
@@ -953,10 +1007,17 @@ $( document ).ready(function() {
 
     // Actualize the picture of the dut selector for Laborem with the list selection
     $('.list-dut-item').on('click', function() {
+        if (LAST_DUT_ITEM_SELECTED == $(this)[0]) {return;}
+
         var $this = $(this);
+        LAST_DUT_ITEM_SELECTED = $this[0]
         var $img = $this.data('img');
 
+        $('.img-plug').appendTo($this.children(' .div-img-plug').first());
+        $('.img-plug').show()
+
         if ($this.children('.badge.robot').length) {
+            $(".dropdown-robot").insertBefore($this.children(' .badge').first());
             $('.dropdown-robot').show();
         }else {
             $('.dropdown-robot').hide();
@@ -988,7 +1049,7 @@ $( document ).ready(function() {
                 else {
                     $(dropdown_item[i]).show()
                 }
-                if ($(dropdown_item[i]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt")[0].innerHTML === "------- ") {
+                if ($(dropdown_item[i]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt")[0].innerHTML === $(dropdown_item[i]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt")[0].data('name')) {
                     base_empty = 'yes'
                 }
             }

@@ -10,7 +10,6 @@ urlpatterns = [
     # Public pages
     url(r'^$', views.index, name="view-overview"),
     url(r'^view_laborem/(?P<link_title>[\w,-]+)/$', views.view_laborem, name="main-laborem-view"),
-    url(r'^form/write_task_pycom/$', views.write_task_pycom),
     url(r'^form/write_plug/$', views.form_write_plug),
     url(r'^form/write_robot_base/$', views.form_write_robot_base),
     url(r'^form/write_property/$', views.form_write_property),
@@ -27,3 +26,13 @@ urlpatterns = [
     url(r'^form/remove_id/$', views.remove_id),
     url(r'^form/get_experience_list/$', views.get_experience_list),
 ]
+
+try:
+    import django_cas_ng.views
+    urlpatterns += [
+        url(r'^accounts/CASlogin/$', django_cas_ng.views.LoginView.as_view(), name='cas_ng_login'),
+        url(r'^accounts/logout$', django_cas_ng.views.LogoutView.as_view(), name='cas_ng_logout'),
+        url(r'^accounts/callback$', django_cas_ng.views.CallbackView.as_view(), name='cas_ng_proxy_callback'),
+    ]
+except ImportError:
+    pass

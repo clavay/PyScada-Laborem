@@ -16,8 +16,8 @@ class Device:
         """
         return False
 
-    def write_data(self,variable_id, value, task):
-        '''
+    def write_data(self, variable_id, value, task):
+        """
         write value to the instrument/device
-        '''
+        """
         return False

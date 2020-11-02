@@ -106,7 +106,8 @@ def script(self):
 
     :return:
     """
-    if self.instruments.inst_afg.inst is not None and self.instruments.inst_mdo.inst is not None:
+    if self.instruments.inst_afg is not None and self.instruments.inst_mdo is not None and \
+            self.instruments.inst_afg.inst is not None and self.instruments.inst_mdo.inst is not None:
 
         # Get all the variables that start an experience
         experiences = self.read_values_from_db(variable_names=['zzz_bode', 'zzz_bode_compare', 'zzz_spectrum',
@@ -469,6 +470,13 @@ def script(self):
                 scaled_wave_ch1 = list()
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
+                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                             timestamp=now())
+                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
+                self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
+                                             value_class='BOOLEAN')
+                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                return
 
             scaled_wave_ch1_mini = list()
             scaled_wave_ch2_mini = list()
@@ -601,7 +609,7 @@ def script(self):
             sleep(2)
 
             # Read all values from DB
-            values = self.read_values_from_db(variable_names=['AFG_FREQ', 'MDO_SCALE_Y_CH1',
+            values = self.read_values_from_db(variable_names=['AFG_FREQ_1', 'MDO_SCALE_Y_CH1',
                                                               'MDO_SCALE_Y_CH2', 'MDO_SCALE_X', 'MDO_TRIGGER_LEVEL',
                                                               'MDO_TRIGGER_SOURCE'],
                                               current_value_only=True)
@@ -609,7 +617,7 @@ def script(self):
                 values[key] = item[-1]
 
             # Set the generator frequency to f
-            f = values.get('AFG_FREQ', 1000)
+            f = values.get('AFG_FREQ_1', 1000)
 
             # Prepare MDO trigger, channel 1 vertical scale, bandwidth
             self.instruments.inst_mdo.mdo_prepare()
@@ -640,6 +648,12 @@ def script(self):
                 scaled_wave_ch1 = list()
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
+                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                             timestamp=now())
+                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
+                self.write_values_to_db(data={'zzz_oscillo': [0]})
+                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                return
 
             scaled_wave_ch1_mini = list()
             scaled_wave_ch2_mini = list()
@@ -658,6 +672,13 @@ def script(self):
                 scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
                 scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
 
+            # FFT CH1
+            spectrum_hanning_1 = self.instruments.inst_mdo.fft(scaled_wave_ch1)
+            tscale = self.instruments.inst_mdo.mdo_xincr()
+            frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
+            # FFT CH2
+            spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
+
             if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=now())
@@ -669,6 +690,9 @@ def script(self):
             self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
             self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
             self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+            self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
+            self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
+            self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_oscillo': [0]})
@@ -690,12 +714,14 @@ def script(self):
             sleep(2)
 
             # Read all values from DB
-            values = self.read_values_from_db(variable_names=['AFG_FREQ_1', 'AFG_VEPP_1'],
+            values = self.read_values_from_db(variable_names=['AFG_FREQ_1', 'AFG_VEPP_1', 'AFG_OFFSET_1'],
                                               current_value_only=True)
             for key, item in values.items():
                 values[key] = item[-1]
 
             vepp = values.get('AFG_VEPP_1', 5)
+
+            offset = values.get('AFG_OFFSET_1', 0)
 
             # Set the generator frequency to f
             f = values.get('AFG_FREQ_1', 1000)
@@ -704,6 +730,10 @@ def script(self):
             self.instruments.inst_mdo.mdo_prepare()
 
             try:
+                # Set MDO trigger level and trigger source
+                self.instruments.inst_mdo.mdo_set_trigger_level(ch=int(1), level=float(offset + vepp / 4.0))
+                self.instruments.inst_mdo.mdo_set_trigger_source(ch=int(1))
+
                 # Set the oscilloscope horizontal scale and vertical scale for the output
                 range_i = None
                 self.instruments.inst_mdo.mdo_find_vertical_scale(ch=2, frequency=f, range_i=range_i)
@@ -711,10 +741,6 @@ def script(self):
                 self.instruments.inst_mdo.mdo_find_vertical_scale(ch=1, frequency=f, range_i=range_i)
 
                 self.instruments.inst_mdo.mdo_horizontal_scale_in_period(period=4.0, frequency=f)
-
-                # Set MDO trigger level and trigger source
-                self.instruments.inst_mdo.mdo_set_trigger_level(ch=int(1), level=float(vepp/2.0))
-                self.instruments.inst_mdo.mdo_set_trigger_source(ch=int(1))
 
                 resolution = 10000
                 scaled_wave_ch1 = self.instruments.inst_mdo.mdo_query_waveform(
@@ -725,6 +751,12 @@ def script(self):
                 scaled_wave_ch1 = list()
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
+                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
+                                             timestamp=now())
+                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
+                self.write_values_to_db(data={'zzz_autoset_oscillo': [0]})
+                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                return
 
             scaled_wave_ch1_mini = list()
             scaled_wave_ch2_mini = list()
@@ -743,17 +775,27 @@ def script(self):
                 scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
                 scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
 
+            # FFT CH1
+            spectrum_hanning_1 = self.instruments.inst_mdo.fft(scaled_wave_ch1)
+            tscale = self.instruments.inst_mdo.mdo_xincr()
+            frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
+            # FFT CH2
+            spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
+
             if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                 self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                              timestamp=now())
                 self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
-                self.write_values_to_db(data={'zzz_oscillo': [0]})
+                self.write_values_to_db(data={'zzz_autoset_oscillo': [0]})
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
                 return
 
             self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
             self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
             self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+            self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
+            self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
+            self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_autoset_oscillo': [0]})
@@ -763,6 +805,9 @@ def script(self):
 
         # Reset stop button value
         self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+
+    else:
+        logger.debug("An instrument is None : %s %s" % (self.instruments.inst_afg, self.instruments.inst_mdo))
 
 
 def connect_check_visa(config, idn=True):

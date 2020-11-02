@@ -19,7 +19,7 @@ from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import requires_csrf_token, csrf_exempt
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.utils.timezone import now, timedelta
 from django.utils.dateformat import format
 from django.conf import settings
@@ -172,9 +172,10 @@ def view_laborem(request, link_title):
     if LaboremGroupInputPermission.objects.count() == 0:
         visible_experience_list = LaboremExperience.objects.all()
     else:
-        visible_experience_list = LaboremExperience.objects.filter(laboremgroupinputpermission__hmi_group__in=request.
-                                                                   user.groups.exclude(name='teacher').
-                                                                   iterator())
+        #visible_experience_list = LaboremExperience.objects.filter(laboremgroupinputpermission__hmi_group__in=request.
+        #                                                           user.groups.exclude(name='teacher').
+        #                                                           iterator())
+        visible_experience_list = LaboremExperience.objects.filter(laboremgroupinputpermission__hmi_group__name="worker")
 
     c = {
         'page_list': page_list,
@@ -194,48 +195,6 @@ def view_laborem(request, link_title):
     }
 
     return TemplateResponse(request, 'view_laborem.html', c)
-
-
-@csrf_exempt
-def write_task_pycom(request):
-    if 'username' not in request.POST or 'password' not in request.POST or 'key' not in request.POST \
-            or 'value' not in request.POST or 'item_type' not in request.POST:
-        return HttpResponse(status=404)
-    item_type = request.POST['item_type']
-    key = int(request.POST['key'])
-    value = request.POST['value']
-    user = authenticate(username=request.POST.get('username'), password=request.POST.get('password'))
-    if user:
-        login(request, user)
-    else:
-        return HttpResponse(status=404)
-    if LaboremGroupInputPermission.objects.count() == 0:
-        if item_type == 'variable':
-            cwt = DeviceWriteTask(variable_id=key, value=value, start=time.time(),
-                                  user=request.user)
-            cwt.save()
-            return HttpResponse(status=200)
-        elif item_type == 'variable_property':
-            cwt = DeviceWriteTask(variable_property_id=key, value=value, start=time.time(),
-                                  user=request.user)
-            cwt.save()
-            return HttpResponse(status=200)
-    else:
-        if item_type == 'variable':
-            if LaboremGroupInputPermission.objects.filter(
-                    variables__pk=key, hmi_group__in=request.user.groups.exclude(name='teacher').iterator()):
-                cwt = DeviceWriteTask(variable_id=key, value=value, start=time.time(),
-                                      user=request.user)
-                cwt.save()
-                return HttpResponse(status=200)
-        elif item_type == 'variable_property':
-            if LaboremGroupInputPermission.objects.filter(
-                    variable_properties__pk=key, hmi_group__in=request.user.groups.exclude(name='teacher').iterator()):
-                cwt = DeviceWriteTask(variable_property_id=key, value=value, start=time.time(),
-                                      user=request.user)
-                cwt.save()
-                return HttpResponse(status=200)
-    return HttpResponse(status=404)
 
 
 @unauthenticated_redirect
@@ -372,7 +331,7 @@ def query_top10_question(request):
         logger.debug("top10qa bases error")
         return HttpResponse(status=404)
     if top10qa is None:
-        logger.debug("top10qa is None")
+        # logger.debug("top10qa is None")
         return HttpResponse(json.dumps(data), content_type='application/json')
     data['disable'] = 0
     data['question1'] = top10qa.question1
@@ -439,25 +398,25 @@ def validate_top10_answers(request):
     if top10qa is None:
         return HttpResponse(status=404)
     if top10qa.question1:
-        note += calculate_note(level_plug, top10qa.answer1, request.POST['value1'])
+        note += calculate_note(level_plug, top10qa.score1, top10qa.answer1, request.POST['value1'])
     if top10qa.question2:
-        note += calculate_note(level_plug, top10qa.answer2, request.POST['value2'])
+        note += calculate_note(level_plug, top10qa.score2, top10qa.answer2, request.POST['value2'])
     if top10qa.question3:
-        note += calculate_note(level_plug, top10qa.answer3, request.POST['value3'])
+        note += calculate_note(level_plug, top10qa.score3, top10qa.answer3, request.POST['value3'])
     if top10qa.question4:
-        note += calculate_note(level_plug, top10qa.answer4, request.POST['value4'])
+        note += calculate_note(level_plug, top10qa.score4, top10qa.answer4, request.POST['value4'])
     score = LaboremTOP10Score(user=request.user, TOP10QA=top10qa, note=note,
                               answer1=request.POST['value1'], answer2=request.POST['value2'],
                               answer3=request.POST['value3'], answer4=request.POST['value4'])
     score.save()
     if top10qa.question1:
-        note_max += calculate_note(level_plug, top10qa.answer1, top10qa.answer1)
+        note_max += calculate_note(level_plug, top10qa.score1, top10qa.answer1, top10qa.answer1)
     if top10qa.question2:
-        note_max += calculate_note(level_plug, top10qa.answer2, top10qa.answer2)
+        note_max += calculate_note(level_plug, top10qa.score2, top10qa.answer2, top10qa.answer2)
     if top10qa.question3:
-        note_max += calculate_note(level_plug, top10qa.answer3, top10qa.answer3)
+        note_max += calculate_note(level_plug, top10qa.score3, top10qa.answer3, top10qa.answer3)
     if top10qa.question4:
-        note_max += calculate_note(level_plug, top10qa.answer4, top10qa.answer4)
+        note_max += calculate_note(level_plug, top10qa.score4, top10qa.answer4, top10qa.answer4)
     VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"), "message_laborem",
                                                        "Vous avez eu " + str(round(note, 2)) + "/" + str(note_max),
                                                        value_class='string', timestamp=now())
@@ -467,15 +426,33 @@ def validate_top10_answers(request):
     return HttpResponse(status=200)
 
 
-def calculate_note(level, answer, student_answer):
+def calculate_note(level, score, answer, student_answer):
     try:
         float(answer.replace(',', '.'))
         float(student_answer.replace(',', '.'))
     except ValueError:
         logger.error("TOP10 answer is not a float : %s - %s" % (answer, student_answer))
     # return level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))*2)
-    return min(level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))+0.2),
-               level)
+    note = 0
+    high_limit = 0.1
+    low_limit = 0.25
+    if float(answer.replace(',', '.')) == 0.0:
+        if float(student_answer.replace(',', '.')) == 0.0:
+            note = level * score
+            return note
+        else:
+            temp_answer = answer
+            answer = student_answer
+            student_answer = temp_answer
+    if abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.'))) <= high_limit:
+        note = level * score
+    elif abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.'))) <= low_limit:
+        note = level * score * \
+               (abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.'))) - low_limit) \
+               / (high_limit - low_limit)
+    return note
+    # return min(level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))+0.2),
+    #           level) * score
 
 
 @unauthenticated_redirect

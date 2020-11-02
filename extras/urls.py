@@ -18,7 +18,17 @@ from django.contrib import admin
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^', include('pyscada.laborem.urls')),
+]
+
+try:
+    import pyscada.laborem
+    urlpatterns += [
+        url(r'^', include('pyscada.laborem.urls')),
+    ]
+except ImportError:
+    pass
+
+urlpatterns += [
     url(r'^', include('pyscada.hmi.urls')),
 ]
 
