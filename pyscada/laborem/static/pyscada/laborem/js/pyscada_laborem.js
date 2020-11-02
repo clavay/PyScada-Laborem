@@ -31,7 +31,6 @@ function reload_top10_ranking() {
         },
         error: function(data) {
             add_notification('rank top10 failed',3);
-            console.log('rank top10 failed');
         }
     });
 };
@@ -277,7 +276,7 @@ function move_robot(mov) {
             }
         },
         error: function(data) {
-            add_notification('move robot failed',3);
+            //add_notification('move robot failed',3);
         }
     });
 };
@@ -411,8 +410,7 @@ function refresh_top10_qa() {
                 }
             },
             error: function(data) {
-                console.log("query top10 question failed");
-                add_notification('query top10 question failed',3);
+                //add_notification('query top10 question failed',3);
             }
         });
     }else {
@@ -450,7 +448,7 @@ function remove_id() {
                 check_users();
             },
             error: function(data) {
-                console.log('remove_id failed');
+                add_notification('remove_id failed', 1);
             }
         })
     }else {
@@ -483,7 +481,7 @@ function check_time() {
             }
         },
         error: function(data) {
-            console.log('check time failed');
+            add_notification('check time failed', 1);
             setTimeout(function() {check_time()}, 30000);
         }
     })
@@ -772,7 +770,7 @@ function check_users() {
             }
         },
         error: function(data) {
-            console.log('check user failed');
+            add_notification('check user failed', 1);
             setTimeout(function() {check_users()}, 30000);
         }
     });
@@ -812,7 +810,7 @@ function get_experience_list() {
                 });
             },
             error: function(data) {
-                console.log('get_experience_list failed');
+                add_notification('get_experience_list failed', 1);
             }
         })
     }
@@ -827,8 +825,6 @@ function updateImage() {
     })
     now = new Date().getTime()
     if (ready_to_update || now - LAST_UPDATED_IMAGES_TIME > 30000){
-        console.log("update images")
-        console.log(now - LAST_UPDATED_IMAGES_TIME)
         LAST_UPDATED_IMAGES_TIME = now
         $.each($('.camera-img'),function(key,val){
             if ($(this).is(':visible')) {
@@ -1143,7 +1139,6 @@ $( document ).ready(function() {
                 },
                 error: function(data) {
                     add_notification('validate_top10_answers error',3);
-                    console.log('validate_top10_answers error');
                 }
             });
         };

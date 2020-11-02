@@ -282,7 +282,6 @@
     </div>
 {% endblock %}
 {% block include_bootom %}
-<script type="text/javascript" src="{% static "pyscada/js/jquery.mb.CSSAnimate.min.js" %}"></script>
 <script type="text/javascript" src="{% static "pyscada/js/jquery.tablesorter.min.js" %}"></script>
 
 <script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/lib/jquery.mousewheel.js" %}"></script>
@@ -344,28 +343,28 @@
             });
             // sidemenues
             $('.side-menu.left').mouseenter(function(){
-                $(this).stop().CSSAnimate({"left":0},500)
+                $(this).stop().animate({"left":0},500)
             }).mouseleave(function(){
                 ow = $(this).outerWidth()
-                $(this).stop().CSSAnimate({"left":-(ow - 11)},500)
+                $(this).stop().animate({"left":-(ow - 11)},500)
             });
             
             $('.side-menu.right').mouseenter(function(){
-                $(this).stop().CSSAnimate({"right":0},500)
+                $(this).stop().animate({"right":0},500)
             }).mouseleave(function(){
                 ow = $(this).outerWidth()
-                $(this).stop().CSSAnimate({"right":-(ow - 11)},500)
+                $(this).stop().animate({"right":-(ow - 11)},500)
             });
             
             $('.side-menu.bottom').css('margin-left',- $('.side-menu.bottom').outerWidth(true)/2)
             
-            $('.side-menu.bottom').stop().CSSAnimate({"bottom":-($('.side-menu.bottom').outerHeight(true) - 31)},500)
+            $('.side-menu.bottom').stop().animate({"bottom":-($('.side-menu.bottom').outerHeight(true) - 31)},500)
             
             $('.side-menu.bottom').mouseenter(function(){
-                $(this).stop().CSSAnimate({"bottom":0},500)
+                $(this).stop().animate({"bottom":0},500)
             }).mouseleave(function(){
                 oh = $(this).outerHeight(true)
-                $(this).stop().CSSAnimate({"bottom":-(oh - 31)},500)
+                $(this).stop().animate({"bottom":-(oh - 31)},500)
             });
             
 
