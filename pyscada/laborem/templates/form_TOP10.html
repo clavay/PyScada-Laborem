@@ -4,7 +4,7 @@
 <form name="{{ form.title }}" class="form" id="{{ form.web_id }}">
     {% for item in form.hidden_control_items_to_true.all %}
         {% if item.active == 1 %}
-            {% if item.type == 5 %}<!-- hidden form input {{ item.key }} -->
+            {% if item.type == 0 %}<!-- hidden form input {{ item.key }} -->
                 <div class="hidden variable-config" data-name="{{ item.name }}" data-key="{{ item.key }}" data-init-type="0" data-type="{{ item.item_type}}"></div>
                 <input type="hidden" class="form-control {{ item.web_class_str }}" name="{{ item.name }}" id="{{ item.web_id }}-value" placeholder="" value="1">
             {% endif %}
@@ -12,7 +12,7 @@
     {% endfor %}
     {% for item in form.control_items.all %}
         {% if item.active == 1 %}
-            {% if item.type == 5 %}<!-- form input {{ item.key }} -->
+            {% if item.type == 0 %}<!-- form input {{ item.key }} -->
                 <div class="hidden variable-config" data-name="{{ item.name }}" data-key="{{ item.key }}" data-init-type="0" data-type="{{ item.item_type}}"></div>
                 {% if item.item_type == 'variable_property' %}<!-- VP -->
                     {% if item.variable_property.value_class == 'BOOL' or item.variable_property.value_class == 'BOOLEAN' %}

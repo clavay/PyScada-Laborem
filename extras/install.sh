@@ -148,7 +148,7 @@ if `validate_url $url >/dev/null`; then
     sudo wget $url -O /etc/systemd/system/gunicorn.service
 else echo $url "does not exist"; exit 1; fi
 
-url='https://raw.githubusercontent.com/trombastic/PyScada/master/extras/service/systemd/pyscada_daemon.service'
+url='https://raw.githubusercontent.com/clavay/PyScada/master/extras/service/systemd/pyscada_daemon.service'
 if `validate_url $url >/dev/null`; then
     sudo wget $url -O /etc/systemd/system/pyscada.service
 else echo $url "does not exist"; exit 1; fi

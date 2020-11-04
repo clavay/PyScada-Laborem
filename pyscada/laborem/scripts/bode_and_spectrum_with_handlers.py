@@ -808,6 +808,9 @@ def script(self):
 
     else:
         logger.debug("An instrument is None : %s %s" % (self.instruments.inst_afg, self.instruments.inst_mdo))
+        self.write_variable_property("LABOREM", "message_laborem", "An instrument is not connected or not defined",
+                                     value_class='string', timestamp=now())
+        raise ResourceWarning("An instrument is None : %s %s" % (self.instruments.inst_afg, self.instruments.inst_mdo))
 
 
 def connect_check_visa(config, idn=True):
