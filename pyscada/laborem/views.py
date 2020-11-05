@@ -167,7 +167,7 @@ def view_laborem(request, link_title):
     try:
         form_top10qa = Form.objects.get(title="TOP10QA")
     except Form.DoesNotExist or Form.MultipleObjectsReturned:
-        return HttpResponse(status=404)
+        form_top10qa = ""
 
     if LaboremGroupInputPermission.objects.count() == 0:
         visible_experience_list = LaboremExperience.objects.all()
@@ -703,8 +703,12 @@ def check_users(request):
     # Send viewer list
     # LaboremUser.objects.update_or_create(user=request.user, defaults={'last_check': now})
     data['request_user'] = str(request.user)
-    td = timedelta(minutes=int(VariableProperty.objects.get_property(Variable.objects.get(
-        name="LABOREM"), "working_time").value_int16))
+    if Variable.objects.filter(name="LABOREM").count() and VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "working_time") is not None:
+        td = timedelta(minutes=int(VariableProperty.objects.get_property(Variable.objects.get(
+            name="LABOREM"), "working_time").value_int16))
+    else:
+        td = 0
     waiting_users_list = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
         order_by('connection_time')
     working_user = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").first()

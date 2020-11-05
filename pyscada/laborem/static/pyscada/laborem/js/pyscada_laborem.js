@@ -848,6 +848,10 @@ $( document ).ready(function() {
     $(".navbar-brand").prepend('<span class="glyphicon glyphicon-home"></span>');
     $(".btn-previous").hide();
 
+    //hide menus
+    $($('.navbar-right .divider')[1]).addClass('hidden')
+    $($('.navbar-right .dropdown-menu li')[6]).addClass('hidden')
+
     // If not starting on #start page redirect to this hash
     if (window.location.hash.substr(1) != "start"){window.location.href = "#loading";}
 
