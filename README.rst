@@ -34,7 +34,7 @@ Installation
  - Install gpiozero : sudo pip3 install gpiozero
  - Install PyScada-Laborem : sudo pip3 install https://github.com/clavay/PyScada-Laborem/tarball/master
  - Install PyScada-GPIO : sudo pip3 install https://github.com/clavay/PyScada-GPIO/tarball/master
- - Install PyScada-Scripting : sudo pip3 install https://github.com/clavay/PyScada-Scipting/tarball/master
+ - Install PyScada-Scripting : sudo pip3 install https://github.com/clavay/PyScada-Scripting/tarball/master
  - Install Scipy :
     - sudo apt-get install gcc gfortran python-dev libopenblas-dev liblapack-dev cython
     - sudo pip3 install scipy
