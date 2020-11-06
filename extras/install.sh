@@ -7,6 +7,12 @@ function validate_url(){
     return 1
   fi
 }
+read -p "Install PyScada clavay fork ? [y/n]: " answer_pyscada
+read -p "Install PyScada-Laborem ? [y/n]: " answer_laborem
+read -p "Install PyScada-GPIO ? [y/n]: " answer_gpio
+read -p "Install PyScada-Scripting ? [y/n]: " answer_scripting
+read -p "Install CAS ? [y/n]: " answer_cas
+read -p "Install mjpeg-streamer ? [y/n]: " answer_mjpeg
 
 sudo apt-get update
 sudo apt-get -y upgrade
@@ -16,8 +22,7 @@ sudo apt-get install -y libatlas-base-dev
 sudo apt-get install -y libopenjp2-7
 sudo pip3 install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvisa-py
 
-read -p "Install PyScada clavay fork ? [y/n]: " answer
-if [[ "$answer" == "y" ]]; then
+if [[ "$answer_pyscada" == "y" ]]; then
   sudo pip3 install https://github.com/clavay/PyScada/tarball/master
 else
   sudo pip3 install https://github.com/trombastic/PyScada/tarball/master
@@ -29,23 +34,19 @@ sudo pip3 install smbus-cffi
 sudo pip3 install psutil
 sudo pip3 install pyusb gpiozero
 
-read -p "Install PyScada-Laborem ? [y/n]: " answer
-if [[ "$answer" == "y" ]]; then
+if [[ "$answer_laborem" == "y" ]]; then
   sudo pip3 install https://github.com/clavay/PyScada-Laborem/tarball/master
 fi
-read -p "Install PyScada-GPIO ? [y/n]: " answer
-if [[ "$answer" == "y" ]]; then
+if [[ "$answer_gpio" == "y" ]]; then
   sudo pip3 install https://github.com/clavay/PyScada-GPIO/tarball/master
 fi
-read -p "Install PyScada-Scripting ? [y/n]: " answer
-if [[ "$answer" == "y" ]]; then
+if [[ "$answer_scripting" == "y" ]]; then
   sudo pip3 install https://github.com/trombastic/PyScada-Scripting/tarball/master
 fi
 sudo pip3 install --upgrade mysqlclient
 
 #CAS
-read -p "Install CAS ? [y/n]: " answer
-if [[ "$answer" == "y" ]]; then
+if [[ "$answer_cas" == "y" ]]; then
   sudo apt-get -y install libxml2-dev libxslt-dev python-dev
   sudo pip3 install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
   sudo pip3 install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
@@ -69,8 +70,7 @@ sudo adduser pyscada i2c
 sudo adduser pyscada gpio
 
 #Mjpeg-streamer
-read -p "Install mjpeg-streamer ? [y/n]: " answer
-if [[ "$answer" == "y" ]]; then
+if [[ "$answer_mjpeg" == "y" ]]; then
   cd ~
   url='https://github.com/jacksonliam/mjpg-streamer/archive/master.zip'
   if `validate_url $url >/dev/null`; then
