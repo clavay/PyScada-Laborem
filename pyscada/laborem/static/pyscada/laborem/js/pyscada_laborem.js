@@ -1049,7 +1049,7 @@ $( document ).ready(function() {
                 else {
                     $(dropdown_item[i]).show()
                 }
-                if ($(dropdown_item[i]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt")[0].innerHTML === $(dropdown_item[i]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt")[0].data('name')) {
+                if ($(dropdown_item[i]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt")[0].innerHTML === $(dropdown_item[i]).parents(".dropdown-robot").children(".btn").children(".ui-dropdown-robot-bnt").attr('data-name')) {
                     base_empty = 'yes'
                 }
             }

@@ -2,36 +2,52 @@
 from __future__ import unicode_literals
 
 from pyscada.visa.devices import GenericDevice
-from pyscada.models import VariableProperty, Variable
 import numpy as np
 import time
 import logging
 
 logger = logging.getLogger(__name__)
+# -*- coding: utf-8 -*-
+"""Object based access to the robot Tergane 45 from Terel
 
 
-class Handler(GenericDevice):
-    """
-    Tergane 45 Robot from Terel
-    """
+Example::
+    from pyscada.laborem.scripts.Robot_Tergane45 import Tergane45
+    unit = Tergane45()
+    import pyvisa
+    import time
+    visa_backend = '@py'  # use PyVISA-py as backend
+    rm = pyvisa.ResourceManager(visa_backend)
+    inst = rm.open_resource('ASRL/dev/ttyS0::INSTR', baud_rate=9600, data_bits=8, parity=pyvisa.constants.Parity.none,
+        stop_bits=pyvisa.constants.StopBits.one, write_termination='')
+    unit.connect(inst)
+    unit.init()
+    unit.pince(0)
+    time.sleep(1)
+    unit.pince(1)
 
-    def read_data(self, variable_instance):
-        """
-        read values from the device
-        """
-        return None
+"""
+__author__ = "Camille Lavayssière"
+__copyright__ = "Copyright 2020, UPPA"
+__credits__ = []
+__license__ = "GPLv3"
+__version__ = "0.1.0"
+__maintainer__ = "Camille Lavayssière"
+__email__ = "clavayssiere@univ-pau.fr"
+__status__ = "Beta"
+__docformat__ = 'reStructuredText'
 
-    def write_data(self, variable_id, value, task):
-        """
-        write values to the device
-        """
-        return None
 
-    def parse_value(self, value):
-        """
-        takes a string in the HP3456A format and returns a float value or None if not parseable
-        """
-        return None
+class Tergane45(object):
+
+    def __init__(self):
+        self.instr = None
+        self.old_theta = 0
+
+    def connect(self, instr):
+        if self.instr is None and instr is None:
+            return
+        self.instr = instr
 
     def init(self):
         # on tourne le bras
@@ -103,27 +119,27 @@ class Handler(GenericDevice):
         theta_poignet = -np.pi / 2 - np.pi / 4 - theta_epaule - theta_coude
 
         if mouvement == 1:
-            self.inst.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
                                                                 angle_max_poignet), 'F'))
             time.sleep(temps_entre_cmd)
-            self.inst.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
+            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
             time.sleep(temps_entre_cmd)
-            self.inst.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
             time.sleep(1)
         elif mouvement == 2:
-            self.inst.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
             time.sleep(temps_entre_cmd)
-            self.inst.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
+            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
             time.sleep(temps_entre_cmd)
-            self.inst.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
                                                                 angle_max_poignet), 'F'))
             time.sleep(1)
         elif mouvement == 3:
-            self.inst.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
+            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
             time.sleep(temps_entre_cmd)
-            self.inst.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
             time.sleep(temps_entre_cmd)
-            self.inst.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
                                                                 angle_max_poignet), 'F'))
             time.sleep(1)
         return True
@@ -131,26 +147,52 @@ class Handler(GenericDevice):
     def rotation_base(self, theta):
         angle_max_base = 130
         theta_base = theta * np.pi / 180
-        self.inst.write(self.format_ascii(self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base), 'B'))
+        self.instr.write(self.format_ascii(self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base), 'B'))
         try:
-            variable = Variable.objects.filter(name='LABOREM').first()
-            old_theta = 0.0 - VariableProperty.objects.get_property(variable=variable, name='OLD_THETA').value()
-            tempo = abs(sum([self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base), old_theta])) * 5000 / 1024
+            theta = 0.0 - self.old_theta
+            tempo = abs(sum([self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base), theta])) * 5000 / 1024
             time.sleep(tempo / 1000)
-            VariableProperty.objects.update_or_create_property(variable=variable, name='OLD_THETA',
-                                                               value=self.deg_to_ascii(theta_base * 180 / np.pi,
-                                                                                       angle_max_base),
-                                                               value_class='INT32')
+            self.old_theta = self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base)
         except Exception as e:
-            logger.warning("No old theta : %s" % e)
+            logger.warning(e)
             time.sleep(3)
         return True
 
     def pince(self, openclose):
         if openclose == 0:
-            self.inst.write('P+511')
+            self.instr.write('P+511')
             time.sleep(1.7)
         else:
-            self.inst.write('P-511')
+            self.instr.write('P-511')
             time.sleep(1.7)
         return True
+
+
+class Handler(GenericDevice):
+    """
+    Tergane 45 Robot from Terel
+    """
+    device = None
+
+    def connect(self):
+        super(Handler, self).connect()
+        self.device = Tergane45()
+        self.device.connect(self.inst)
+
+    def read_data(self, variable_instance):
+        """
+        read values from the device
+        """
+        return None
+
+    def write_data(self, variable_id, value, task):
+        """
+        write values to the device
+        """
+        return None
+
+    def parse_value(self, value):
+        """
+        takes a string in the HP3456A format and returns a float value or None if not parseable
+        """
+        return None

@@ -1,17 +1,11 @@
 <div class="dropdown dropdown-robot" id="{{ base.pk }}" style="display: inline; padding-left: 15px">
     <!--Composant {{ base.description }} :<br>-->
-    {% if base.description == "vert" %}
-        <button class="btn btn-success dropdown-toggle dropdown-robot-btn" type="button" data-toggle="dropdown">
-    {% elif base.description == "rouge" %}
-        <button class="btn btn-danger dropdown-toggle dropdown-robot-btn" type="button" data-toggle="dropdown">
-    {% else %}
-        <button class="btn btn-primary dropdown-toggle dropdown-robot-btn" type="button" data-toggle="dropdown">
-    {% endif %}
-    <span class="ui-dropdown-robot-bnt" data-name="Composant {{ base.description }} ">Composant {{ base.description }} </span>
+    <button class="btn {% if base.description == 'vert' %}btn-success{% elif base.description == 'rouge' %}btn-danger{% else %}btn-primary{% endif %} dropdown-toggle dropdown-robot-btn" type="button" id="dropdownRobot{{ base.description }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    <span class="ui-dropdown-robot-bnt" data-name="Composant {{ base.description }} ">Composant {{ base.description }}</span>
     <span class="caret"></span></button>
-    <ul class="dropdown-menu">
+    <ul class="dropdown-menu" aria-labelledby="dropdownRobot{{ base.description }}">
         {% for element in visible_robot_element_list %}
-            <li class="dropdown-base" id="{{ Element.pk }}">
+            <li class="dropdown-base" id="{{ element.pk }}">
                 <a href="javascript:;">{{ element.name }} </a>
             </li>
         {% endfor %}

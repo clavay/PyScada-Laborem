@@ -113,7 +113,6 @@ fi
 if [[ "$answer_picamera" == "y" ]]; then
   sudo pip3 install --upgrade picamera
   echo 'SUBSYSTEM=="vchiq",MODE="0666", GROUP="pyscada"' | sudo tee -a /etc/udev/rules.d/99-camera.rules
-  echo "Active pi camera with sudo raspi-config"
 fi
 
 if [[ "$answer_update" == "n" ]]; then
@@ -198,4 +197,10 @@ if [[ "$answer_update" == "n" ]]; then
   echo "PyScada installed"
 else
   echo "PyScada updated"
+fi
+if [[ "$answer_picamera" == "y" ]]; then
+  echo "Activate pi camera with sudo raspi-config"
+fi
+if [[ "$answer_laborem" == "y" ]]; then
+  echo "Activate serial with sudo raspi-config"
 fi

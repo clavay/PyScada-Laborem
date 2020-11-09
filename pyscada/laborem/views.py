@@ -120,7 +120,7 @@ def view_laborem(request, link_title):
         visible_form_list = GroupDisplayPermission.objects.filter(
             hmi_group__in=request.user.groups.iterator()).values_list('forms', flat=True)
 
-    visible_robot_element_list = LaboremRobotElement.objects.all().values_list('name', flat=True)
+    visible_robot_element_list = LaboremRobotElement.objects.all()
     visible_robot_base_list = LaboremRobotBase.objects.all()
     panel_list = sliding_panel_list.filter(position__in=(1, 2,))
     control_list = sliding_panel_list.filter(position=0)

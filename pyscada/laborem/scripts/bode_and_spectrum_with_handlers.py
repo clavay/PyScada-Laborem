@@ -61,7 +61,7 @@ def startup(self):
     self.instruments.inst_mdo2 = None
 
     try:
-        self.instruments.inst_robot.init() if self.instruments.inst_robot is not None else True
+        self.instruments.inst_robot.device.init() if self.instruments.inst_robot is not None else True
     except pyvisa.VisaIOError:
         self.instruments.inst_robot = None
 
@@ -139,7 +139,7 @@ def script(self):
                         r_base = base.R
                         theta_base = base.theta
                         z_base = base.z
-                        self.instruments.inst_robot.take_and_drop(
+                        self.instruments.inst_robot.device.take_and_drop(
                             r_element, theta_element, z_element, r_base, theta_base, z_base)
                         base.element.change_active_to_base_id(base.pk)
                     else:
@@ -171,7 +171,7 @@ def script(self):
                         r_base = base.R
                         theta_base = base.theta
                         z_base = base.z
-                        self.instruments.inst_robot.take_and_drop(
+                        self.instruments.inst_robot.device.take_and_drop(
                             r_base, theta_base, z_base, r_element, theta_element, z_element)
                         base.element.change_active_to_base_id('0')
                     else:
