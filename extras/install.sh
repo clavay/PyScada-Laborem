@@ -11,9 +11,17 @@ read -p "Install PyScada clavay fork ? [y/n]: " answer_pyscada
 read -p "Install PyScada-Laborem ? [y/n]: " answer_laborem
 read -p "Install PyScada-GPIO ? [y/n]: " answer_gpio
 read -p "Install PyScada-Scripting ? [y/n]: " answer_scripting
-read -p "Install CAS ? [y/n]: " answer_cas
-read -p "Install mjpeg-streamer ? [y/n]: " answer_mjpeg
-
+read -p "Install PyScada-Serial ? [y/n]: " answer_serial
+read -p "Install PyScada-WebService ? [y/n]: " answer_webservice
+if [[ "$answer_laborem" == "y" ]]; then
+  read -p "Install CAS ? [y/n]: " answer_cas
+  read -p "Install mjpeg-streamer ? [y/n]: " answer_mjpeg
+  read -p "Install PiCamera ? [y/n]: " answer_picamera
+else
+  answer_cas = "n"
+  answer_mjpeg = "n"
+  answer_picamera = "n"
+fi
 sudo apt-get update
 sudo apt-get -y upgrade
 sudo apt-get -y install mariadb-server python3-mysqldb
@@ -41,7 +49,13 @@ if [[ "$answer_gpio" == "y" ]]; then
   sudo pip3 install https://github.com/clavay/PyScada-GPIO/tarball/master
 fi
 if [[ "$answer_scripting" == "y" ]]; then
-  sudo pip3 install https://github.com/trombastic/PyScada-Scripting/tarball/master
+  sudo pip3 install https://github.com/clavay/PyScada-Scripting/tarball/master
+fi
+if [[ "$answer_serial" == "y" ]]; then
+  sudo pip3 install https://github.com/clavay/PyScada-Serial/tarball/master
+fi
+if [[ "$answer_webservice" == "y" ]]; then
+  sudo pip3 install https://github.com/clavay/PyScada-WebService/tarball/master
 fi
 sudo pip3 install --upgrade mysqlclient
 
@@ -85,6 +99,10 @@ if [[ "$answer_mjpeg" == "y" ]]; then
       sudo systemctl enable laborem_camera
       sudo systemctl restart laborem_camera;
   else echo $url "does not exist"; exit 1; fi
+fi
+
+if [[ "$answer_picamera" == "y" ]]; then
+  sudo pip3 install picamera
 fi
 
 #create DB

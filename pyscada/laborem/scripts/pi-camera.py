@@ -4,6 +4,9 @@ import logging
 import socketserver
 from threading import Condition
 from http import server
+import logging
+
+logger = logging.getLogger(__name__)
 
 PAGE = """\
 <html>
@@ -16,6 +19,29 @@ PAGE = """\
 </body>
 </html>
 """
+
+
+def startup(self):
+    pass
+
+
+def shutdown(self):
+    pass
+
+
+def script(self):
+    port = 8000
+    logger.debug("Starting PiCamera HTTP server on port %i" % port)
+    with picamera.PiCamera(resolution='320x240', framerate=24) as camera:
+        output = StreamingOutput()
+        camera.start_recording(output, format='mjpeg')
+        try:
+            address = ('', port)
+            camera_server = StreamingServer(address, StreamingHandler)
+            camera_server.serve_forever()
+        finally:
+            logger.debug("Stop PiCamera")
+            camera.stop_recording()
 
 
 class StreamingOutput(object):
@@ -79,14 +105,3 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
-
-
-with picamera.PiCamera(resolution='320x240', framerate=24) as camera:
-    output = StreamingOutput()
-    camera.start_recording(output, format='mjpeg')
-    try:
-        address = ('', 8000)
-        server = StreamingServer(address, StreamingHandler)
-        server.serve_forever()
-    finally:
-        camera.stop_recording()
