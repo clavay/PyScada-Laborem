@@ -25,7 +25,9 @@ else
   answer_picamera = "n"
 fi
 
+echo "Stopping PyScada"
 sudo systemctl stop pyscada gunicorn gunicorn.socket
+echo "PyScada stopped"
 
 sudo apt-get update
 sudo apt-get -y upgrade
@@ -36,9 +38,9 @@ sudo apt-get install -y libopenjp2-7
 sudo pip3 install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvisa-py
 
 if [[ "$answer_pyscada" == "y" ]]; then
-  sudo pip3 install https://github.com/clavay/PyScada/tarball/master
+  sudo pip3 install --upgrade https://github.com/clavay/PyScada/tarball/master
 else
-  sudo pip3 install https://github.com/trombastic/PyScada/tarball/master
+  sudo pip3 install --upgrade https://github.com/trombastic/PyScada/tarball/master
 fi
 
 sudo apt-get -y install owfs
@@ -48,19 +50,19 @@ sudo pip3 install psutil
 sudo pip3 install pyusb gpiozero
 
 if [[ "$answer_laborem" == "y" ]]; then
-  sudo pip3 install https://github.com/clavay/PyScada-Laborem/tarball/master
+  sudo pip3 install --upgrade https://github.com/clavay/PyScada-Laborem/tarball/master
 fi
 if [[ "$answer_gpio" == "y" ]]; then
-  sudo pip3 install https://github.com/clavay/PyScada-GPIO/tarball/master
+  sudo pip3 install --upgrade https://github.com/clavay/PyScada-GPIO/tarball/master
 fi
 if [[ "$answer_scripting" == "y" ]]; then
-  sudo pip3 install https://github.com/clavay/PyScada-Scripting/tarball/master
+  sudo pip3 install --upgrade https://github.com/clavay/PyScada-Scripting/tarball/master
 fi
 if [[ "$answer_serial" == "y" ]]; then
-  sudo pip3 install https://github.com/clavay/PyScada-Serial/tarball/master
+  sudo pip3 install --upgrade https://github.com/clavay/PyScada-Serial/tarball/master
 fi
 if [[ "$answer_webservice" == "y" ]]; then
-  sudo pip3 install https://github.com/clavay/PyScada-WebService/tarball/master
+  sudo pip3 install --upgrade https://github.com/clavay/PyScada-WebService/tarball/master
 fi
 sudo pip3 install --upgrade mysqlclient
 
@@ -109,7 +111,7 @@ if [[ "$answer_mjpeg" == "y" ]]; then
 fi
 
 if [[ "$answer_picamera" == "y" ]]; then
-  sudo pip3 install picamera
+  sudo pip3 install --upgrade picamera
   echo 'SUBSYSTEM=="vchiq",MODE="0666", GROUP="pyscada"' | sudo tee -a /etc/udev/rules.d/99-camera.rules
   echo "Active pi camera with sudo raspi-config"
 fi
