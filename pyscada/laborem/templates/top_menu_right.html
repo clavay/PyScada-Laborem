@@ -1,0 +1,83 @@
+{% load i18n staticfiles %}
+    <li class="dropdown dropdown-WaitingList">
+        <a class="dropdown-toggle dropdown-WaitingList-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-time"></span> File d'attente <strong class="caret"></strong></a>
+        <div class="dropdown-menu" style="padding: 15px;background-color: white;width:300px;">
+            <div class="control-panel">
+                <table class="table table-condensed table-striped table-responsive table-activeuser">
+                  <tr class="activeuser-header">
+                      <th style="text-align: center; width: 150px;">Utilisateur actif</th>
+                      <th style="text-align: center; width: 150px;">Temps restant à manipuler</th>
+                  </tr>
+                </table>
+                <table class="table table-condensed table-striped table-responsive table-waitingusers">
+                  <tr class="waitingusers-header">
+                      <th style="text-align: center; width: 150px;">File d'attente</th>
+                      <th style="text-align: center; width: 150px;">Temps d'attente</th>
+                  </tr>
+                </table>
+            </div>
+        </div>
+    </li>
+    <li class="dropdown dropdown-TOP10Results">
+        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-stats"></span> TOP10 Résultats <strong class="caret"></strong></a>
+        <div class="dropdown-menu" style="padding: 15px; width: auto;background-color: white;">
+            <div class="control-panel">
+                <table class="table table-condensed table-striped table-responsive table-top10">
+                  <tr class="top10-header">
+                      <th style="text-align: center">Utilisateur</th>
+                      <th style="text-align: center">Score</th>
+                  </tr>
+                </table>
+            </div>
+        </div>
+    </li>
+    <li class="dropdown dropdown-TOP10QA hidden">
+        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-pencil" style="color: orange"></span> TOP10 Questions/Réponses <strong class="caret"></strong></a>
+        <div class="dropdown-menu" style="padding: 15px; width: auto;background-color: white;">
+            <div class="control-panel">
+                {% include "form_TOP10.html" with form=form_top10qa %}
+            </div>
+        </div>
+    </li>
+    {% for panel in control_list %}
+        {% if panel.visible %}
+            <li class="dropdown"><!-- {{ panel.title|upper }} -->
+                <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-wrench"></span> {{ panel.title }}<strong class="caret"></strong></a>
+                <div class="dropdown-menu" style="padding: 15px; width:715px;">
+                    <div class="control-panel">
+                        {% for item in panel.control_panel.items.all %}
+                            {% if item.pk in visible_control_element_list %}
+                                {% include "control_element.html" with item=item %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for form in panel.control_panel.forms.all %}
+                            {% if form.pk in visible_form_list %}
+                                {% include "form.html" with form=form %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for dropdown in panel.control_panel.dropdowns.all %}
+                            {% if dropdown.pk in visible_dropdown_list %}
+                                {% include "dropdown.html" with dropdown=dropdown %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </li>
+        {% endif %}
+    {% endfor %}
+        <li class="dropdown hidden"><!-- Settings -->
+            <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span> Options <strong class="caret"></strong></a>
+            <div class="dropdown-menu" style="padding: 15px; padding-bottom: 15px; width:70%; min-width:380px;">
+                <ul>
+                    <li>
+                        <button type="button" class="btn btn-success" id="AutoUpdateButton" >auto update</button>
+                        {% if view_show_timeline %}
+                            <button type="button" class="btn btn-success" id="ShowTimelineButton" >show timeline</button>
+                        {% else %}
+                            <button type="button" class="btn btn-default" id="ShowTimelineButton" >show timeline</button>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+
+        </li>

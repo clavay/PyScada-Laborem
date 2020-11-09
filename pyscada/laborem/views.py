@@ -121,6 +121,7 @@ def view_laborem(request, link_title):
             hmi_group__in=request.user.groups.iterator()).values_list('forms', flat=True)
 
     visible_robot_element_list = LaboremRobotElement.objects.all().values_list('name', flat=True)
+    visible_robot_base_list = LaboremRobotBase.objects.all()
     panel_list = sliding_panel_list.filter(position__in=(1, 2,))
     control_list = sliding_panel_list.filter(position=0)
 
@@ -188,6 +189,7 @@ def view_laborem(request, link_title):
         'visible_control_element_list': visible_control_element_list,
         'visible_form_list': visible_form_list,
         'visible_robot_element_list': visible_robot_element_list,
+        'visible_robot_base_list': visible_robot_base_list,
         'view_title': v.title,
         'view_show_timeline': v.show_timeline,
         'version_string': core_version,

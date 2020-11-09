@@ -7,6 +7,8 @@ function validate_url(){
     return 1
   fi
 }
+
+read -p "Update only (don't create db, user, copy services, settings and urls...) ? [y/n]: " answer_update
 read -p "Install PyScada clavay fork ? [y/n]: " answer_pyscada
 read -p "Install PyScada-Laborem ? [y/n]: " answer_laborem
 read -p "Install PyScada-GPIO ? [y/n]: " answer_gpio
@@ -22,6 +24,9 @@ else
   answer_mjpeg = "n"
   answer_picamera = "n"
 fi
+
+sudo systemctl stop pyscada gunicorn gunicorn.socket
+
 sudo apt-get update
 sudo apt-get -y upgrade
 sudo apt-get -y install mariadb-server python3-mysqldb
@@ -66,22 +71,24 @@ if [[ "$answer_cas" == "y" ]]; then
   sudo pip3 install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
 fi
 
-#Create pyscada user
-sudo useradd -r pyscada
-sudo mkdir -p /var/www/pyscada/http
-sudo chown -R pyscada:pyscada /var/www/pyscada
-sudo mkdir -p /home/pyscada
-sudo chown -R pyscada:pyscada /home/pyscada
+if [[ "$answer_update" == "n" ]]; then
+  #Create pyscada user
+  sudo useradd -r pyscada
+  sudo mkdir -p /var/www/pyscada/http
+  sudo chown -R pyscada:pyscada /var/www/pyscada
+  sudo mkdir -p /home/pyscada
+  sudo chown -R pyscada:pyscada /home/pyscada
 
-sudo chmod a+w /var/log
+  sudo chmod a+w /var/log
 
-#Add rights for usb, i2c and serial
-echo 'SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pyscada"' | sudo tee -a /etc/udev/rules.d/10-usb.rules
-echo 'KERNEL=="ttyS[0-9]", GROUP="dialout", MODE="0777"' | sudo tee -a /etc/udev/rules.d/10-usb.rules
-sudo usermod -a -G pyscada www-data
-sudo usermod -a -G dialout pyscada
-sudo adduser pyscada i2c
-sudo adduser pyscada gpio
+  #Add rights for usb, i2c and serial
+  echo 'SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pyscada"' | sudo tee -a /etc/udev/rules.d/10-usb.rules
+  echo 'KERNEL=="ttyS[0-9]", GROUP="dialout", MODE="0777"' | sudo tee -a /etc/udev/rules.d/10-usb.rules
+  sudo usermod -a -G pyscada www-data
+  sudo usermod -a -G dialout pyscada
+  sudo adduser pyscada i2c
+  sudo adduser pyscada gpio
+fi
 
 #Mjpeg-streamer
 if [[ "$answer_mjpeg" == "y" ]]; then
@@ -103,29 +110,34 @@ fi
 
 if [[ "$answer_picamera" == "y" ]]; then
   sudo pip3 install picamera
+  echo 'SUBSYSTEM=="vchiq",MODE="0666", GROUP="pyscada"' | sudo tee -a /etc/udev/rules.d/99-camera.rules
+  echo "Active pi camera with sudo raspi-config"
 fi
 
-#create DB
-sudo mysql -uroot -p -e "CREATE DATABASE PyScada_db CHARACTER SET utf8;GRANT ALL PRIVILEGES ON PyScada_db.* TO 'PyScada-user'@'localhost' IDENTIFIED BY 'PyScada-user-password';"
+if [[ "$answer_update" == "n" ]]; then
 
-cd /var/www/pyscada/
-sudo -u pyscada django-admin startproject PyScadaServer
+  #create DB
+  sudo mysql -uroot -p -e "CREATE DATABASE PyScada_db CHARACTER SET utf8;GRANT ALL PRIVILEGES ON PyScada_db.* TO 'PyScada-user'@'localhost' IDENTIFIED BY 'PyScada-user-password';"
 
-#Copy settings.py and urls.py
-cd /var/www/pyscada/PyScadaServer/PyScadaServer # linux
-var1=$(grep SECRET_KEY settings.py)
-echo $var1
-printf -v var2 '%q' "$var1"
-url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/settings.py'
-if `validate_url $url >/dev/null`; then
-    sudo wget $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py
-else echo $url "does not exist"; exit 1; fi
-sudo sed -i "s/SECRET_KEY.*/$var2/g" settings.py
+  cd /var/www/pyscada/
+  sudo -u pyscada django-admin startproject PyScadaServer
 
-url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/urls.py'
-if `validate_url $url >/dev/null`; then
-    sudo wget $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py
-else echo $url "does not exist"; exit 1; fi
+  #Copy settings.py and urls.py
+  cd /var/www/pyscada/PyScadaServer/PyScadaServer # linux
+  var1=$(grep SECRET_KEY settings.py)
+  echo $var1
+  printf -v var2 '%q' "$var1"
+  url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/settings.py'
+  if `validate_url $url >/dev/null`; then
+      sudo wget $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py
+  else echo $url "does not exist"; exit 1; fi
+  sudo sed -i "s/SECRET_KEY.*/$var2/g" settings.py
+
+  url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/urls.py'
+  if `validate_url $url >/dev/null`; then
+      sudo wget $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py
+  else echo $url "does not exist"; exit 1; fi
+fi
 
 #Migration and static files
 cd /var/www/pyscada/PyScadaServer # linux
@@ -139,38 +151,40 @@ sudo -u pyscada python3 manage.py loaddata units
 # initialize the background service system of pyscada
 sudo -u pyscada python3 manage.py pyscada_daemon init
 
-cd /var/www/pyscada/PyScadaServer
-sudo -u pyscada python3 manage.py createsuperuser
+if [[ "$answer_update" == "n" ]]; then
 
-# Nginx
-url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/nginx_sample.conf'
-if `validate_url $url >/dev/null`; then
-    sudo wget $url -O /etc/nginx/sites-available/pyscada.conf
-    sudo ln -s /etc/nginx/sites-available/pyscada.conf /etc/nginx/sites-enabled/
-    sudo rm /etc/nginx/sites-enabled/default
-    sudo mkdir /etc/nginx/ssl
-    # the certificate will be valid for 5 Years,
-    sudo openssl req -x509 -nodes -days 1780 -newkey rsa:2048 -keyout /etc/nginx/ssl/pyscada_server.key -out /etc/nginx/ssl/pyscada_server.crt
-    sudo systemctl enable nginx.service # enable autostart on boot
-    sudo systemctl restart nginx
-else echo $url "does not exist"; exit 1; fi
+  cd /var/www/pyscada/PyScadaServer
+  sudo -u pyscada python3 manage.py createsuperuser
 
-# Gunicorn and PyScada
-url='https://raw.githubusercontent.com/trombastic/PyScada/master/extras/service/systemd/gunicorn.socket'
-if `validate_url $url >/dev/null`; then
-    sudo wget $url -O /etc/systemd/system/gunicorn.socket
-else echo $url "does not exist"; exit 1; fi
+  # Nginx
+  url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/nginx_sample.conf'
+  if `validate_url $url >/dev/null`; then
+      sudo wget $url -O /etc/nginx/sites-available/pyscada.conf
+      sudo ln -s /etc/nginx/sites-available/pyscada.conf /etc/nginx/sites-enabled/
+      sudo rm /etc/nginx/sites-enabled/default
+      sudo mkdir /etc/nginx/ssl
+      # the certificate will be valid for 5 Years,
+      sudo openssl req -x509 -nodes -days 1780 -newkey rsa:2048 -keyout /etc/nginx/ssl/pyscada_server.key -out /etc/nginx/ssl/pyscada_server.crt
+      sudo systemctl enable nginx.service # enable autostart on boot
+      sudo systemctl restart nginx
+  else echo $url "does not exist"; exit 1; fi
 
-url='https://raw.githubusercontent.com/trombastic/PyScada/master/extras/service/systemd/gunicorn.service'
-if `validate_url $url >/dev/null`; then
-    sudo wget $url -O /etc/systemd/system/gunicorn.service
-else echo $url "does not exist"; exit 1; fi
+  # Gunicorn and PyScada
+  url='https://raw.githubusercontent.com/trombastic/PyScada/master/extras/service/systemd/gunicorn.socket'
+  if `validate_url $url >/dev/null`; then
+      sudo wget $url -O /etc/systemd/system/gunicorn.socket
+  else echo $url "does not exist"; exit 1; fi
 
-url='https://raw.githubusercontent.com/clavay/PyScada/master/extras/service/systemd/pyscada_daemon.service'
-if `validate_url $url >/dev/null`; then
-    sudo wget $url -O /etc/systemd/system/pyscada.service
-else echo $url "does not exist"; exit 1; fi
+  url='https://raw.githubusercontent.com/trombastic/PyScada/master/extras/service/systemd/gunicorn.service'
+  if `validate_url $url >/dev/null`; then
+      sudo wget $url -O /etc/systemd/system/gunicorn.service
+  else echo $url "does not exist"; exit 1; fi
 
+  url='https://raw.githubusercontent.com/clavay/PyScada/master/extras/service/systemd/pyscada_daemon.service'
+  if `validate_url $url >/dev/null`; then
+      sudo wget $url -O /etc/systemd/system/pyscada.service
+  else echo $url "does not exist"; exit 1; fi
+fi
 
 # enable the services for autostart
 sudo systemctl enable gunicorn
@@ -178,4 +192,8 @@ sudo systemctl restart gunicorn
 sudo systemctl enable pyscada
 sudo systemctl restart pyscada
 
-echo "PyScada installed"
+if [[ "$answer_update" == "n" ]]; then
+  echo "PyScada installed"
+else
+  echo "PyScada updated"
+fi

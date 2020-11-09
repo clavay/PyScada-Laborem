@@ -1,0 +1,7 @@
+{% load i18n staticfiles %}
+
+<div class="hidden">
+    {% for robot_base in visible_robot_base_list %}
+        {% include "robot_selector.html" with base=robot_base %}
+    {% endfor %}
+</div>

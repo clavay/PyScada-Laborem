@@ -10,14 +10,14 @@
     <span class="ui-dropdown-robot-bnt" data-name="Composant {{ base.description }} ">Composant {{ base.description }} </span>
     <span class="caret"></span></button>
     <ul class="dropdown-menu">
-        {% for Element in visible_robot_element_list %}
+        {% for element in visible_robot_element_list %}
             <li class="dropdown-base" id="{{ Element.pk }}">
-                <a href="javascript:;">{{ Element.name }} </a>
+                <a href="javascript:;">{{ element.name }} </a>
             </li>
         {% endfor %}
     </ul>
  </div>
-{% for Elements in visible_robot_element_list %}
+{% for elements in visible_robot_element_list %}
     <!--<br>-->
 {% endfor %}
 <br>

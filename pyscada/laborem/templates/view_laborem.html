@@ -1,388 +1,43 @@
 {% extends "base.html" %}
 {% load i18n staticfiles %}
 
+{% block head_css %}
+    {% include "css.html" %}
+{% endblock %}
+
+{% block footer_left %}
+    {% include "footer.html" %}
+{% endblock %}
+
+{% block navbar_logo %}
+    {% include "logo.html" %}
+{% endblock %}
+
 {% block title %}{{ view_title }} - PyScada-Laborem Control Center{% endblock %}
+
 {% block body_confic_data %} data-data-file="json/cache_data/" {% endblock %}
+
 {% block top_menu_left %}
-    {% if view_title == "laborem" %}
-        {% for page in page_list %}
-            <li class="hidden"><a href="#{{page.link_title}}">{{page.title}}</a></li>
-        {% endfor %}
-        <li><a href="#" style="color: lightcoral; font-size: 16px;" class="btn-previous btn-next-previous">Précédent <span class="glyphicon glyphicon-chevron-left"></span></a></li>
-        <li><a href="#" style="color: lightgreen; font-size: 16px;" class="btn-next btn-next-previous"><span class="glyphicon glyphicon-chevron-right"></span> Suivant</a></li>
-    {% else %}
-        <li><a href="#plugs"><span class="glyphicon glyphicon-cog"></span> Configuration du circuit</a></li>
-        <li class="dropdown"><!-- Experiences -->
-            <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-blackboard"></span> Acquisition & Analyse <strong class="caret"></strong></a>
-            <div class="dropdown-menu" style="padding: 15px; padding-bottom: 15px; width:70%; min-width:380px;">
-                <ul>
-                    {% for experience in visible_experience_list %}
-                        <li>
-                            <a href="#{{experience.page.link_title}}">{{experience.page.title}}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </li>
-    {% endif %}
+    {% include "top_menu_left.html" %}
 {% endblock %}
 
 {% block top_menu_right %}
-    <li class="dropdown dropdown-WaitingList">
-        <a class="dropdown-toggle dropdown-WaitingList-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-time"></span> File d'attente <strong class="caret"></strong></a>
-        <div class="dropdown-menu" style="padding: 15px;background-color: white;width:300px;">
-            <div class="control-panel">
-                <table class="table table-condensed table-striped table-responsive table-activeuser">
-                  <tr class="activeuser-header">
-                      <th style="text-align: center; width: 150px;">Utilisateur actif</th>
-                      <th style="text-align: center; width: 150px;">Temps restant à manipuler</th>
-                  </tr>
-                </table>
-                <table class="table table-condensed table-striped table-responsive table-waitingusers">
-                  <tr class="waitingusers-header">
-                      <th style="text-align: center; width: 150px;">File d'attente</th>
-                      <th style="text-align: center; width: 150px;">Temps d'attente</th>
-                  </tr>
-                </table>
-            </div>
-        </div>
-    </li>
-    <li class="dropdown dropdown-TOP10Results">
-        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-stats"></span> TOP10 Résultats <strong class="caret"></strong></a>
-        <div class="dropdown-menu" style="padding: 15px; width: auto;background-color: white;">
-            <div class="control-panel">
-                <table class="table table-condensed table-striped table-responsive table-top10">
-                  <tr class="top10-header">
-                      <th style="text-align: center">Utilisateur</th>
-                      <th style="text-align: center">Score</th>
-                  </tr>
-                </table>
-            </div>
-        </div>
-    </li>
-    <li class="dropdown dropdown-TOP10QA hidden">
-        <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-pencil" style="color: orange"></span> TOP10 Questions/Réponses <strong class="caret"></strong></a>
-        <div class="dropdown-menu" style="padding: 15px; width: auto;background-color: white;">
-            <div class="control-panel">
-                {% include "form_TOP10.html" with form=form_top10qa %}
-            </div>
-        </div>
-    </li>
-    {% for panel in control_list %}
-        {% if panel.visible %}
-            <li class="dropdown"><!-- {{ panel.title|upper }} -->
-                <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-wrench"></span> {{ panel.title }}<strong class="caret"></strong></a>
-                <div class="dropdown-menu" style="padding: 15px; width:715px;">
-                    <div class="control-panel">
-                        {% for item in panel.control_panel.items.all %}
-                            {% if item.pk in visible_control_element_list %}
-                                {% include "control_element.html" with item=item %}
-                            {% endif %}	
-                        {% endfor %}
-                        {% for form in panel.control_panel.forms.all %}
-                            {% if form.pk in visible_form_list %}
-                                {% include "form.html" with form=form %}
-                            {% endif %}
-                        {% endfor %}
-                        {% for dropdown in panel.control_panel.dropdowns.all %}
-                            {% if dropdown.pk in visible_dropdown_list %}
-                                {% include "dropdown.html" with dropdown=dropdown %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-            </li>
-        {% endif %}
-    {% endfor %}
-        <li class="dropdown hidden"><!-- Settings -->
-            <a class="dropdown-toggle" href="#" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span> Options <strong class="caret"></strong></a>
-            <div class="dropdown-menu" style="padding: 15px; padding-bottom: 15px; width:70%; min-width:380px;">
-                <ul>
-                    <li>
-                        <button type="button" class="btn btn-success" id="AutoUpdateButton" >auto update</button>
-                        {% if view_show_timeline %}
-                            <button type="button" class="btn btn-success" id="ShowTimelineButton" >show timeline</button>
-                        {% else %}
-                            <button type="button" class="btn btn-default" id="ShowTimelineButton" >show timeline</button>
-                        {% endif %}
-                    </li>
-                </ul>
-            </div>
-
-        </li>
+    {% include "top_menu_right.html" %}
 {% endblock %}
+
 {% block top_area %}
+    {% include "top_area.html" %}
 {% endblock %}
+
 {% block content %}
-    <div id="page-timeline">
-        <div class="row show_timeline_yes" id="show_timeline">
-            <div class="col-md-12">
-                <span class="pull-left"><button type="button" class="btn" id="PlusTwoHoursButton" style="height:24px; padding-top:1px;"><img id="loadingAnimation" style="display: inline; height:15px;padding-bottom:3px;" src="/static/pyscada/laborem/img/load.gif" alt="loading"> +2h</button></span>
-                <span id="timeline-time-left-label" class="pull-left" style="padding-left: 10px; line-height:24px;color:#333"></span>
-                <div style="height:24px; padding-left:150px;">
-                    <div id="timeline-border" style="height:24px; background-color: #9d9d9d;">
-                        <div id="timeline" class="ui-widget-content ui-resizable ui-draggable ui-draggable-handle" style="background-color: #333; height: 24px; left: 0px; width: 0px; top: 0px;">
-                            <span class="pull-left glyphicon glyphicon-triangle-left" style="line-height:20px;color:#9d9d9d;" aria-hidden="true"></span>
-                            <span class="pull-right glyphicon glyphicon-triangle-right" style="line-height:20px;color:#9d9d9d;" aria-hidden="true"></span>
-                            <span id="timeline-time-from-label" class="pull-left" style="padding-left:3px; line-height:24px; color:#9d9d9d"> </span>
-                            <span id="timeline-time-to-label" class="pull-right" style="padding-right:3px; line-height:24px; color:#9d9d9d"> </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {{pages_html|safe}}
-    <div id="page-log" class="sub-page" style="display: none;">
-        <table id="log-table" class="table table-condensed table-hover tablesorter tablesorter-default" width="100%">
-            <colgroup>
-                <col style="width: 180px;">
-                <col style="width: 60px;">
-                <col>
-            </colgroup>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Level</th>
-                    <th>Message</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div> <!-- end page-log -->
-    {% for panel in panel_list %}
-        <div class="side-menu  {% if panel.position == 1 %}left{% elif panel.position == 2 %}right{% endif %}">
-            <ul class="status-panel">
-                <li>{{ panel.title }}</li>
-                {% for item in panel.control_panel.items.all %}
-                    {% if item.pk in visible_control_element_list %}
-                        {% include "status_element.html" with item=item %}
-                    {% endif %}
-                {% endfor %}
-            </ul>
-        </div>
-    {% endfor %}
-    <div class="camera side-menu left hidden">
-        <ul class="status-panel">
-            <li>Camera</li>
-            <img class="camera-img usb-camera" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
-            <img class="camera-img pi-camera" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
-        </ul>
-    </div>
-    <div class="summary side-menu right hidden col-md-3" style="width: 300px; list-style: circle;">
-        <ul class="status-panel">
-            <li>Summary</li>
-        </ul>
-    </div>
-    <!--
-    <div class="row">
-        <div class="message-laborem side-menu top col-md-4 col-md-offset-4">
-            <h2><img id="laborem-loadingAnimation" style="height:30px;padding-bottom:3px;" src="{% static 'pyscada/img/load.gif' %}" alt="loading"> Nothing to say</h2>
-            <div class="progress" style="width:50%; margin-left: auto; margin-right: auto;">
-                <div class="progress-bar hidden" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;width:100%">100%</div>
-            </div>
-        </div>
-    </div>
-    -->
-    <!-- Modal -->
-    <div class="modal fade" id="MessageModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static">
-      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close hidden" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="MessageModalLabel">Veuillez patienter...</h4>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-                <div class="message-laborem" data-timestamp="0">
-                    <h2>Nothing to say</h2>
-                    <div class="progress" style="width:50%; margin-left: auto; margin-right: auto;">
-                        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;width:100%">100%</div>
-                    </div>
-                </div>
-            </div>
-          </div>
-          <div class="modal-footer" style="text-align:left;">
-              <div class="row">
-                <div class="camera col-md-6">
-                    <ul class="status-panel">
-                        <li class="col-md-2">Camera</li>
-                        <br>
-                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
-                        <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
-                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" alt="Camera view" data-src="/motionpicam/stream.mjpg">
-                        <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" alt="Camera view" data-src="/motionpicam/stream2.mjpg">
-                    </ul>
-                </div>
-                <div class="summary-modal col-md-6">
-                    <ul>
-                        <li>Summary Modal</li>
-                    </ul>
-                </div>
-              </div>
-              <div class="row">
-                  <div class="col-md-3 col-md-offset-9">
-                    <button type="button" class="user_stop_btn btn btn-danger">Arrêter</button>
-                  </div>
-              </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade" id="ViewerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="ViewerModalLabel">PyScada-Laborem</h4>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-                <div class="col-md-offset-1">
-                    <h2>Vous êtes dans la file d'attente de Laborem.</h2>
-                    <p>Vous pouvez fermer ce panneau et voir les tracés de l'élève qui manipule.</p>
-                    <ul>Après avoir fermé ce panneau, vous aurez accès à différentes informations :
-                        <li>En haut :
-                            <ul>
-                                <li>File d'attente</li>
-                                <li>TOP 10</li>
-                            </ul>
-                        </li>
-                        <li>En bas à gauche : placer la souris sur la caméra pour l'afficher</li>
-                        <li>En bas à droite : placer la souris sur le résumé pour l'afficher</li>
-                    </ul>
-                </div>
-            </div>
-          </div>
-          <div class="modal-footer" style="text-align:left;">
-              <div class="row">
-                <div class="camera col-md-6">
-                    <ul class="status-panel">
-                        <li class="col-md-2">Caméra</li>
-                        <br>
-                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
-                        <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
-                    </ul>
-                </div>
-                <div class="summary-modal col-md-6">
-                    <ul>
-                        <li>Summary Modal</li>
-                    </ul>
-                </div>
-              </div>
-              <div class="row">
-                  <div class="col-md-3 col-md-offset-9">
-                    <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
-                  </div>
-              </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include "content.html" %}
 {% endblock %}
-{% block include_bootom %}
-<script type="text/javascript" src="{% static "pyscada/js/jquery/jquery.tablesorter.min.js" %}"></script>
 
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/lib/jquery.mousewheel.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.canvaswrapper.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.colorhelpers.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.saturated.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.browser.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.drawSeries.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.errorbars.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.uiConstants.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.logaxis.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.symbol.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.flatdata.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.navigate.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.fillbetween.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.stack.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.touchNavigate.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.hover.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.touch.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.time.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.axislabels.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.selection.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.composeImages.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.legend.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.pie.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/flot/source/jquery.flot.crosshair.js" %}"></script>
-<script language="javascript" type="text/javascript" src="{% static "pyscada/js/jquery.flot.axisvalues.js" %}"></script>
-
-<script type="text/javascript" src="{% static "pyscada/js/pyscada/pyscada_v0-7-0rc14.js" %}"></script>
-<script type="text/javascript" src="{% static "pyscada/laborem/js/pyscada_laborem.js" %}"></script>
+{% block include_bottom %}
+    {% include "js.html" %}
 {% endblock %}
+
 {% block script_bottom %}
-        $( document ).ready(function() {
-            // Handler for .ready() called.
-
-            // Load camera image
-            window.onload = function() {
-                setInterval(updateImage, 1000);
-            }
-
-            // hide all pages
-            $(".sub-page").hide();
-            if (window.location.hash.length > 0) {
-                $(window.location.hash).show();
-            }else{
-                window.location.hash = $('ul.navbar-nav li a').first().attr("href");
-            }
-            // move overlapping side menus
-            var menu_pos = $('footer')[0].clientHeight + 6;
-            $.each($('.side-menu.left'),function(key,val){
-                $(val).attr("style","bottom: " + menu_pos + "px;");
-                menu_pos = menu_pos + val.clientHeight + 10;
-            });
-            var menu_pos = $('footer')[0].clientHeight + 6;
-            $.each($('.side-menu.right'),function(key,val){
-                $(val).attr("style","bottom: " + menu_pos + "px;");
-                menu_pos = menu_pos + val.clientHeight + 10;
-            });
-            // sidemenues
-            $('.side-menu.left').mouseenter(function(){
-                $(this).stop().animate({"left":0},500)
-            }).mouseleave(function(){
-                ow = $(this).outerWidth()
-                $(this).stop().animate({"left":-(ow - 11)},500)
-            });
-            
-            $('.side-menu.right').mouseenter(function(){
-                $(this).stop().animate({"right":0},500)
-            }).mouseleave(function(){
-                ow = $(this).outerWidth()
-                $(this).stop().animate({"right":-(ow - 11)},500)
-            });
-            
-            $('.side-menu.bottom').css('margin-left',- $('.side-menu.bottom').outerWidth(true)/2)
-            
-            $('.side-menu.bottom').stop().animate({"bottom":-($('.side-menu.bottom').outerHeight(true) - 31)},500)
-            
-            $('.side-menu.bottom').mouseenter(function(){
-                $(this).stop().animate({"bottom":0},500)
-            }).mouseleave(function(){
-                oh = $(this).outerHeight(true)
-                $(this).stop().animate({"bottom":-(oh - 31)},500)
-            });
-            
-
-            // prevent reloading by existent 
-            window.onbeforeunload = function() {
-                return "you realy wan't to reload/leave the page?";
-            };
-            // nav menu click event
-            $(window).on('hashchange', function() {
-                if (window.location.hash.length > 0) {
-                    $('ul.navbar-nav li.active').removeClass('active');
-                    $('a[href$="' + window.location.hash + '"]').parent('li').addClass('active');
-                    // hide all pages
-                    $(".sub-page").hide();
-                    // show only new content
-                    $(window.location.hash).show();
-                };
-            });
-        });
+    {% include "script_bottom.html" %}
 {% endblock %}
 
