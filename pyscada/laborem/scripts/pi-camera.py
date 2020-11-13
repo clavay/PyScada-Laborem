@@ -20,6 +20,8 @@ PAGE = """\
 </html>
 """
 
+output = None
+
 
 def startup(self):
     pass
@@ -30,9 +32,10 @@ def shutdown(self):
 
 
 def script(self):
-    port = 8000
+    port = 8091
     logger.debug("Starting PiCamera HTTP server on port %i" % port)
     with picamera.PiCamera(resolution='320x240', framerate=24) as camera:
+        global output
         output = StreamingOutput()
         camera.start_recording(output, format='mjpeg')
         try:
