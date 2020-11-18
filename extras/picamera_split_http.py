@@ -1,6 +1,5 @@
 import io
 import picamera
-import picamera.array
 import logging
 import socketserver
 from threading import Condition
@@ -126,4 +125,3 @@ with picamera.PiCamera(resolution='1600x1200', framerate=24) as camera:
     finally:
         camera.stop_recording()
 #        pass
-

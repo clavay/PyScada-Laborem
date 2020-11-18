@@ -99,10 +99,13 @@ if [[ "$answer_mjpeg" == "y" ]]; then
   if `validate_url $url >/dev/null`; then
       wget $url
       sudo apt-get -y install cmake libjpeg62-turbo-dev
-      unzip mjpg-streamer-master.zip
-      cd mjpg-streamer-experimental/
+      unzip master.zip
+      rm master.zip
+      cd mjpg-streamer-master/mjpg-streamer-experimental/
       make
       sudo make install
+      cd ../..
+      sudo rm -r mjpg-streamer-master
       sudo usermod -a -G video pyscada
       sudo wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/service/systemd/laborem_camera.service -O /etc/systemd/system/laborem_camera.service
       sudo systemctl enable laborem_camera
