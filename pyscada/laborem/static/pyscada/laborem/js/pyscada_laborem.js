@@ -832,7 +832,7 @@ function updateImage() {
                 //if ($(this).attr("src") !== $(this).data("src")) {
                     $(this).attr("data-loaded", 0)
                     //$(this).attr("src",$(this).data("src") + "?" + LAST_UPDATED_IMAGES_TIME);
-                    $(this).attr("src",$(this).data("src");
+                    $(this).attr("src",$(this).data("src"));
                 }
             }else {
                 $(this).attr("src","");
