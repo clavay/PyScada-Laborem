@@ -49,14 +49,14 @@ class LaboremMotherboardDevice(WidgetContentModel):
     def relay(self, value=True):
         io_config = self.MotherboardIOConfig
         if io_config.pin5 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin5.pk, value=value, start=time.time(), user=None)
+            cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(), user=None)
             cwt.save()
             return True
         else:
             logger.debug('Laborem relay pin not defined !')
             return False
 
-    def change_selected_plug(self, plug):
+    def change_selected_plug(self, plug, sub_plug=None):
         # self.plug = self.plug_choices[plug][0]
         # self.save()
 
@@ -65,37 +65,49 @@ class LaboremMotherboardDevice(WidgetContentModel):
             return False
 
         io_config = self.MotherboardIOConfig
+
+        if sub_plug:
+            plug_device.switch1_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch1_value
+            plug_device.switch2_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch2_value
+            plug_device.switch3_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch3_value
+            plug_device.switch4_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch4_value
+        else:
+            io_config.switch1 = None
+            io_config.switch2 = None
+            io_config.switch3 = None
+            io_config.switch4 = None
+
         if io_config.switch1 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch1.pk, value=plug_device.switch1_value, start=time.time(),
-                                  user=None)
+            cwt = DeviceWriteTask(variable_id=io_config.switch1.gpio_variable.pk, value=plug_device.switch1_value,
+                                  start=time.time(), user=None)
             cwt.save()
         if io_config.switch2 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch2.pk, value=plug_device.switch2_value, start=time.time(),
-                                  user=None)
+            cwt = DeviceWriteTask(variable_id=io_config.switch2.gpio_variable.pk, value=plug_device.switch2_value,
+                                  start=time.time(), user=None)
             cwt.save()
         if io_config.switch3 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch3.pk, value=plug_device.switch3_value, start=time.time(),
-                                  user=None)
+            cwt = DeviceWriteTask(variable_id=io_config.switch3.gpio_variable.pk, value=plug_device.switch3_value,
+                                  start=time.time(), user=None)
             cwt.save()
         if io_config.switch4 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch4.pk, value=plug_device.switch4_value, start=time.time(),
-                                  user=None)
+            cwt = DeviceWriteTask(variable_id=io_config.switch4.gpio_variable.pk, value=plug_device.switch4_value,
+                                  start=time.time(), user=None)
             cwt.save()
 
         if io_config.pin1 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin1.pk, value=int(bin(plug-1)[2:].zfill(4)[3:4]),
+            cwt = DeviceWriteTask(variable_id=io_config.pin1.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[3:4]),
                                   start=time.time(), user=None)
             cwt.save()
         if io_config.pin2 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin2.pk, value=int(bin(plug-1)[2:].zfill(4)[2:3]),
+            cwt = DeviceWriteTask(variable_id=io_config.pin2.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[2:3]),
                                   start=time.time(), user=None)
             cwt.save()
         if io_config.pin3 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin3.pk, value=int(bin(plug-1)[2:].zfill(4)[1:2]),
+            cwt = DeviceWriteTask(variable_id=io_config.pin3.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[1:2]),
                                   start=time.time(), user=None)
             cwt.save()
         if io_config.pin4 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin4.pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
+            cwt = DeviceWriteTask(variable_id=io_config.pin4.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
                                   start=time.time(), user=None)
             cwt.save()
         return True
@@ -270,6 +282,15 @@ class LaboremPlugDevice(models.Model):
     robot = models.ForeignKey(VISADevice, blank=True, null=True, on_delete=models.SET_NULL,
                               help_text='If the PCB Plug is modifiable with the robot choose the Robot device. '
                                         'If not let it blank')
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
+class LaboremSubPlugDevice(models.Model):
+    master_plug = models.ForeignKey(LaboremPlugDevice, on_delete=models.CASCADE)
+    sub_name = models.CharField(default='', max_length=255)
     switch1_value = models.BooleanField(default=False, help_text='If the PCB host various circuits enter the switches '
                                                                  'logic to select this circuit. The switches GPIO Pin '
                                                                  'can be selected in the IO config')
@@ -278,7 +299,7 @@ class LaboremPlugDevice(models.Model):
     switch4_value = models.BooleanField(default=False,)
 
     def __str__(self):
-        return self.name
+        return self.sub_name
 
 
 @python_2_unicode_compatible

@@ -203,9 +203,12 @@ def view_laborem(request, link_title):
 
 @unauthenticated_redirect
 def form_write_plug(request):
-    if 'mb_id' in request.POST and 'plug_id' in request.POST:
+    if 'mb_id' in request.POST and 'plug_id' in request.POST and 'sub_plug_id' in request.POST:
         mb_id = int(request.POST['mb_id'])
         plug_id = int(request.POST['plug_id'])
+        sub_plug_id = int(request.POST['sub_plug_id'])
+        if sub_plug_id == 0:
+            sub_plug_id = None
         if LaboremGroupInputPermission.objects.count() == 0:
             mb = LaboremMotherboardDevice.objects.get(pk=mb_id)
         else:
@@ -218,7 +221,7 @@ def form_write_plug(request):
                                (mb_id, request.user.groups.exclude(name='teacher')))
                 return HttpResponse(status=200)
         if mb is not None:
-            mb.change_selected_plug(plug_id)
+            mb.change_selected_plug(plug_id, sub_plug_id)
             logger.debug("Change selected plug_id %s - user %s - mb_id %s" % (plug_id, request.user, mb_id))
             return HttpResponse(status=200)
     return HttpResponse(status=404)

@@ -53,6 +53,7 @@ def startup(self):
         logger.error("Script Laborem - The motherboard does not have the good IO configuration for this script.")
         return False
 
+    sleep(5)
     self.instruments = lambda: None
     self.instruments.inst_mdo = connect_check_visa(io_conf.mdo1)
     self.instruments.inst_afg = connect_check_visa(io_conf.afg1)

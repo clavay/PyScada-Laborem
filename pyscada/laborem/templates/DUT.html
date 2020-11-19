@@ -1,18 +1,40 @@
 {% load i18n staticfiles %}
-{% if plug.plug_image %}
-    <a href="javascript:;" class="list-group-item list-dut-item" data-img="{{ plug.plug_image.url }}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-plug-name="{{ plug.name|upper }}">{{ plug.name }}
+{% if plug.laboremsubplugdevice_set.count %}
+    {% for sub_plug in plug.laboremsubplugdevice_set.all %}
+        {% if plug.plug_image %}
+            <a href="javascript:;" class="list-group-item list-dut-item" data-img="{{ plug.plug_image.url }}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-sub-plug-id="{{ plug_id }}" data-plug-name="{{ plug.name|upper }}">{{ plug.name }}{{ sub_plug.sub_name }}
+        {% else %}
+            <a href="javascript:;" class="list-group-item list-dut-item" data-img="{% static 'pyscada/laborem/img/no_img.jpg' %}" data-motherboard-id="{{ dut_selector.pk }}" data-sub-plug-id="{{ plug_id }}" data-plug-name="{{ plug.name|upper }}">{{ plug.name }}{{ sub_plug.sub_name }}
+        {% endif %}
+        {% if plug.get_level_display == "beginner" %}
+            <span class="badge level" style="background-color: #34D942">Débutant</span>
+        {% elif plug.get_level_display == "intermediate" %}
+            <span class="badge level" style="background-color: orange">Intermédiaire</span>
+        {% elif plug.get_level_display == "advanced" %}
+            <span class="badge level" style="background-color: #EE4646">Avancé</span>
+        {% endif %}
+        {% if plug.robot %}
+            <span class="badge robot">Robot</span>
+        {% endif %}
+            <div class="div-img-plug"></div>
+        </a>
+    {% endfor %}
 {% else %}
-    <a href="javascript:;" class="list-group-item list-dut-item" data-img="{% static 'pyscada/laborem/img/no_img.jpg' %}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-plug-name="{{ plug.name|upper }}">{{ plug.name }}
+    {% if plug.plug_image %}
+        <a href="javascript:;" class="list-group-item list-dut-item" data-img="{{ plug.plug_image.url }}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-sub-plug-id="0" data-plug-name="{{ plug.name|upper }}">{{ plug.name }}
+    {% else %}
+        <a href="javascript:;" class="list-group-item list-dut-item" data-img="{% static 'pyscada/laborem/img/no_img.jpg' %}" data-motherboard-id="{{ dut_selector.pk }}" data-sub-plug-id="0" data-plug-name="{{ plug.name|upper }}">{{ plug.name }}
+    {% endif %}
+    {% if plug.get_level_display == "beginner" %}
+        <span class="badge level" style="background-color: #34D942">Débutant</span>
+    {% elif plug.get_level_display == "intermediate" %}
+        <span class="badge level" style="background-color: orange">Intermédiaire</span>
+    {% elif plug.get_level_display == "advanced" %}
+        <span class="badge level" style="background-color: #EE4646">Avancé</span>
+    {% endif %}
+    {% if plug.robot %}
+        <span class="badge robot">Robot</span>
+    {% endif %}
+        <div class="div-img-plug"></div>
+    </a>
 {% endif %}
-{% if plug.get_level_display == "beginner" %}
-    <span class="badge level" style="background-color: #34D942">Débutant</span>
-{% elif plug.get_level_display == "intermediate" %}
-    <span class="badge level" style="background-color: orange">Intermédiaire</span>
-{% elif plug.get_level_display == "advanced" %}
-    <span class="badge level" style="background-color: #EE4646">Avancé</span>
-{% endif %}
-{% if plug.robot %}
-    <span class="badge robot">Robot</span>
-{% endif %}
-    <div class="div-img-plug"></div>
-</a>

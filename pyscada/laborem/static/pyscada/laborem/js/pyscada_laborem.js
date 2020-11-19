@@ -326,13 +326,14 @@ function change_plug_selected_motherboard() {
     plug_active = $(".sub-page#plugs .list-dut-item.active");
     mb_id = plug_active.data('motherboard-id');
     plug_id = plug_active.data('plug-id');
-    if (mb_id === "" || plug_id === ""){
-        add_notification('mb_id or plug_id empty',3);
+    sub_plug_id = plug_active.data('sub-plug-id');
+    if (mb_id === "" || plug_id === "" || sub_plug_id === ""){
+        add_notification('mb_id or plug_id or sub_plug_id empty',3);
     }else{
         $.ajax({
             type: 'post',
             url: ROOT_URL+'form/write_plug/',
-            data: {mb_id:mb_id, plug_id:plug_id},
+            data: {mb_id:mb_id, plug_id:plug_id, sub_plug_id:sub_plug_id},
             success: function (data) {
 
             },

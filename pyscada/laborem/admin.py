@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from pyscada.laborem import PROTOCOL_ID
 from pyscada.laborem.models import LaboremMotherboardDevice, LaboremMotherboardIOConfig, LaboremMotherboardIOElement
-from pyscada.laborem.models import ExtendedLaboremMotherboardDevice, LaboremExperience
+from pyscada.laborem.models import ExtendedLaboremMotherboardDevice, LaboremExperience, LaboremSubPlugDevice
 from pyscada.laborem.models import LaboremPlugDevice, LaboremRobotElement, LaboremRobotBase, LaboremUser
 from pyscada.laborem.models import LaboremTOP10, LaboremTOP10Score, LaboremTOP10Ranking, LaboremGroupInputPermission
 from pyscada.admin import DeviceAdmin
@@ -56,8 +56,16 @@ class LaboremTOP10Admin(admin.ModelAdmin):
     list_per_page = 20
 
 
+class LaboremSubPlugDeviceAdminInline(admin.TabularInline):
+    model = LaboremSubPlugDevice
+    extra = 0
+
+
 class LaboremPlugDeviceAdmin(admin.ModelAdmin):
     list_display = ('name', 'motherboardIOConfig', 'level', 'robot')
+    inlines = [
+        LaboremSubPlugDeviceAdminInline
+    ]
 
 
 class LaboremRobotBaseAdmin(admin.ModelAdmin):
