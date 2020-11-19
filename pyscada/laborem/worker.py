@@ -9,6 +9,7 @@ from pyscada.laborem.models import LaboremMotherboardDevice, LaboremGroupInputPe
 from pyscada.models import Variable, VariableProperty
 from django.contrib.auth.models import Group
 
+from time import sleep
 import traceback
 import logging
 
@@ -47,3 +48,9 @@ class Process(SingleDeviceDAQProcessWorker):
         lt.top10_answer = True
         lw.save()
         lt.save()
+
+    def init_process(self):
+        super(SingleDeviceDAQProcessWorker, self).init_process()
+        LaboremMotherboardDevice.objects.first().relay(False)
+        sleep(1)
+        LaboremMotherboardDevice.objects.first().relay(True)

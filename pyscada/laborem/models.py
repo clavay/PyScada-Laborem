@@ -46,6 +46,16 @@ class LaboremMotherboardDevice(WidgetContentModel):
     def __str__(self):
         return self.laboremmotherboard_device.short_name
 
+    def relay(self, value=True):
+        io_config = self.MotherboardIOConfig
+        if io_config.pin5 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin5__pk, value=value, start=time.time(), user=None)
+            cwt.save()
+            return True
+        else:
+            logger.debug('Laborem relay pin not defined !')
+            return False
+
     def change_selected_plug(self, plug):
         # self.plug = self.plug_choices[plug][0]
         # self.save()
