@@ -29,6 +29,7 @@
             </ul>
         </div>
     {% endfor %}
+    <!--
     <div class="camera side-menu left hidden">
         <ul class="status-panel">
             <li>Camera</li>
@@ -36,6 +37,7 @@
             <img class="camera-img pi-camera" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
         </ul>
     </div>
+    -->
     <div class="summary side-menu right hidden col-md-3" style="width: 300px; list-style: circle;">
         <ul class="status-panel">
             <li>Summary</li>
@@ -75,7 +77,10 @@
                     <ul class="status-panel">
                         <li class="col-md-2">Camera</li>
                         <br>
+                        <!--
                         <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
+                        -->
+                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=snapshot">
                         <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
                         <!--
                         <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" alt="Camera view" data-src="/motionpicam/stream.mjpg">

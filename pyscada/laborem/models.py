@@ -50,9 +50,41 @@ class LaboremMotherboardDevice(WidgetContentModel):
         # self.plug = self.plug_choices[plug][0]
         # self.save()
 
-        key = Variable.objects.get(name="plug_selected").id
-        cwt = DeviceWriteTask(variable_id=key, value=plug, start=time.time(), user=None)
-        cwt.save()
+        plug = self._get_selected_plug(plug)
+        io_config = self.MotherboardIOConfig
+        if io_config.switch1 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.switch1__pk, value=plug.switch1_value, start=time.time(),
+                                  user=None)
+            cwt.save()
+        if io_config.switch2 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.switch2__pk, value=plug.switch2_value, start=time.time(),
+                                  user=None)
+            cwt.save()
+        if io_config.switch3 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.switch3__pk, value=plug.switch3_value, start=time.time(),
+                                  user=None)
+            cwt.save()
+        if io_config.switch4 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.switch4__pk, value=plug.switch4_value, start=time.time(),
+                                  user=None)
+            cwt.save()
+
+        if io_config.pin1 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin1__pk, value=int(bin(plug-1)[2:].zfill(4)[3:4]),
+                                  start=time.time(), user=None)
+            cwt.save()
+        if io_config.pin2 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin2__pk, value=int(bin(plug-1)[2:].zfill(4)[2:3]),
+                                  start=time.time(), user=None)
+            cwt.save()
+        if io_config.pin3 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin3__pk, value=int(bin(plug-1)[2:].zfill(4)[1:2]),
+                                  start=time.time(), user=None)
+            cwt.save()
+        if io_config.pin4 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin4__pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
+                                  start=time.time(), user=None)
+            cwt.save()
         return True
 
     def visible(self):
@@ -63,6 +95,9 @@ class LaboremMotherboardDevice(WidgetContentModel):
             plug = str(RecordedData.objects.last_element(variable__name="plug_selected").value())
         except AttributeError:
             return None
+        return self._get_selected_plug(plug)
+
+    def _get_selected_plug(self, plug=None):
         if plug == '1':
             return self.MotherboardIOConfig.plug1
         elif plug == '2':
@@ -97,6 +132,8 @@ class LaboremMotherboardDevice(WidgetContentModel):
             return self.MotherboardIOConfig.plug16
         elif plug == '0':
             return None
+        else:
+            return None
 
     def gen_html(self, **kwargs):
         """
@@ -113,30 +150,33 @@ class LaboremMotherboardDevice(WidgetContentModel):
 class LaboremMotherboardIOConfig(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
-    V1 = models.ForeignKey('LaboremMotherboardIOElement', help_text='V1 connector', null=True, blank=True,
-                           related_name='mobo_V1', on_delete=models.SET_NULL)
-    V2 = models.ForeignKey('LaboremMotherboardIOElement', help_text='V2 connector', null=True, blank=True,
-                           related_name='mobo_V2', on_delete=models.SET_NULL)
-    V3 = models.ForeignKey('LaboremMotherboardIOElement', help_text='V3 connector', null=True, blank=True,
-                           related_name='mobo_V3', on_delete=models.SET_NULL)
-    V4 = models.ForeignKey('LaboremMotherboardIOElement', help_text='V4 connector', null=True, blank=True,
-                           related_name='mobo_V4', on_delete=models.SET_NULL)
-    C1 = models.ForeignKey('LaboremMotherboardIOElement', help_text='C1 connector', null=True, blank=True,
-                           related_name='mobo_C1', on_delete=models.SET_NULL)
-    C2 = models.ForeignKey('LaboremMotherboardIOElement', help_text='C2 connector', null=True, blank=True,
-                           related_name='mobo_C2', on_delete=models.SET_NULL)
-    C3 = models.ForeignKey('LaboremMotherboardIOElement', help_text='C3 connector', null=True, blank=True,
-                           related_name='mobo_C3', on_delete=models.SET_NULL)
-    C4 = models.ForeignKey('LaboremMotherboardIOElement', help_text='C4 connector', null=True, blank=True,
-                           related_name='mobo_C4', on_delete=models.SET_NULL)
-    C5 = models.ForeignKey('LaboremMotherboardIOElement', help_text='C5 connector', null=True, blank=True,
-                           related_name='mobo_C5', on_delete=models.SET_NULL)
-    C6 = models.ForeignKey('LaboremMotherboardIOElement', help_text='C6 connector', null=True, blank=True,
-                           related_name='mobo_C6', on_delete=models.SET_NULL)
-    C7 = models.ForeignKey('LaboremMotherboardIOElement', help_text='C7 connector', null=True, blank=True,
-                           related_name='mobo_C7', on_delete=models.SET_NULL)
-    C8 = models.ForeignKey('LaboremMotherboardIOElement', help_text='C8 connector', null=True, blank=True,
-                           related_name='mobo_C8', on_delete=models.SET_NULL)
+    V_and_C_choices = (('0', 'None'),
+                       ('1', 'switch1'), ('2', 'switch2'), ('3', 'switch3'), ('4', 'switch4'),
+                       ('10', 'MDO1'), ('11', 'MDO2'), ('12', 'MDO3'), ('13', 'MDO4'),
+                       ('20', 'AFG1'), ('21', 'AFG2'),
+                       ('30', 'DMM_High'), ('31', 'DMM_Low'),
+                       ('30', 'DC1'), ('31', 'DC2'),
+                       )
+    V1 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V1 connector')
+    V2 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V2 connector')
+    V3 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V3 connector')
+    V4 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V4 connector')
+    C1 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C1 connector')
+    C2 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C2 connector')
+    C3 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C3 connector')
+    C4 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C4 connector')
+    C5 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C5 connector')
+    C6 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C6 connector')
+    C7 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C7 connector')
+    C8 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C8 connector')
+    switch1 = models.OneToOneField(GPIOVariable, help_text='Switch 1 GPIO pin', null=True, blank=True,
+                                   related_name='switch1', on_delete=models.SET_NULL)
+    switch2 = models.OneToOneField(GPIOVariable, help_text='Switch 2 GPIO pin', null=True, blank=True,
+                                   related_name='switch2', on_delete=models.SET_NULL)
+    switch3 = models.OneToOneField(GPIOVariable, help_text='Switch 3 GPIO pin', null=True, blank=True,
+                                   related_name='switch3', on_delete=models.SET_NULL)
+    switch4 = models.OneToOneField(GPIOVariable, help_text='Switch 4 GPIO pin', null=True, blank=True,
+                                   related_name='switch4', on_delete=models.SET_NULL)
     pin1 = models.OneToOneField(GPIOVariable, help_text='A0 connector', null=True, blank=True, related_name='mobo_pin1',
                                 on_delete=models.SET_NULL)
     pin2 = models.OneToOneField(GPIOVariable, help_text='A1 connector', null=True, blank=True, related_name='mobo_pin2',
@@ -218,6 +258,12 @@ class LaboremPlugDevice(models.Model):
     robot = models.ForeignKey(VISADevice, blank=True, null=True, on_delete=models.SET_NULL,
                               help_text='If the PCB Plug is modifiable with the robot choose the Robot device. '
                                         'If not let it blank')
+    switch1_value = models.BooleanField(default=False, help_text='If the PCB host various circuits enter the switches '
+                                                                 'logic to select this circuit. The switches GPIO Pin '
+                                                                 'can be selected in the IO config')
+    switch2_value = models.BooleanField(default=False,)
+    switch3_value = models.BooleanField(default=False,)
+    switch4_value = models.BooleanField(default=False,)
 
     def __str__(self):
         return self.name

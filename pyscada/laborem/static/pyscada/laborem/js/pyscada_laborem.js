@@ -822,6 +822,9 @@ function updateImage() {
         if ($(this).is(':visible') && $(this).attr("data-loaded") == 0) {
             ready_to_update = false
         }
+        if (!$(this).is(':visible')) {
+            $(this).attr("src","");
+        }
     })
     now = new Date().getTime()
     if (ready_to_update || now - LAST_UPDATED_IMAGES_TIME > 30000){
@@ -831,8 +834,8 @@ function updateImage() {
                 if ($(this).attr('data-loaded') == 1) {
                 //if ($(this).attr("src") !== $(this).data("src")) {
                     $(this).attr("data-loaded", 0)
-                    //$(this).attr("src",$(this).data("src") + "?" + LAST_UPDATED_IMAGES_TIME);
-                    $(this).attr("src",$(this).data("src"));
+                    $(this).attr("src",$(this).data("src") + "?" + LAST_UPDATED_IMAGES_TIME);
+                    //$(this).attr("src",$(this).data("src"));
                 }
             }else {
                 $(this).attr("src","");

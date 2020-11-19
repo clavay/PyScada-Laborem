@@ -2,9 +2,7 @@
             // Handler for .ready() called.
 
             // Load camera image
-            window.onload = function() {
-                setInterval(updateImage, 1000);
-            }
+            uuint = setInterval(function() {updateImage();}, 1000);
 
             // hide all pages
             $(".sub-page").hide();

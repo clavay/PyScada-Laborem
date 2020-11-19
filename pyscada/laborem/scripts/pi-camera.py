@@ -34,7 +34,7 @@ def shutdown(self):
 def script(self):
     port = 8091
     logger.debug("Starting PiCamera HTTP server on port %i" % port)
-    with picamera.PiCamera(resolution='320x240', framerate=24) as camera:
+    with picamera.PiCamera(resolution='320x240', framerate=2) as camera:
         global output
         output = StreamingOutput()
         camera.start_recording(output, format='mjpeg')
@@ -78,7 +78,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Content-Length', len(content))
             self.end_headers()
             self.wfile.write(content)
-        elif self.path == '/stream.mjpg':
+        elif self.path.startswith('/stream.mjpg'):
             self.send_response(200)
             self.send_header('Age', 0)
             self.send_header('Cache-Control', 'no-cache, private')
