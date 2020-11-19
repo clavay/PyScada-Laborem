@@ -160,13 +160,12 @@ class LaboremMotherboardDevice(WidgetContentModel):
 class LaboremMotherboardIOConfig(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
-    V_and_C_choices = (('0', 'None'),
-                       ('1', 'switch1'), ('2', 'switch2'), ('3', 'switch3'), ('4', 'switch4'),
-                       ('10', 'MDO1'), ('11', 'MDO2'), ('12', 'MDO3'), ('13', 'MDO4'),
-                       ('20', 'AFG1'), ('21', 'AFG2'),
-                       ('30', 'DMM_High'), ('31', 'DMM_Low'),
-                       ('30', 'DC1'), ('31', 'DC2'),
-                       )
+    V_and_C_choices = ((0, 'None'),
+                       (1, 'switch1'), (2, 'switch2'), (3, 'switch3'), (4, 'switch4'),
+                       (10, 'MDO1'), (11, 'MDO2'), (12, 'MDO3'), (13, 'MDO4'),
+                       (20, 'AFG1'), (21, 'AFG2'),
+                       (30, 'DMM_High'), (31, 'DMM_Low'),
+                       (40, 'DC1'), (41, 'DC2'),)
     V1 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V1 connector')
     V2 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V2 connector')
     V3 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V3 connector')
