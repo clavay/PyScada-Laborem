@@ -49,7 +49,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
     def relay(self, value=True):
         io_config = self.MotherboardIOConfig
         if io_config.pin5 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin5__pk, value=value, start=time.time(), user=None)
+            cwt = DeviceWriteTask(variable_id=io_config.pin5.pk, value=value, start=time.time(), user=None)
             cwt.save()
             return True
         else:
@@ -60,39 +60,42 @@ class LaboremMotherboardDevice(WidgetContentModel):
         # self.plug = self.plug_choices[plug][0]
         # self.save()
 
-        plug = self._get_selected_plug(plug)
+        plug_device = self._get_selected_plug(plug)
+        if plug_device is None:
+            return False
+
         io_config = self.MotherboardIOConfig
         if io_config.switch1 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch1__pk, value=plug.switch1_value, start=time.time(),
+            cwt = DeviceWriteTask(variable_id=io_config.switch1.pk, value=plug_device.switch1_value, start=time.time(),
                                   user=None)
             cwt.save()
         if io_config.switch2 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch2__pk, value=plug.switch2_value, start=time.time(),
+            cwt = DeviceWriteTask(variable_id=io_config.switch2.pk, value=plug_device.switch2_value, start=time.time(),
                                   user=None)
             cwt.save()
         if io_config.switch3 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch3__pk, value=plug.switch3_value, start=time.time(),
+            cwt = DeviceWriteTask(variable_id=io_config.switch3.pk, value=plug_device.switch3_value, start=time.time(),
                                   user=None)
             cwt.save()
         if io_config.switch4 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch4__pk, value=plug.switch4_value, start=time.time(),
+            cwt = DeviceWriteTask(variable_id=io_config.switch4.pk, value=plug_device.switch4_value, start=time.time(),
                                   user=None)
             cwt.save()
 
         if io_config.pin1 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin1__pk, value=int(bin(plug-1)[2:].zfill(4)[3:4]),
+            cwt = DeviceWriteTask(variable_id=io_config.pin1.pk, value=int(bin(plug-1)[2:].zfill(4)[3:4]),
                                   start=time.time(), user=None)
             cwt.save()
         if io_config.pin2 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin2__pk, value=int(bin(plug-1)[2:].zfill(4)[2:3]),
+            cwt = DeviceWriteTask(variable_id=io_config.pin2.pk, value=int(bin(plug-1)[2:].zfill(4)[2:3]),
                                   start=time.time(), user=None)
             cwt.save()
         if io_config.pin3 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin3__pk, value=int(bin(plug-1)[2:].zfill(4)[1:2]),
+            cwt = DeviceWriteTask(variable_id=io_config.pin3.pk, value=int(bin(plug-1)[2:].zfill(4)[1:2]),
                                   start=time.time(), user=None)
             cwt.save()
         if io_config.pin4 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin4__pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
+            cwt = DeviceWriteTask(variable_id=io_config.pin4.pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
                                   start=time.time(), user=None)
             cwt.save()
         return True
