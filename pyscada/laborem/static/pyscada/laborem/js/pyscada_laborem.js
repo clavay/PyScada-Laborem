@@ -990,7 +990,8 @@ $( document ).ready(function() {
 
         $(".message-laborem h2")[0].innerHTML = ' ' + 'Veuillez patienter...';
         $('#MessageModal').modal('show');
-        $(".message-laborem").attr('data-timestamp', Number($(".message-laborem").attr('data-timestamp')) + 1)
+        //$(".message-laborem").attr('data-timestamp', Number($(".message-laborem").attr('data-timestamp')) + 1)
+        $(".message-laborem").attr('data-timestamp', SERVER_TIME + 1)
     })
 
     // Stop experience on stop user btn click

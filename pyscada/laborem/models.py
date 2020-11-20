@@ -62,7 +62,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
 
         plug_device = self._get_selected_plug(str(plug))
         if plug_device is None:
-            logger.debug("Plug device not found %s" % str(plug))
+            #logger.debug("Plug device not found %s" % str(plug))
             return False
 
         io_config = self.MotherboardIOConfig
