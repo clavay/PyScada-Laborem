@@ -238,14 +238,8 @@ def script(self):
             range_i = None
             for f in np.geomspace(fmin, fmax, nb_points):
                 if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
-                    self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                                 timestamp=now())
-                    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string',
-                                                 timestamp=now())
-                    self.write_values_to_db(data={'zzz_bode': [0]})
-                    self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-                    return
+                    break
                 # Progress bar
                 n += 1
                 self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
@@ -346,14 +340,8 @@ def script(self):
             range_i_2 = None
             for f in np.geomspace(fmin, fmax, nb_points):
                 if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
-                    self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                                 timestamp=now())
-                    self.write_variable_property("LABOREM", "message_laborem", "", value_class='string',
-                                                 timestamp=now())
-                    self.write_values_to_db(data={'zzz_bode_compare': [0]})
-                    self.write_variable_property("LABOREM", "progress_bar_max", 0, value_class='int16')
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-                    return
+                    break
                 # Progress bar
                 n += 1
                 self.write_variable_property("LABOREM", "progress_bar_now", n, value_class='int16')
@@ -507,20 +495,14 @@ def script(self):
             logger.debug("spectrum_hanning_1 %s - frequencies %s" % (len(spectrum_hanning_1), len(frequencies)))
 
             if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
-                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                             timestamp=now())
-                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
-                self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
-                                             value_class='BOOLEAN')
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-                return
-
-            self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
-            self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
-            self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
-            self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
-            self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
-            self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
+            else:
+                self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
+                self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
+                self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+                self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
+                self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
+                self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_spectrum': [0]})
@@ -681,19 +663,14 @@ def script(self):
             spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
 
             if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
-                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                             timestamp=now())
-                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
-                self.write_values_to_db(data={'zzz_oscillo': [0]})
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-                return
-
-            self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
-            self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
-            self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
-            self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
-            self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
-            self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
+            else:
+                self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
+                self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
+                self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+                self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
+                self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
+                self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_oscillo': [0]})
@@ -784,19 +761,14 @@ def script(self):
             spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
 
             if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
-                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                             timestamp=now())
-                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
-                self.write_values_to_db(data={'zzz_autoset_oscillo': [0]})
                 self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-                return
-
-            self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
-            self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
-            self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
-            self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
-            self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
-            self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
+            else:
+                self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
+                self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
+                self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+                self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
+                self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
+                self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_autoset_oscillo': [0]})

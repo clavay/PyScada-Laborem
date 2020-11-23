@@ -222,7 +222,7 @@ def form_write_plug(request):
                 return HttpResponse(status=200)
         if mb is not None:
             mb.change_selected_plug(plug_id, sub_plug_id)
-            logger.debug("Change selected plug_id %s - user %s - mb_id %s" % (plug_id, request.user, mb_id))
+            logger.debug("Change selected plug_id %s sub_plug_id %s - user %s - mb_id %s" % (plug_id, sub_plug_id, request.user, mb_id))
             return HttpResponse(status=200)
     return HttpResponse(status=404)
 
