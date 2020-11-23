@@ -909,84 +909,7 @@ $( document ).ready(function() {
             jQuery(PyScadaPlots[plot_id].getChartContainerId() + " .btn.btn-default.chart-ResetSelection").trigger(e);
         })
 
-        err = false;
-        id_form = $(this.form).attr('id');
-        tabinputs = $.merge($('#'+id_form+ ' :text'),$('#'+id_form+ ' :input:hidden'));
-        for (i=0;i<tabinputs.length;i++){ //test if there is an empty or non numeric value
-            value = $(tabinputs[i]).val();
-            id = $(tabinputs[i]).attr('id');
-            var_name = $(tabinputs[i]).attr("name");
-            $.each($('.variable-config'),function(kkey,val){
-                name_var = $(val).data('name');
-                if (name_var==var_name){
-                    key = parseInt($(val).data('key'));
-                    item_type = $(val).data('type');
-                    value_class = $(val).data('value-class');
-                    min = $(val).data('min');
-                    max = $(val).data('max');
-                    min_type = $(val).data('min-type');
-                    max_type = $(val).data('max-type');
-                    if (min_type == 'lte') {min_type_char = ">="} else {min_type_char = ">"};
-                    if (max_type == 'gte') {max_type_char = "<="} else {max_type_char = "<"};
-                }
-            });
-            if (value == "" || value == null){
-                err = true;
-            }else {
-                check_mm = check_min_max(parseFloat(value), parseFloat(min), parseFloat(max), min_type, max_type)
-                if (check_mm == -1) {
-                    err = true;
-                }else if (check_mm == 1) {
-                    err = true;
-                }else if (check_mm == 0) {
-                    if (isNaN(value)) {
-                        if (item_type == "variable_property" && value_class == 'STRING') {
-                        }else {
-                            err = true;
-                        }
-                    }
-                }
-            }
-        };
-        tabselects = $('#'+id_form+ ' .select');
-        for (i=0;i<tabselects.length;i++){ //test if there is an empty value
-            value = $(tabselects[i]).val();
-            id = $(tabselects[i]).attr('id');
-            var_name = $(tabselects[i]).data("name");
-            $.each($('.variable-config'),function(kkey,val){
-                name_var = $(val).data('name');
-                if (name_var==var_name){
-                    key = parseInt($(val).data('key'));
-                    item_type = $(val).data('type');
-                    value_class = $(val).data('value-class');
-                    min = $(val).data('min');
-                    max = $(val).data('max');
-                    min_type = $(val).data('min-type');
-                    max_type = $(val).data('max-type');
-                    if (min_type == 'lte') {min_type_char = ">="} else {min_type_char = ">"};
-                    if (max_type == 'gte') {max_type_char = "<="} else {max_type_char = "<"};
-                }
-            });
-            if (value == "" || value == null){
-                err = true;
-            }else {
-                check_mm = check_min_max(parseFloat(value), parseFloat(min), parseFloat(max), min_type, max_type)
-                if (check_mm == -1) {
-                    err = true;
-                }else if (check_mm == 1) {
-                    err = true;
-                }else if (check_mm == 0) {
-                    $(tabselects[i]).parents(".input-group").removeClass("has-error")
-                    if (isNaN(value)) {
-                        if (item_type == "variable_property" && value_class == 'STRING') {
-                        }else {
-                            err = true;
-                        }
-                    }
-                }
-            }
-        };
-        if (err) {return;}
+        if (check_form(id_form)) {return;}
 
         $(".message-laborem h2")[0].innerHTML = ' ' + 'Veuillez patienter...';
         $('#MessageModal').modal('show');
@@ -1090,35 +1013,8 @@ $( document ).ready(function() {
 
     // Send answer for TOP10
     $('button.write-task-form-top10-set').click(function(){
-        err = false;
-        name_form = $(this.form).attr('name');
-        id_form = $(this.form).attr('id');
-        //tabinputs = document.forms[name_form].getElementsByTagName("input");
-        tabinputs = $.merge($('#'+id_form+ ' :text'),$('#'+id_form+ ' :input:hidden'));
-        ok_button = $('#'+id_form+ ' :button')
-        //ok_button = document.forms[name_form].getElementsByTagName("button");
-        mb_id = $('.list-dut-item.active').data('motherboard-id');
-        request_data = {}
-        for (i=0;i<tabinputs.length;i++){
-            value = $(tabinputs[i]).val();
-            if (!$(tabinputs[i]).parents(".input-group").hasClass("hidden")) {
-                if (value == "" || value == null){
-                    $(tabinputs[i]).parents(".input-group").addClass("has-error");
-                    $(tabinputs[i]).parents(".input-group").find('.help-block').remove()
-                    $(tabinputs[i]).parents(".input-group").append('<span id="helpBlock-' + id + '" class="help-block">Please provide a value !</span>');
-                    err = true;
-                }else if (isNaN(value)) {
-                    $(tabinputs[i]).parents(".input-group").addClass("has-error");
-                    $(tabinputs[i]).parents(".input-group").find('.help-block').remove()
-                    $(tabinputs[i]).parents(".input-group").append('<span id="helpBlock-' + id + '" class="help-block">The value must be a number ! Use dot not coma.</span>');
-                    err = true;
-                }else {
-                    $(tabinputs[i]).parents(".input-group").find('.help-block').remove()
-                    $(tabinputs[i]).parents(".input-group").removeClass("has-error")
-                }
-            }
-        }
-        if (err) {return;}
+        if (check_form(id_form)) {return;}
+
         ok_button[0].disabled = true;
         ok_button[0].innerHTML = "Réponse envoyée !"
         for (i=0;i<tabinputs.length;i++){
