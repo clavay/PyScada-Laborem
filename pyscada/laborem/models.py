@@ -291,6 +291,7 @@ class LaboremPlugDevice(models.Model):
 class LaboremSubPlugDevice(models.Model):
     master_plug = models.ForeignKey(LaboremPlugDevice, on_delete=models.CASCADE)
     sub_name = models.CharField(default='', max_length=255)
+    sub_plug_image = models.ImageField(upload_to="img/laborem/plugs/", verbose_name="plug image", blank=True)
     switch1_value = models.BooleanField(default=False, help_text='If the PCB host various circuits enter the switches '
                                                                  'logic to select this circuit. The switches GPIO Pin '
                                                                  'can be selected in the IO config')

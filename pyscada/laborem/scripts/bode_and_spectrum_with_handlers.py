@@ -85,13 +85,13 @@ def shutdown(self):
                                  timestamp=now())
 
     try:
-        if self.instruments.inst_mdo is not None:
+        if self.instruments.inst_mdo is not None and self.instruments.inst_mdo.inst is not None:
             self.instruments.inst_mdo.inst.close()
-        if self.instruments.inst_afg is not None:
+        if self.instruments.inst_afg is not None and self.instruments.inst_afg.inst is not None:
             self.instruments.inst_afg.inst.close()
-        if self.instruments.inst_robot is not None:
+        if self.instruments.inst_robot is not None and self.instruments.inst_robot.inst is not None:
             self.instruments.inst_robot.inst.close()
-        if self.instruments.inst_mdo2 is not None:
+        if self.instruments.inst_mdo2 is not None and self.instruments.inst_mdo2.inst is not None:
             self.instruments.inst_mdo2.inst.close()
     except pyvisa.VisaIOError as e:
         logger.error(e)

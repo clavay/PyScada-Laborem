@@ -182,7 +182,7 @@ function reset_page(page_name) {
         $(".user_stop_btn").hide()
         $('#ViewerModal').modal('hide');
         reset_robot_bases();
-        reset_selected_plug();
+        //reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
         $("#tooltip").hide();
@@ -190,7 +190,7 @@ function reset_page(page_name) {
     }else if (page_name === "plugs") {
         $(".user_stop_btn").hide()
         reset_robot_bases();
-        reset_selected_plug();
+        //reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
         $("#tooltip").hide();
