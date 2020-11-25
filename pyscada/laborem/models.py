@@ -118,7 +118,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
 
     def get_selected_plug(self):
         try:
-            plug = str(RecordedData.objects.last_element(variable__name="plug_selected").value())
+            plug = str(RecordedData.objects.last_element(variable__name="plug_selected", time_min=0).value())
         except AttributeError:
             return None
         return self._get_selected_plug(plug)
