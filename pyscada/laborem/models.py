@@ -242,7 +242,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
             pin3 = int(RecordedData.objects.last_element(variable=io_config.pin3.gpio_variable, time_min=0).value())
             pin4 = int(RecordedData.objects.last_element(variable=io_config.pin4.gpio_variable, time_min=0).value())
             plug = 1 + pin1 + 2 * pin2 + 2*2 * pin3 + 2*2*2 * pin4
-            plug = self._get_selected_plug(plug)
+            plug = self._get_selected_plug(str(plug))
 
             io_config.switch1.gpio_variable.refresh_from_db()
             io_config.switch2.gpio_variable.refresh_from_db()

@@ -331,8 +331,8 @@ def query_top10_question(request):
                                               element.unit).order_by('id').first()
     elif LaboremRobotBase.objects.get(name="base1").element is None \
             and LaboremRobotBase.objects.get(name="base2").element is None:
-        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, robot_base1__value=None,
-                                              robot_base1__unit=None,
+        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
+                                              robot_base1__value=None, robot_base1__unit=None,
                                               robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
     else:
         logger.debug("top10qa bases error")
@@ -397,8 +397,8 @@ def validate_top10_answers(request):
                                               unit).order_by('id').first()
     elif LaboremRobotBase.objects.get(name="base1").element is None \
             and LaboremRobotBase.objects.get(name="base2").element is None:
-        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, robot_base1__value=None,
-                                              robot_base1__unit=None,
+        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
+                                              robot_base1__value=None, robot_base1__unit=None,
                                               robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
     else:
         return HttpResponse(status=404)
@@ -739,7 +739,8 @@ def check_users(request):
         selected_plug, selected_sub_plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
         data['plug'] = {}
         if selected_plug is not None:
-            data['plug']['name'] = selected_plug.name + selected_sub_plug.sub_name if selected_sub_plug is not None else ""
+            data['plug']['name'] = selected_plug.name + " " +\
+                                   selected_sub_plug.sub_name if selected_sub_plug is not None else ""
             data['plug']['description'] = selected_plug.description
 
             if selected_plug.robot:
