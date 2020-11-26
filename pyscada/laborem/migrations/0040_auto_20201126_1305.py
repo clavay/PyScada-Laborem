@@ -16,9 +16,8 @@ class Migration(migrations.Migration):
             name='sub_plug',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='laborem.LaboremSubPlugDevice'),
         ),
-        migrations.AlterField(
+        migrations.RemoveField(
             model_name='laboremmotherboarddevice',
             name='plug',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='laborem.LaboremPlugDevice'),
         ),
     ]

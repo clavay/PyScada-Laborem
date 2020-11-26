@@ -156,7 +156,6 @@ class LaboremMotherboardDevice(WidgetContentModel):
     MotherboardIOConfig = models.ForeignKey('LaboremMotherboardIOConfig', blank=True, null=True,
                                             on_delete=models.SET_NULL)
     # TODO : Make the motherboard Config to be restrictive on plug selection
-    plug = models.ForeignKey(LaboremPlugDevice, blank=True, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.laboremmotherboard_device.short_name
