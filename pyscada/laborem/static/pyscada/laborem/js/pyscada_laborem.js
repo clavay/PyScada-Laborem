@@ -1025,13 +1025,7 @@ $( document ).ready(function() {
             j=i+1;
             value = $(tabinputs[i]).val();
             var_name = $(tabinputs[i]).attr("name");
-            $.each($('.variable-config'),function(kkey,val){
-                name_var = $(val).data('name');
-                if (name_var==var_name){
-                    //key = parseInt($(val).data('key'));
-                    request_data['value'+j] = value;
-                }
-            });
+            request_data['value'+j] = value;
         };
         request_data['mb_id'] = mb_id;
         request_data['page'] = window.location.hash.substr(1);
