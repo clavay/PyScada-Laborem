@@ -352,8 +352,8 @@ function change_bases() {
 }
 
 function refresh_top10_qa() {
-    questions = $(".dropdown-TOP10QA .input-group-addon-label");
-    input_group = $(".dropdown-TOP10QA .input-group");
+    questions = $(".dropdown-TOP10QA .input-group-addon-label-left");
+    input_group = $(".dropdown-TOP10QA .input-group-addon-label-right");
     form_control = $(".dropdown-TOP10QA .form-control");
     ok_button = $(".dropdown-TOP10QA .write-task-form-top10-set");
     if (experiences.indexOf(window.location.hash.substr(1)) >= 0) {
@@ -910,6 +910,7 @@ $( document ).ready(function() {
             jQuery(PyScadaPlots[plot_id].getChartContainerId() + " .btn.btn-default.chart-ResetSelection").trigger(e);
         })
 
+        id_form = $(this.form).attr('id');
         if (check_form(id_form)) {return;}
 
         $(".message-laborem h2")[0].innerHTML = ' ' + 'Veuillez patienter...';
@@ -1014,6 +1015,7 @@ $( document ).ready(function() {
 
     // Send answer for TOP10
     $('button.write-task-form-top10-set').click(function(){
+        id_form = $(this.form).attr('id');
         if (check_form(id_form)) {return;}
 
         ok_button[0].disabled = true;
