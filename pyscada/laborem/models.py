@@ -19,160 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 @python_2_unicode_compatible
-class LaboremMotherboardDevice(WidgetContentModel):
-    laboremmotherboard_device = models.OneToOneField(Device, blank=True, null=True, on_delete=models.CASCADE)
-    MotherboardIOConfig = models.ForeignKey('LaboremMotherboardIOConfig', blank=True, null=True,
-                                            on_delete=models.SET_NULL)
-    # TODO : Make the motherboard Config to be restrictive on plug selection
-    plug_choices = (('0', '0'),
-                    ('1', '1'),
-                    ('2', '2'),
-                    ('3', '3'),
-                    ('4', '4'),
-                    ('5', '5'),
-                    ('6', '6'),
-                    ('7', '7'),
-                    ('8', '8'),
-                    ('9', '9'),
-                    ('10', '10'),
-                    ('11', '11'),
-                    ('12', '12'),
-                    ('13', '13'),
-                    ('14', '14'),
-                    ('15', '15'),
-                    ('16', '16'))
-    plug = models.CharField(max_length=254, choices=plug_choices, default=0)
-
-    def __str__(self):
-        return self.laboremmotherboard_device.short_name
-
-    def relay(self, value=True):
-        io_config = self.MotherboardIOConfig
-        if io_config.pin5 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(), user=None)
-            cwt.save()
-            return True
-        else:
-            logger.debug('Laborem relay pin not defined !')
-            return False
-
-    def change_selected_plug(self, plug, sub_plug=None):
-        # self.plug = self.plug_choices[plug][0]
-        # self.save()
-
-        plug_device = self._get_selected_plug(str(plug))
-        if plug_device is None:
-            #logger.debug("Plug device not found %s" % str(plug))
-            return False
-
-        io_config = self.MotherboardIOConfig
-
-        if sub_plug:
-            plug_device.switch1_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch1_value
-            plug_device.switch2_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch2_value
-            plug_device.switch3_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch3_value
-            plug_device.switch4_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch4_value
-        else:
-            io_config.switch1 = None
-            io_config.switch2 = None
-            io_config.switch3 = None
-            io_config.switch4 = None
-
-        if io_config.switch1 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch1.gpio_variable.pk, value=plug_device.switch1_value,
-                                  start=time.time(), user=None)
-            cwt.save()
-        if io_config.switch2 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch2.gpio_variable.pk, value=plug_device.switch2_value,
-                                  start=time.time(), user=None)
-            cwt.save()
-        if io_config.switch3 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch3.gpio_variable.pk, value=plug_device.switch3_value,
-                                  start=time.time(), user=None)
-            cwt.save()
-        if io_config.switch4 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.switch4.gpio_variable.pk, value=plug_device.switch4_value,
-                                  start=time.time(), user=None)
-            cwt.save()
-
-        if io_config.pin1 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin1.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[3:4]),
-                                  start=time.time(), user=None)
-            cwt.save()
-        if io_config.pin2 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin2.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[2:3]),
-                                  start=time.time(), user=None)
-            cwt.save()
-        if io_config.pin3 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin3.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[1:2]),
-                                  start=time.time(), user=None)
-            cwt.save()
-        if io_config.pin4 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin4.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
-                                  start=time.time(), user=None)
-            cwt.save()
-        return True
-
-    def visible(self):
-        return True
-
-    def get_selected_plug(self):
-        try:
-            plug = str(RecordedData.objects.last_element(variable__name="plug_selected", time_min=0).value())
-        except AttributeError:
-            return None
-        return self._get_selected_plug(plug)
-
-    def _get_selected_plug(self, plug=None):
-        if plug == '1':
-            return self.MotherboardIOConfig.plug1
-        elif plug == '2':
-            return self.MotherboardIOConfig.plug2
-        elif plug == '3':
-            return self.MotherboardIOConfig.plug3
-        elif plug == '4':
-            return self.MotherboardIOConfig.plug4
-        elif plug == '5':
-            return self.MotherboardIOConfig.plug5
-        elif plug == '6':
-            return self.MotherboardIOConfig.plug6
-        elif plug == '7':
-            return self.MotherboardIOConfig.plug7
-        elif plug == '8':
-            return self.MotherboardIOConfig.plug8
-        elif plug == '9':
-            return self.MotherboardIOConfig.plug9
-        elif plug == '10':
-            return self.MotherboardIOConfig.plug10
-        elif plug == '11':
-            return self.MotherboardIOConfig.plug11
-        elif plug == '12':
-            return self.MotherboardIOConfig.plug12
-        elif plug == '13':
-            return self.MotherboardIOConfig.plug13
-        elif plug == '14':
-            return self.MotherboardIOConfig.plug14
-        elif plug == '15':
-            return self.MotherboardIOConfig.plug15
-        elif plug == '16':
-            return self.MotherboardIOConfig.plug16
-        elif plug == '0':
-            return None
-        else:
-            return None
-
-    def gen_html(self, **kwargs):
-        """
-
-        :return: main panel html and sidebar html as
-        """
-        main_template = get_template('DUT_selector.html')
-        main_content = main_template.render(dict(dut_selector=self))
-        sidebar_content = None
-        return main_content, sidebar_content
-
-
-@python_2_unicode_compatible
 class LaboremMotherboardIOConfig(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
@@ -305,6 +151,159 @@ class LaboremSubPlugDevice(models.Model):
 
 
 @python_2_unicode_compatible
+class LaboremMotherboardDevice(WidgetContentModel):
+    laboremmotherboard_device = models.OneToOneField(Device, blank=True, null=True, on_delete=models.CASCADE)
+    MotherboardIOConfig = models.ForeignKey('LaboremMotherboardIOConfig', blank=True, null=True,
+                                            on_delete=models.SET_NULL)
+    # TODO : Make the motherboard Config to be restrictive on plug selection
+    plug = models.ForeignKey(LaboremPlugDevice, blank=True, null=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return self.laboremmotherboard_device.short_name
+
+    def relay(self, value=True):
+        io_config = self.MotherboardIOConfig
+        if io_config.pin5 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(), user=None)
+            cwt.save()
+            return True
+        else:
+            logger.debug('Laborem relay pin not defined !')
+            return False
+
+    def change_selected_plug(self, plug, sub_plug=None):
+        # self.plug = self.plug_choices[plug][0]
+        # self.save()
+
+        plug_device = self._get_selected_plug(str(plug))
+        if plug_device is None:
+            #logger.debug("Plug device not found %s" % str(plug))
+            return False
+
+        io_config = self.MotherboardIOConfig
+
+        if sub_plug:
+            plug_device.switch1_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch1_value
+            plug_device.switch2_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch2_value
+            plug_device.switch3_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch3_value
+            plug_device.switch4_value = plug_device.laboremsubplugdevice_set.get(pk=sub_plug).switch4_value
+        else:
+            io_config.switch1 = None
+            io_config.switch2 = None
+            io_config.switch3 = None
+            io_config.switch4 = None
+
+        if io_config.switch1 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.switch1.gpio_variable.pk, value=plug_device.switch1_value,
+                                  start=time.time(), user=None)
+            cwt.save()
+        if io_config.switch2 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.switch2.gpio_variable.pk, value=plug_device.switch2_value,
+                                  start=time.time(), user=None)
+            cwt.save()
+        if io_config.switch3 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.switch3.gpio_variable.pk, value=plug_device.switch3_value,
+                                  start=time.time(), user=None)
+            cwt.save()
+        if io_config.switch4 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.switch4.gpio_variable.pk, value=plug_device.switch4_value,
+                                  start=time.time(), user=None)
+            cwt.save()
+
+        if io_config.pin1 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin1.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[3:4]),
+                                  start=time.time(), user=None)
+            cwt.save()
+        if io_config.pin2 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin2.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[2:3]),
+                                  start=time.time(), user=None)
+            cwt.save()
+        if io_config.pin3 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin3.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[1:2]),
+                                  start=time.time(), user=None)
+            cwt.save()
+        if io_config.pin4 is not None:
+            cwt = DeviceWriteTask(variable_id=io_config.pin4.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
+                                  start=time.time(), user=None)
+            cwt.save()
+        return True
+
+    def visible(self):
+        return True
+
+    def get_selected_plug(self):
+        try:
+            io_config = self.MotherboardIOConfig
+            pin1 = int(RecordedData.objects.last_element(variable=io_config.pin1.gpio_variable, time_min=0).value())
+            pin2 = int(RecordedData.objects.last_element(variable=io_config.pin2.gpio_variable, time_min=0).value())
+            pin3 = int(RecordedData.objects.last_element(variable=io_config.pin3.gpio_variable, time_min=0).value())
+            pin4 = int(RecordedData.objects.last_element(variable=io_config.pin4.gpio_variable, time_min=0).value())
+            plug = pin1 + 2 * pin2 + 2*2 * pin3 + 2*2*2 * pin4
+            plug = self._get_selected_plug(plug)
+
+            switch1 = int(RecordedData.objects.last_element(variable=io_config.pin1.gpio_variable, time_min=0).value())
+            switch2 = int(RecordedData.objects.last_element(variable=io_config.pin2.gpio_variable, time_min=0).value())
+            switch3 = int(RecordedData.objects.last_element(variable=io_config.pin3.gpio_variable, time_min=0).value())
+            switch4 = int(RecordedData.objects.last_element(variable=io_config.pin4.gpio_variable, time_min=0).value())
+            if plug is not None:
+                sub_plug = plug.laboremsubplugdevice_set.filter(switch1_value=switch1, switch2_value=switch2,
+                                                                switch3_value=switch3, switch4_value=switch4).first()
+            else:
+                sub_plug = None
+        except AttributeError:
+            return None
+        return plug, sub_plug
+
+    def _get_selected_plug(self, plug=None):
+        if plug == '1':
+            return self.MotherboardIOConfig.plug1
+        elif plug == '2':
+            return self.MotherboardIOConfig.plug2
+        elif plug == '3':
+            return self.MotherboardIOConfig.plug3
+        elif plug == '4':
+            return self.MotherboardIOConfig.plug4
+        elif plug == '5':
+            return self.MotherboardIOConfig.plug5
+        elif plug == '6':
+            return self.MotherboardIOConfig.plug6
+        elif plug == '7':
+            return self.MotherboardIOConfig.plug7
+        elif plug == '8':
+            return self.MotherboardIOConfig.plug8
+        elif plug == '9':
+            return self.MotherboardIOConfig.plug9
+        elif plug == '10':
+            return self.MotherboardIOConfig.plug10
+        elif plug == '11':
+            return self.MotherboardIOConfig.plug11
+        elif plug == '12':
+            return self.MotherboardIOConfig.plug12
+        elif plug == '13':
+            return self.MotherboardIOConfig.plug13
+        elif plug == '14':
+            return self.MotherboardIOConfig.plug14
+        elif plug == '15':
+            return self.MotherboardIOConfig.plug15
+        elif plug == '16':
+            return self.MotherboardIOConfig.plug16
+        elif plug == '0':
+            return None
+        else:
+            return None
+
+    def gen_html(self, **kwargs):
+        """
+
+        :return: main panel html and sidebar html as
+        """
+        main_template = get_template('DUT_selector.html')
+        main_content = main_template.render(dict(dut_selector=self))
+        sidebar_content = None
+        return main_content, sidebar_content
+
+
+@python_2_unicode_compatible
 class LaboremRobotElement(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
@@ -367,6 +366,7 @@ class LaboremTOP10(models.Model):
     description = models.TextField(default='', verbose_name="Description", null=True)
     page = models.ForeignKey(Page, default=1, null=True, on_delete=models.SET_NULL)
     plug = models.ForeignKey(LaboremPlugDevice, null=True, on_delete=models.SET_NULL)
+    sub_plug = models.ForeignKey(LaboremSubPlugDevice, null=True, on_delete=models.SET_NULL)
     robot_base1 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base1',
                                     on_delete=models.SET_NULL, verbose_name='Robot base vert')
     robot_base2 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base2',

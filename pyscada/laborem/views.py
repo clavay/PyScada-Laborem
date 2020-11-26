@@ -312,7 +312,7 @@ def query_top10_question(request):
     mb_id = int(request.POST['mb_id'])
     page = request.POST['page']
 
-    plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
+    plug, sub_plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
     if plug is None:
         logger.error("Cannot select plug in query_top10_question")
         return HttpResponse(status=404)
@@ -320,7 +320,7 @@ def query_top10_question(request):
     data = {}
     if LaboremRobotBase.objects.get(name="base1").element is not None \
             and LaboremRobotBase.objects.get(name="base2").element is not None:
-        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug,
+        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").
                                               element.value,
                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").
@@ -368,7 +368,7 @@ def validate_top10_answers(request):
     mb_id = int(request.POST['mb_id'])
     page = request.POST['page']
 
-    plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
+    plug, sub_plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
     if plug is None:
         logger.error("Cannot select plug in validate_top10_answers")
         return HttpResponse(status=404)
@@ -386,7 +386,7 @@ def validate_top10_answers(request):
     note_max = 0
     if LaboremRobotBase.objects.get(name="base1").element is not None \
             and LaboremRobotBase.objects.get(name="base2").element is not None:
-        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug,
+        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
                                               robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.
                                               value,
                                               robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.
@@ -736,11 +736,12 @@ def check_users(request):
                 str((td - (now() - working_user.start_time) + (wu - 1) * td).seconds % 60)
             wu += 1
     try:
-        selected_plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
+        selected_plug, selected_sub_plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
         data['plug'] = {}
         if selected_plug is not None:
-            data['plug']['name'] = selected_plug.name
+            data['plug']['name'] = selected_plug.name + selected_sub_plug.sub_name if selected_sub_plug is not None else ""
             data['plug']['description'] = selected_plug.description
+
             if selected_plug.robot:
                 data['plug']['robot'] = "true"
                 data['plug']['base'] = {}
