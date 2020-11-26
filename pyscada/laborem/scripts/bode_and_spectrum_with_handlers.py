@@ -256,7 +256,7 @@ def script(self):
 
                     # Start reading the phase
                     phase_osc, phase_np = self.instruments.inst_mdo.mdo_get_phase(
-                        source1=1, source2=2, frequency=f, period=period)
+                        source1=2, source2=1, frequency=f, period=period)
 
                     # Start reading the gain
                     period = 2.0
@@ -360,9 +360,9 @@ def script(self):
 
                     # Start reading the phase
                     phase_osc, phase_np = self.instruments.inst_mdo.mdo_get_phase(
-                        source1=1, source2=2, frequency=f, period=period)
+                        source1=2, source2=1, frequency=f, period=period)
                     phase_osc2, phase_np2 = self.instruments.inst_mdo2.mdo_get_phase(
-                        source1=1, source2=2, frequency=f, period=period)
+                        source1=2, source2=1, frequency=f, period=period)
 
                     # Start reading the gain
                     period = 2.0

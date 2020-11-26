@@ -882,6 +882,7 @@ $( document ).ready(function() {
 
         // Check if we are on a page that need to show the TOP10QAs
         refresh_top10_qa();
+        setTimeout(function() {refresh_top10_qa()}, 3000);
 
         // Reset the pages settings to force the user to interact with
         reset_page(window.location.hash.substr(1));
