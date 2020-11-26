@@ -233,17 +233,25 @@ class LaboremMotherboardDevice(WidgetContentModel):
     def get_selected_plug(self):
         try:
             io_config = self.MotherboardIOConfig
+            io_config.pin1.gpio_variable.refresh_from_db()
+            io_config.pin2.gpio_variable.refresh_from_db()
+            io_config.pin3.gpio_variable.refresh_from_db()
+            io_config.pin4.gpio_variable.refresh_from_db()
             pin1 = int(RecordedData.objects.last_element(variable=io_config.pin1.gpio_variable, time_min=0).value())
             pin2 = int(RecordedData.objects.last_element(variable=io_config.pin2.gpio_variable, time_min=0).value())
             pin3 = int(RecordedData.objects.last_element(variable=io_config.pin3.gpio_variable, time_min=0).value())
             pin4 = int(RecordedData.objects.last_element(variable=io_config.pin4.gpio_variable, time_min=0).value())
-            plug = pin1 + 2 * pin2 + 2*2 * pin3 + 2*2*2 * pin4
+            plug = 1 + pin1 + 2 * pin2 + 2*2 * pin3 + 2*2*2 * pin4
             plug = self._get_selected_plug(plug)
 
-            switch1 = int(RecordedData.objects.last_element(variable=io_config.pin1.gpio_variable, time_min=0).value())
-            switch2 = int(RecordedData.objects.last_element(variable=io_config.pin2.gpio_variable, time_min=0).value())
-            switch3 = int(RecordedData.objects.last_element(variable=io_config.pin3.gpio_variable, time_min=0).value())
-            switch4 = int(RecordedData.objects.last_element(variable=io_config.pin4.gpio_variable, time_min=0).value())
+            io_config.switch1.gpio_variable.refresh_from_db()
+            io_config.switch2.gpio_variable.refresh_from_db()
+            io_config.switch3.gpio_variable.refresh_from_db()
+            io_config.switch4.gpio_variable.refresh_from_db()
+            switch1 = int(RecordedData.objects.last_element(variable=io_config.switch1.gpio_variable, time_min=0).value())
+            switch2 = int(RecordedData.objects.last_element(variable=io_config.switch2.gpio_variable, time_min=0).value())
+            switch3 = int(RecordedData.objects.last_element(variable=io_config.switch3.gpio_variable, time_min=0).value())
+            switch4 = int(RecordedData.objects.last_element(variable=io_config.switch4.gpio_variable, time_min=0).value())
             if plug is not None:
                 sub_plug = plug.laboremsubplugdevice_set.filter(switch1_value=switch1, switch2_value=switch2,
                                                                 switch3_value=switch3, switch4_value=switch4).first()

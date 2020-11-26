@@ -445,20 +445,20 @@ function remove_id() {
             data: {connection_id:CONNECTION_ID},
             success: function (data) {
                 window.location.href = "#loading";
-                check_time();
-                check_users();
+                check_time(true);
+                check_users(true);
             },
             error: function(data) {
                 add_notification('remove_id failed', 1);
             }
         })
     }else {
-        check_time();
+        check_time(true);
         remove_id();
     }
 }
 
-function check_time() {
+function check_time(one_shot=false) {
     $.ajax({
         type: 'post',
         url: ROOT_URL+'form/check_time/',
@@ -472,23 +472,23 @@ function check_time() {
                 }else if (window.location.hash.substr(1) == "loading") {
                     check_users()
                 }
-                setTimeout(function() {check_time()}, data['setTimeout']);
+                if (!one_shot) {setTimeout(function() {check_time()}, data['setTimeout']);}
             }else {
                 CONNECTION_ACCEPTED = -1;
                 $('#ViewerModal').modal('hide');
                 window.location.href = "#disconnect";
                 REFRESH_RATE = 30000;
-                setTimeout(function() {check_time()}, REFRESH_RATE);
+                if (!one_shot) {setTimeout(function() {check_time()}, REFRESH_RATE);}
             }
         },
         error: function(data) {
             add_notification('check time failed', 1);
-            setTimeout(function() {check_time()}, 30000);
+            if (!one_shot) {setTimeout(function() {check_time()}, 30000);}
         }
     })
 }
 
-function check_users() {
+function check_users(one_shot=false) {
     if(typeof $($('.list-dut-item')[0]).data('motherboard-id') == 'undefined'){mb_id = 0}else{mb_id = $($('.list-dut-item')[0]).data('motherboard-id')};
     $.ajax({
         type: 'post',
@@ -764,15 +764,15 @@ function check_users() {
 
             // Reload check_users if not on disconnect page (other session active)
             if (window.location.hash.substr(1) != "disconnect") {
-                setTimeout(function() {check_users()}, data['setTimeout']);
+                if (!one_shot) {setTimeout(function() {check_users()}, data['setTimeout']);}
             }else {
                 REFRESH_RATE = 30000;
-                setTimeout(function() {check_users()}, REFRESH_RATE);
+                if (!one_shot) {setTimeout(function() {check_users()}, REFRESH_RATE);}
             }
         },
         error: function(data) {
             add_notification('check user failed', 1);
-            setTimeout(function() {check_users()}, 30000);
+            if (!one_shot) {setTimeout(function() {check_users()}, 30000);}
         }
     });
 }
