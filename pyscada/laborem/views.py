@@ -468,7 +468,7 @@ def rank_top10(request):
     LaboremTOP10Ranking.objects.all().delete()
     for user in LaboremTOP10Score.objects.values_list('user').distinct():
         score_total = 0
-        for item in LaboremTOP10Score.objects.filter(user=user).values_list('TOP10QA').distinct():
+        for item in LaboremTOP10Score.objects.filter(user=user, active=True).values_list('TOP10QA').distinct():
             score_total += LaboremTOP10Score.objects.filter(user=user, TOP10QA=item).order_by('id').first().note
         rank = LaboremTOP10Ranking(user=User.objects.get(pk=user[0]), score=score_total)
         rank.save()
