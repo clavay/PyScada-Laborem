@@ -51,6 +51,7 @@ class Process(SingleDeviceDAQProcessWorker):
 
     def init_process(self):
         super(SingleDeviceDAQProcessWorker, self).init_process()
-        LaboremMotherboardDevice.objects.first().relay(False)
-        sleep(1)
-        LaboremMotherboardDevice.objects.first().relay(True)
+        if LaboremMotherboardDevice.objects.count():
+            LaboremMotherboardDevice.objects.first().relay(False)
+            sleep(1)
+            LaboremMotherboardDevice.objects.first().relay(True)

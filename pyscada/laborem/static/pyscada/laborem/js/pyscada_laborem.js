@@ -483,7 +483,7 @@ function check_time(one_shot=false) {
         },
         error: function(data) {
             add_notification('check time failed', 1);
-            if (!one_shot) {setTimeout(function() {check_time()}, 30000);}
+            if (!one_shot) {setTimeout(function() {check_time()}, 10000);}
         }
     })
 }
@@ -575,11 +575,11 @@ function check_users(one_shot=false) {
                     $(".dropdown-WaitingList-toggle").append(title_time);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
-                    if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] < 6) {
+                    if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] <= data['viewer_quantity']) {
                         USER_TYPE = "viewer"
                         if (data['viewer_refresh_rate'] == 1) {
-                            data['setTimeout'] = 1000;
-                            REFRESH_RATE = 1000;
+                            data['setTimeout'] = 2000;
+                            REFRESH_RATE = 2000;
                         }else {
                             data['setTimeout'] = 10000;
                             REFRESH_RATE = 10000;
@@ -591,7 +591,7 @@ function check_users(one_shot=false) {
                                 window.location.href = "#disconnect";
                             }
                         }
-                    }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > 5) {
+                    }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > data['viewer_quantity']) {
                         USER_TYPE = "waiting"
                         data['setTimeout'] = 30000;
                         REFRESH_RATE = 30000;
@@ -605,8 +605,8 @@ function check_users(one_shot=false) {
                     }
                 }else if (data['user_type'] == "worker") {
                     USER_TYPE = "worker"
-                    data['setTimeout'] = 1000;
-                    REFRESH_RATE = 1000;
+                    data['setTimeout'] = 2000;
+                    REFRESH_RATE = 2000;
                     $(".dropdown-WaitingList-toggle")[0].innerHTML = ' Actif pour : ';
                     $(".dropdown-WaitingList-toggle").append(title_time);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
@@ -620,14 +620,14 @@ function check_users(one_shot=false) {
                     }
                 }else if (data['user_type'] == "teacher") {
                     USER_TYPE = "teacher"
-                    data['setTimeout'] = 1000;
-                    REFRESH_RATE = 1000;
+                    data['setTimeout'] = 2000;
+                    REFRESH_RATE = 2000;
                     $(".dropdown-WaitingList-toggle")[0].innerHTML = " Liste d'attente ";
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
                 }else if (data['user_type'] == "none") {
-                    data['setTimeout'] = 1000;
-                    REFRESH_RATE = 1000;
+                    data['setTimeout'] = 2000;
+                    REFRESH_RATE = 2000;
                 }
             }
 
@@ -772,7 +772,7 @@ function check_users(one_shot=false) {
         },
         error: function(data) {
             add_notification('check user failed', 1);
-            if (!one_shot) {setTimeout(function() {check_users()}, 30000);}
+            if (!one_shot) {setTimeout(function() {check_users()}, 10000);}
         }
     });
 }

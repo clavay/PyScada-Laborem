@@ -764,6 +764,16 @@ def check_users(request):
     except (Variable.DoesNotExist, AttributeError):
         pass
 
+    try:
+        viewer_quantity = VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),
+                                                                "VIEWER_QUANTITY").value()
+        if viewer_quantity is not None:
+            data['viewer_quantity'] = viewer_quantity
+        else:
+            data['viewer_quantity'] = 1
+    except (Variable.DoesNotExist, AttributeError):
+        data['viewer_quantity'] = 1
+
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 

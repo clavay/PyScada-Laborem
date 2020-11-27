@@ -1,0 +1,105 @@
+{% load i18n staticfiles %}
+
+    <!-- Modal -->
+    <div class="modal fade" id="MessageModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close hidden" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="MessageModalLabel">Veuillez patienter...</h4>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+                <div class="message-laborem" data-timestamp="0">
+                    <h2>Nothing to say</h2>
+                    <div class="progress" style="width:50%; margin-left: auto; margin-right: auto;">
+                        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;width:100%">100%</div>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer" style="text-align:left;">
+              <div class="row">
+                <div class="camera col-md-6">
+                    <ul class="status-panel">
+                        <li class="col-md-2">Camera</li>
+                        <br>
+                        <!--
+                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
+                        -->
+                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=snapshot">
+                        <!--
+                        <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
+                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" alt="Camera view" data-src="/motionpicam/stream.mjpg">
+                        <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" alt="Camera view" data-src="/motionpicam/stream2.mjpg">
+                        -->
+                    </ul>
+                </div>
+                <div class="summary-modal col-md-6">
+                    <ul>
+                        <li>Summary Modal</li>
+                    </ul>
+                </div>
+              </div>
+              <div class="row">
+                  <div class="col-md-3 col-md-offset-9">
+                    <button type="button" class="user_stop_btn btn btn-danger">Arrêter</button>
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="ViewerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="ViewerModalLabel">PyScada-Laborem</h4>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+                <div class="col-md-offset-1">
+                    <h2>Vous êtes dans la file d'attente de Laborem.</h2>
+                    <p>Vous pouvez fermer ce panneau et voir les tracés de l'élève qui manipule.</p>
+                    <ul>Après avoir fermé ce panneau, vous aurez accès à différentes informations :
+                        <li>Via les onglets :
+                            <ul>
+                                <li>File d'attente</li>
+                                <li>TOP 10</li>
+                            </ul>
+                        </li>
+                        <!--<li>En bas à gauche : placer la souris sur la caméra pour l'afficher</li>-->
+                        <li>En bas à droite : placer la souris sur le résumé pour l'afficher</li>
+                    </ul>
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer" style="text-align:left;">
+              <div class="row">
+                        <!--
+                <div class="camera col-md-6">
+                    <ul class="status-panel">
+                        <li class="col-md-2">Caméra</li>
+                        <br>
+                        <img class="camera-img usb-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/camera/?action=stream">
+                        <img class="camera-img pi-camera col-md-12" src="{% static 'pyscada/laborem/img/load.gif' %}" data-loaded=1 onload="$(this).attr('data-loaded', 1)" onerror="this.src='{% static 'pyscada/laborem/img/webcam-offline.jpg' %}'" width="320px" height="240px" alt="Camera view" data-src="/picamera/stream.mjpg">
+                    </ul>
+                </div>
+                        -->
+                <div class="summary-modal col-md-6">
+                    <ul>
+                        <li>Summary Modal</li>
+                    </ul>
+                </div>
+              </div>
+              <div class="row">
+                  <div class="col-md-3 col-md-offset-9">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
