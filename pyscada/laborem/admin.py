@@ -42,10 +42,14 @@ class LaboremTOP10ScoreAdmin(admin.ModelAdmin):
     list_display_links = ('user', 'TOP10QA')
     list_filter = ('user', 'TOP10QA',)
     search_fields = ['user__username', 'TOP10QA__name', ]
+    save_as = True
+    save_as_continue = True
 
 
 class LaboremTOP10RankingAdmin(admin.ModelAdmin):
     list_display = ('user', 'score', 'active')
+    save_as = True
+    save_as_continue = True
 
 
 class LaboremTOP10Admin(admin.ModelAdmin):
@@ -54,6 +58,8 @@ class LaboremTOP10Admin(admin.ModelAdmin):
     list_editable = [field.name for field in LaboremTOP10._meta.fields if field.name != "id"]
     search_fields = ['page__title', 'plug__name', 'name', ]
     list_per_page = 20
+    save_as = True
+    save_as_continue = True
 
 
 class LaboremSubPlugDeviceAdminInline(admin.TabularInline):
@@ -66,22 +72,32 @@ class LaboremPlugDeviceAdmin(admin.ModelAdmin):
     inlines = [
         LaboremSubPlugDeviceAdminInline
     ]
+    save_as = True
+    save_as_continue = True
 
 
 class LaboremRobotBaseAdmin(admin.ModelAdmin):
     list_display = ('name', 'element', 'R', 'theta', 'z')
+    save_as = True
+    save_as_continue = True
 
 
 class LaboremRobotElementAdmin(admin.ModelAdmin):
     list_display = ('name', 'active', 'value', 'unit', 'R', 'theta', 'z')
+    save_as = True
+    save_as_continue = True
 
 
 class LaboremGroupInputPermissionAdmin(admin.ModelAdmin):
     filter_horizontal = ('variables', 'variable_properties', 'laborem_motherboard_device', 'laborem_experiences')
+    save_as = True
+    save_as_continue = True
 
 
 class LaboremUserAdmin(admin.ModelAdmin):
     list_display = ('user', 'laborem_group_input', 'connection_time', 'start_time', 'last_check', 'connection_id')
+    save_as = True
+    save_as_continue = True
 
 
 admin_site.register(ExtendedLaboremMotherboardDevice, LaboremMotherboardDeviceAdmin)
