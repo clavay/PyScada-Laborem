@@ -435,28 +435,29 @@ def validate_top10_answers(request):
 
 def calculate_note(level, score, answer, student_answer):
     try:
-        float(answer.replace(',', '.'))
-        float(student_answer.replace(',', '.'))
+        answer = float(str(answer).replace(',', '.'))
+        student_answer = float(str(student_answer).replace(',', '.'))
     except ValueError:
         logger.error("TOP10 answer is not a float : %s - %s" % (answer, student_answer))
     # return level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))*2)
     note = 0
     high_limit = 0.1
     low_limit = 0.25
-    if float(answer.replace(',', '.')) == 0.0:
-        if float(student_answer.replace(',', '.')) == 0.0:
+    if answer == 0.0:
+        if student_answer == 0.0:
             note = level * score
             return note
         else:
             temp_answer = answer
             answer = student_answer
             student_answer = temp_answer
-    if abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.'))) <= high_limit:
+    if abs(1-student_answer/answer) <= high_limit:
         note = level * score
-    elif abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.'))) <= low_limit:
-        note = level * score * \
-               (abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.'))) - low_limit) \
-               / (high_limit - low_limit)
+    elif abs(student_answer - answer) <= 0.1:
+        note = level * score
+    elif abs(1-student_answer/answer) <= low_limit or abs(student_answer - answer) <= 1:
+        note = level * score * max((abs(1-student_answer/answer) - low_limit) / (high_limit - low_limit),
+                                   (1 - abs(student_answer - answer)))
     return note
     # return min(level * np.exp(-abs(1-float(student_answer.replace(',', '.'))/float(answer.replace(',', '.')))+0.2),
     #           level) * score

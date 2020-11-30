@@ -54,8 +54,9 @@ class LaboremTOP10RankingAdmin(admin.ModelAdmin):
 
 class LaboremTOP10Admin(admin.ModelAdmin):
     list_display = [field.name for field in LaboremTOP10._meta.fields]
-    list_filter = ('page', 'plug',)
-    list_editable = [field.name for field in LaboremTOP10._meta.fields if field.name != "id"]
+    list_filter = ('page', 'plug', 'sub_plug',)
+    list_editable = [field.name for field in LaboremTOP10._meta.fields
+                     if (field.name != "id" and field.name != "description")]
     search_fields = ['page__title', 'plug__name', 'name', ]
     list_per_page = 20
     save_as = True

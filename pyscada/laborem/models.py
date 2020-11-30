@@ -373,7 +373,7 @@ class LaboremTOP10(models.Model):
     description = models.TextField(default='', verbose_name="Description", null=True)
     page = models.ForeignKey(Page, default=1, null=True, on_delete=models.SET_NULL)
     plug = models.ForeignKey(LaboremPlugDevice, null=True, on_delete=models.SET_NULL)
-    sub_plug = models.ForeignKey(LaboremSubPlugDevice, null=True, on_delete=models.SET_NULL)
+    sub_plug = models.ForeignKey(LaboremSubPlugDevice, blank=True, null=True, on_delete=models.SET_NULL)
     robot_base1 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base1',
                                     on_delete=models.SET_NULL, verbose_name='Robot base vert')
     robot_base2 = models.ForeignKey(LaboremRobotElement, blank=True, null=True, related_name='robot_base2',
