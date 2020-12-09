@@ -94,7 +94,6 @@ def view_laborem(request, link_title):
         visible_widget_list = Widget.objects.filter(page__in=page_list.iterator()).values_list('pk', flat=True)
         # visible_custom_html_panel_list = CustomHTMLPanel.objects.all().values_list('pk', flat=True)
         # visible_chart_list = Chart.objects.all().values_list('pk', flat=True)
-        # visible_xy_chart_list = XYChart.objects.all().values_list('pk', flat=True)
         visible_control_element_list = ControlItem.objects.all().values_list('pk', flat=True)
         visible_form_list = Form.objects.all().values_list('pk', flat=True)
     else:
@@ -111,8 +110,6 @@ def view_laborem(request, link_title):
         visible_custom_html_panel_list = CustomHTMLPanel.objects.filter(
             groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).values_list('pk', flat=True)
         visible_chart_list = Chart.objects.filter(
-            groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).values_list('pk', flat=True)
-        visible_xy_chart_list = XYChart.objects.filter(
             groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).values_list('pk', flat=True)
         """
         visible_control_element_list = GroupDisplayPermission.objects.filter(

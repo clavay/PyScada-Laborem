@@ -575,15 +575,15 @@ function check_users(one_shot=false) {
                     $(".dropdown-WaitingList-toggle").append(title_time);
                     $(".dropdown-WaitingList-toggle").append(' <strong class="caret"></strong>');
                     $(".dropdown-WaitingList-toggle").prepend('<span class="glyphicon glyphicon-time"></span>');
+                    if (data['viewer_refresh_rate'] == 1 || !INIT_STATUS_VARIABLES_DONE || !INIT_CHART_VARIABLES_DONE) {
+                        data['setTimeout'] = 2000;
+                        REFRESH_RATE = 2000;
+                    }else {
+                        data['setTimeout'] = 10000;
+                        REFRESH_RATE = 10000;
+                    }
                     if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] <= data['viewer_quantity']) {
                         USER_TYPE = "viewer"
-                        if (data['viewer_refresh_rate'] == 1) {
-                            data['setTimeout'] = 2000;
-                            REFRESH_RATE = 2000;
-                        }else {
-                            data['setTimeout'] = 10000;
-                            REFRESH_RATE = 10000;
-                        }
                         if (window.location.hash.substr(1) != "viewer" && window.location.hash.substr(1) != "disconnect") {
                             if (CONNECTION_ACCEPTED == 1) {
                                 window.location.href = "#viewer";
@@ -593,8 +593,6 @@ function check_users(one_shot=false) {
                         }
                     }else if (typeof data['viewer_rank'] != 'undefined' && data['viewer_rank'] > data['viewer_quantity']) {
                         USER_TYPE = "waiting"
-                        data['setTimeout'] = 30000;
-                        REFRESH_RATE = 30000;
                         if (window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "disconnect") {
                             if (CONNECTION_ACCEPTED == 1) {
                                 window.location.href = "#waiting";
