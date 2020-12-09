@@ -27,7 +27,8 @@ class LaboremMotherboardIOConfig(models.Model):
                        (10, 'MDO1'), (11, 'MDO2'), (12, 'MDO3'), (13, 'MDO4'),
                        (20, 'AFG1'), (21, 'AFG2'),
                        (30, 'DMM_High'), (31, 'DMM_Low'),
-                       (40, 'DC1'), (41, 'DC2'),)
+                       (40, 'DC1'), (41, 'DC2'),
+                       (50, 'Robot Vert'), (51, 'Robot Rouge'),)
     V1 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V1 connector')
     V2 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V2 connector')
     V3 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='V3 connector')
@@ -40,25 +41,25 @@ class LaboremMotherboardIOConfig(models.Model):
     C6 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C6 connector')
     C7 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C7 connector')
     C8 = models.IntegerField(default=0, choices=V_and_C_choices, help_text='C8 connector')
-    switch1 = models.OneToOneField(GPIOVariable, help_text='Switch 1 GPIO pin', null=True, blank=True,
+    switch1 = models.ForeignKey(GPIOVariable, help_text='Switch 1 GPIO pin', null=True, blank=True,
                                    related_name='switch1', on_delete=models.SET_NULL)
-    switch2 = models.OneToOneField(GPIOVariable, help_text='Switch 2 GPIO pin', null=True, blank=True,
+    switch2 = models.ForeignKey(GPIOVariable, help_text='Switch 2 GPIO pin', null=True, blank=True,
                                    related_name='switch2', on_delete=models.SET_NULL)
-    switch3 = models.OneToOneField(GPIOVariable, help_text='Switch 3 GPIO pin', null=True, blank=True,
+    switch3 = models.ForeignKey(GPIOVariable, help_text='Switch 3 GPIO pin', null=True, blank=True,
                                    related_name='switch3', on_delete=models.SET_NULL)
-    switch4 = models.OneToOneField(GPIOVariable, help_text='Switch 4 GPIO pin', null=True, blank=True,
+    switch4 = models.ForeignKey(GPIOVariable, help_text='Switch 4 GPIO pin', null=True, blank=True,
                                    related_name='switch4', on_delete=models.SET_NULL)
-    pin1 = models.OneToOneField(GPIOVariable, help_text='A0 connector', null=True, blank=True, related_name='mobo_pin1',
+    pin1 = models.ForeignKey(GPIOVariable, help_text='A0 connector', null=True, blank=True, related_name='mobo_pin1',
                                 on_delete=models.SET_NULL)
-    pin2 = models.OneToOneField(GPIOVariable, help_text='A1 connector', null=True, blank=True, related_name='mobo_pin2',
+    pin2 = models.ForeignKey(GPIOVariable, help_text='A1 connector', null=True, blank=True, related_name='mobo_pin2',
                                 on_delete=models.SET_NULL)
-    pin3 = models.OneToOneField(GPIOVariable, help_text='A2 connector', null=True, blank=True, related_name='mobo_pin3',
+    pin3 = models.ForeignKey(GPIOVariable, help_text='A2 connector', null=True, blank=True, related_name='mobo_pin3',
                                 on_delete=models.SET_NULL)
-    pin4 = models.OneToOneField(GPIOVariable, help_text='A3 connector', null=True, blank=True, related_name='mobo_pin4',
+    pin4 = models.ForeignKey(GPIOVariable, help_text='A3 connector', null=True, blank=True, related_name='mobo_pin4',
                                 on_delete=models.SET_NULL)
-    pin5 = models.OneToOneField(GPIOVariable, help_text='Relay', null=True, blank=True, related_name='mobo_pin5',
+    pin5 = models.ForeignKey(GPIOVariable, help_text='Relay', null=True, blank=True, related_name='mobo_pin5',
                                 on_delete=models.SET_NULL)
-    pin6 = models.OneToOneField(GPIOVariable, help_text='Ground', null=True, blank=True, related_name='mobo_pin6',
+    pin6 = models.ForeignKey(GPIOVariable, help_text='Ground', null=True, blank=True, related_name='mobo_pin6',
                                 on_delete=models.SET_NULL)
     mdo1 = models.ForeignKey(Device, help_text='Oscilloscope', null=True, blank=True, related_name='osc1',
                              on_delete=models.SET_NULL)
