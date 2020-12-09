@@ -232,6 +232,8 @@ class LaboremMotherboardDevice(WidgetContentModel):
         return True
 
     def get_selected_plug(self):
+        plug = None
+        sub_plug = None
         try:
             io_config = self.MotherboardIOConfig
             io_config.pin1.gpio_variable.refresh_from_db()
@@ -242,7 +244,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
             pin2 = int(RecordedData.objects.last_element(variable=io_config.pin2.gpio_variable, time_min=0).value())
             pin3 = int(RecordedData.objects.last_element(variable=io_config.pin3.gpio_variable, time_min=0).value())
             pin4 = int(RecordedData.objects.last_element(variable=io_config.pin4.gpio_variable, time_min=0).value())
-            plug = 1 + pin1 + 2 * pin2 + 2*2 * pin3 + 2*2*2 * pin4
+            plug = 1 + (2**0) * pin1 + (2**1) * pin2 + (2**2) * pin3 + (2**3) * pin4
             plug = self._get_selected_plug(str(plug))
 
             io_config.switch1.gpio_variable.refresh_from_db()
@@ -258,8 +260,8 @@ class LaboremMotherboardDevice(WidgetContentModel):
                                                                 switch3_value=switch3, switch4_value=switch4).first()
             else:
                 sub_plug = None
-        except AttributeError:
-            return None
+        except AttributeError as e:
+            pass
         return plug, sub_plug
 
     def _get_selected_plug(self, plug=None):

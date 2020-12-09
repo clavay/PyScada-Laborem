@@ -740,8 +740,9 @@ def check_users(request):
         selected_plug, selected_sub_plug = LaboremMotherboardDevice.objects.get(pk=mb_id).get_selected_plug()
         data['plug'] = {}
         if selected_plug is not None:
-            data['plug']['name'] = selected_plug.name + " " +\
-                                   selected_sub_plug.sub_name if selected_sub_plug is not None else ""
+            data['plug']['name'] = selected_plug.name
+            if selected_sub_plug is not None:
+                data['plug']['name'] += " " + selected_sub_plug.sub_name
             data['plug']['description'] = selected_plug.description
 
             if selected_plug.robot:
