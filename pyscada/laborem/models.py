@@ -164,7 +164,8 @@ class LaboremMotherboardDevice(WidgetContentModel):
     def relay(self, value=True):
         io_config = self.MotherboardIOConfig
         if io_config.pin5 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(), user=None)
+            cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(),
+                                  user=None)
             cwt.save()
             return True
         else:

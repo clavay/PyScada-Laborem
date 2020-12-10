@@ -792,7 +792,7 @@ def connect_all(self):
         self.instruments.inst_mdo.inst.query("*IDN?")
         self.instruments.inst_afg.inst.query("*IDN?")
     except Exception as e:
-        logger.debug("VISA query failed : " + e)
+        logger.debug("VISA query failed : " + str(e))
         logger.debug('Experiences script starting')
         self.write_variable_property("LABOREM", "message_laborem", "Laborem is starting. Please Wait...",
                                      value_class='string', timestamp=now())

@@ -65,6 +65,8 @@ def script(self):
         # move worker to viewer if start > working_time min and viewer list count > 0
         # if no viewer, actualize the start time each time
         if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").count() > 0:
+            # Someone connected, switch on relay
+            LaboremMotherboardDevice.objects.first().relay(1)
             LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker",
                                        start_time__lte=now() - timedelta(minutes=working_time)).\
                 update(laborem_group_input=None, start_time=None, connection_time=now())
@@ -81,7 +83,13 @@ def script(self):
                     if base.element is not None and str(base.element.active) != '0':
                         lu.start_time += timedelta(seconds=20)
                 lu.save()
+            else:
+                # Nobody connected, switch off relay
+                LaboremMotherboardDevice.objects.first().relay(0)
             reset_laborem_on_user_or_session_change(self)
+        else:
+            # Someone connected, switch on relay
+            LaboremMotherboardDevice.objects.first().relay(1)
 
         # set viewer group for empty user.group
         try:
