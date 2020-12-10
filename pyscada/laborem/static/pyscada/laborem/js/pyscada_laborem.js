@@ -181,7 +181,7 @@ function reset_page(page_name) {
         $(".summary.side-menu").show()
         $(".user_stop_btn").hide()
         $('#ViewerModal').modal('hide');
-        reset_robot_bases();
+        //reset_robot_bases();
         //reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
@@ -189,7 +189,7 @@ function reset_page(page_name) {
         $('.dropdown-robot').hide();
     }else if (page_name === "plugs") {
         $(".user_stop_btn").hide()
-        reset_robot_bases();
+        //reset_robot_bases();
         //reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
@@ -198,7 +198,7 @@ function reset_page(page_name) {
     }else if (page_name === "preconf" || page_name === "robot") {
         $(".user_stop_btn").hide()
         change_plug_selected_motherboard();
-        reset_robot_bases();
+        //reset_robot_bases();
         reset_selected_expe();
         get_experience_list();
         $("#tooltip").hide();
@@ -954,7 +954,7 @@ $( document ).ready(function() {
         }else {
             $('.dropdown-robot').hide();
         }
-        reset_robot_bases();
+        //reset_robot_bases();
         //var $mb_id = $this.data('motherboard-id');
         //var $plug_id = $this.data('plug-id');
         //var $plug_name = $this.data('plug-name');

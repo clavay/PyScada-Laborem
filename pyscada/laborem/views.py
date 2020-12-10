@@ -247,7 +247,7 @@ def form_write_robot_base(request):
         base_id = int(request.POST['base_id'])
         element_id = int(request.POST['element_id'])
         for base in LaboremRobotBase.objects.filter(pk=base_id):
-            base.change_selected_element(element_id)
+            base.change_requested_element(element_id)
         return HttpResponse(status=200)
     logger.error("base_id or element_id not in POST : %s" % request.POST)
     return HttpResponse(status=404)
@@ -514,7 +514,7 @@ def reset_robot_bases(request):
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
                 for base in LaboremRobotBase.objects.all():
-                    base.change_selected_element(None)
+                    base.change_requested_element(None)
                 return HttpResponse(status=200)
     return HttpResponse(status=200)
 
