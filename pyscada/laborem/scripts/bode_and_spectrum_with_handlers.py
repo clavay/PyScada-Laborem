@@ -91,6 +91,10 @@ def script(self):
 
     if self.instruments.inst_afg is not None and self.instruments.inst_mdo is not None and \
             self.instruments.inst_afg.inst is not None and self.instruments.inst_mdo.inst is not None:
+        if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+            self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+            logger.debug("User stop requested")
+            return
 
         # Get all the variables that start an experience
         experiences = self.read_values_from_db(variable_names=['zzz_bode', 'zzz_bode_compare', 'zzz_spectrum',
@@ -104,68 +108,52 @@ def script(self):
         ###########################################
         put_on_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON'))
         if put_on_robot:
-            if self.instruments.inst_robot is None:
-                # self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
-                #                             value_class='string', timestamp=now())
-                # sleep(5)
-                pass
-            else:
+            if self.instruments.inst_robot is not None:
                 logger.debug("Putting on Elements...")
                 # Move the robot
                 for base in LaboremRobotBase.objects.all():
-                    if base.element is not None and str(base.element.active) == '0':
-                        self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
-                                                     value_class='string', timestamp=now())
-                        r_element = base.element.R
-                        theta_element = base.element.theta
-                        z_element = base.element.z
-                        r_base = base.R
-                        theta_base = base.theta
-                        z_base = base.z
-                        self.instruments.inst_robot.device.take_and_drop(
-                            r_element, theta_element, z_element, r_base, theta_base, z_base)
-                        base.element.change_active_to_base_id(base.pk)
-                    else:
-                        if base.element is None:
-                            logger.debug("Base : %s  - Element : %s" % (base, base.element))
+                    if base.requested_element is not None and base.element is not None and \
+                            base.requested_element.value == base.element.value and base.requested_element.unit == \
+                            base.element.unit:
+                        for other_base in LaboremRobotBase.objects.all():
+                            if other_base.pk != base.pk:
+                                if base.requested_element == other_base.element:
+                                    if other_base.requested_element == base.element:
+                                        temp = base.element.id
+                                        other_base.element.change_active_to_base_id(base.id)
+                                        base.change_selected_element(other_base.element.id)
+                                        base.element.change_active_to_base_id(other_base.id)
+                                        other_base.change_selected_element(temp)
+                                    else:
+                                        other_base.element.change_active_to_base_id(base.id)
+                                        base.change_selected_element(other_base.element.id)
+                                    break
+                    if base.requested_element is not None:
+                        if base.requested_element.active == base.pk:
+                            # Element yet placed
+                            continue
+                        elif base.requested_element.active != 0:
+                            self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
+                                                         value_class='string', timestamp=now())
+                            # Element in other base - remove actual element
+                            self.instruments.inst_robot.device.take_and_drop(base, base.element)
+                            base.element.change_active_to_base_id(0)
+                            # then take element from other base
+                            self.instruments.inst_robot.device.take_and_drop(
+                                LaboremRobotBase.objects.get(id=base.requested_element.active), base)
+                            base.requested_element.change_active_to_base_id(base.pk)
+                            base.change_selected_element(base.requested_element.pk)
+                            LaboremRobotBase.objects.get(id=base.requested_element.active).change_selected_element(None)
                         else:
-                            logger.debug("Base : %s  - Element : %s - base.element.active : %s " %
-                                         (base, base.element, base.element.active))
+                            self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
+                                                         value_class='string', timestamp=now())
+                            # Element not in base
+                            self.instruments.inst_robot.device.take_and_drop(base.requested_element, base)
+                            base.requested_element.change_active_to_base_id(base.pk)
+                            base.change_selected_element(base.requested_element.pk)
+                    else:
+                        logger.debug("Base : %s  - requested element : %s" % (base, base.requested_element))
             self.write_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON', value=0,
-                                         value_class='BOOLEAN')
-            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
-
-        take_off_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_TAKE_OFF'))
-        if take_off_robot:
-            if self.instruments.inst_robot is None:
-                # self.write_variable_property("LABOREM", "message_laborem", "Pas de robot configuré.",
-                #                             value_class='string', timestamp=now())
-                # sleep(5)
-                pass
-            else:
-                for base in LaboremRobotBase.objects.all():
-                    if base.element is not None and str(base.element.active) != '0':
-                        logger.debug("Taking off Elements...")
-                        self.write_variable_property("LABOREM", "message_laborem", "Le robot retire les éléments...",
-                                                     value_class='string', timestamp=now())
-                        r_element = base.element.R
-                        theta_element = base.element.theta
-                        z_element = base.element.z
-                        r_base = base.R
-                        theta_base = base.theta
-                        z_base = base.z
-                        self.instruments.inst_robot.device.take_and_drop(
-                            r_base, theta_base, z_base, r_element, theta_element, z_element)
-                        base.element.change_active_to_base_id('0')
-                    else:
-                        if base.element is None:
-                            # logger.debug("Base : %s  - Element : %s" % (base, base.element))
-                            pass
-                        else:
-                            logger.debug("Base : %s  - Element : %s - base.element.active : %s " %
-                                         (base, base.element, base.element.active))
-                    base.change_selected_element(None)
-            self.write_variable_property(variable_name='LABOREM', property_name='ROBOT_TAKE_OFF', value=0,
                                          value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
 
@@ -222,6 +210,7 @@ def script(self):
             for f in np.geomspace(fmin, fmax, nb_points):
                 if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                    logger.debug("User stop requested")
                     break
                 # Progress bar
                 n += 1
@@ -481,7 +470,7 @@ def script(self):
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
                 self.write_variable_property("LABOREM", "message_laborem",
-                                             "Pas de signal à l'oscilloscope, vérifier les configurations du GBF et de "
+                                             "Pas de signal à l'oscilloscope, vérifiez les configurations du GBF et de "
                                              "l'oscilloscope", value_class='string', timestamp=now())
                 sleep(6)
 
@@ -650,7 +639,7 @@ def script(self):
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
                 self.write_variable_property("LABOREM", "message_laborem",
-                                             "Pas de signal à l'oscilloscope, vérifier les configurations du GBF et de "
+                                             "Pas de signal à l'oscilloscope, vérifiez les configurations du GBF et de "
                                              "l'oscilloscope", value_class='string', timestamp=now())
                 sleep(6)
 
@@ -748,7 +737,7 @@ def script(self):
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
                 self.write_variable_property("LABOREM", "message_laborem",
-                                             "Pas de signal à l'oscilloscope, vérifier les configurations du GBF et de "
+                                             "Pas de signal à l'oscilloscope, vérifiez les configurations du GBF et de "
                                              "l'oscilloscope", value_class='string', timestamp=now())
                 sleep(6)
 

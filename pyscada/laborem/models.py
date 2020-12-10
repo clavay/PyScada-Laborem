@@ -167,7 +167,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
             io_config.pin5.gpio_variable.refresh_from_db()
             if int(RecordedData.objects.last_element(variable=io_config.pin5.gpio_variable, time_min=0).value()) != \
                     int(value):
-                logger.debug("Switching relay to " + str(value))
+                logger.debug("Switching relay to " + str(int(value)))
                 cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(),
                                       user=None)
                 cwt.save()
@@ -345,7 +345,10 @@ class LaboremRobotElement(models.Model):
 class LaboremRobotBase(WidgetContentModel):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
-    element = models.ForeignKey(LaboremRobotElement, blank=True, null=True, on_delete=models.SET_NULL)
+    element = models.ForeignKey(LaboremRobotElement, blank=True, null=True, on_delete=models.SET_NULL,
+                                related_name='element')
+    requested_element = models.ForeignKey(LaboremRobotElement, blank=True, null=True, on_delete=models.SET_NULL,
+                                          related_name='requested_element')
     R = models.FloatField(default=0)
     theta = models.FloatField(default=0)
     z = models.FloatField(default=0)
@@ -359,6 +362,14 @@ class LaboremRobotBase(WidgetContentModel):
             self.element = None
         else:
             self.element = LaboremRobotElement.objects.get(pk=element_id)
+        self.save()
+        return True
+
+    def change_requested_element(self, element_id):
+        if element_id is None:
+            self.requested_element = None
+        else:
+            self.requested_element = LaboremRobotElement.objects.get(pk=element_id)
         self.save()
         return True
 

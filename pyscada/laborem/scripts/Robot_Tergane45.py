@@ -50,6 +50,10 @@ class Tergane45(object):
         self.instr = instr
 
     def init(self):
+        try:
+            logger.debug(self.instr.read_raw())
+        except:
+            pass
         # on tourne le bras
         self.rotation_base(0)
         # on baisse le bras
@@ -57,8 +61,18 @@ class Tergane45(object):
         # on ouvre la pince
         self.pince(1)
         self.pince(0)
+        self.pince(1)
 
-    def take_and_drop(self, r1, theta1, z1, r2, theta2, z2):
+    def take_and_drop(self, to_take, to_drop):
+        r_to_take = to_take.R
+        theta_to_take = to_take.theta
+        z_to_take = to_take.z
+        r_to_drop = to_drop.R
+        theta_to_drop = to_drop.theta
+        z_to_drop = to_drop.z
+        self._take_and_drop(r_to_take, theta_to_take, z_to_take, r_to_drop, theta_to_drop, z_to_drop)
+
+    def _take_and_drop(self, r1, theta1, z1, r2, theta2, z2):
         # init
         self.pince(1)
         # prepare_epaule_coude_poignet(20, 5, 3)

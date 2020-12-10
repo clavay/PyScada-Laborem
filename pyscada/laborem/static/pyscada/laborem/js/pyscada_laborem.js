@@ -385,6 +385,7 @@ function refresh_top10_qa() {
                     $(".dropdown-TOP10QA").show();
                     for (i=0;i<questions.length;i++) {
                         if (questions[i].innerHTML != "Question1" && questions[i].innerHTML != "" && questions[i].innerHTML != "undefined") {
+                            questions[i].classList.remove("hidden");
                             input_group[i].classList.remove("hidden");
                             if (data['disable']) {
                                 form_control[i].value = answers[i];
@@ -402,6 +403,8 @@ function refresh_top10_qa() {
                                 }
                             }
                         }else {
+                            questions[i].classList.remove("hidden");
+                            questions[i].className += " hidden";
                             input_group[i].classList.remove("hidden");
                             input_group[i].className += " hidden";
                         }
@@ -914,7 +917,7 @@ $( document ).ready(function() {
         $(".message-laborem h2")[0].innerHTML = ' ' + 'Veuillez patienter...';
         $('#MessageModal').modal('show');
         //$(".message-laborem").attr('data-timestamp', Number($(".message-laborem").attr('data-timestamp')) + 1)
-        $(".message-laborem").attr('data-timestamp', SERVER_TIME + 1)
+        $(".message-laborem").attr('data-timestamp', SERVER_TIME + REFRESH_RATE)
     })
 
     // Stop experience on stop user btn click

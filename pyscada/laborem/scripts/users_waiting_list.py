@@ -27,6 +27,7 @@ def shutdown(self):
     write your code shutdown code here, don't change the name of this function
     :return:
     """
+    LaboremMotherboardDevice.objects.first().relay(0)
     pass
 
 
