@@ -181,14 +181,14 @@ function reset_page(page_name) {
         $(".summary.side-menu").show()
         $(".user_stop_btn").hide()
         $('#ViewerModal').modal('hide');
-        //reset_selected_plug();
+        reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
         $("#tooltip").hide();
         $('.dropdown-robot').hide();
     }else if (page_name === "plugs") {
         $(".user_stop_btn").hide()
-        //reset_selected_plug();
+        reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
         $("#tooltip").hide();
@@ -282,17 +282,7 @@ function reset_selected_plug() {
     $('.list-dut-item.active').removeClass('active');
     $(".img-plug").attr("src",$(".img-plug").data("img"));
     $('.img-plug').hide();
-    if(typeof $('.list-dut-item').data('motherboard-id') == 'undefined'){mb_id = 0}else{mb_id = $('.list-dut-item').data('motherboard-id')};
-    $.ajax({
-        type: 'post',
-        url: ROOT_URL+'form/reset_selected_plug/',
-        data: {mb_id:mb_id},
-        success: function (data) {
-        },
-        error: function(data) {
-            add_notification('reset selected plug failed',3);
-        }
-    });
+    $('.dropdown-robot').hide();
 };
 
 function reset_selected_expe() {
