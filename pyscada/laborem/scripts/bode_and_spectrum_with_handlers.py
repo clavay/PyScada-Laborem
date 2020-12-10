@@ -113,8 +113,10 @@ def script(self):
                 # Move the robot
                 for base in LaboremRobotBase.objects.all():
                     if base.requested_element is not None and base.element is not None and \
-                            base.requested_element.value == base.element.value and base.requested_element.unit == \
-                            base.element.unit:
+                            base.requested_element != base.element and \
+                            base.requested_element.value == base.element.value and \
+                            base.requested_element.unit == base.element.unit:
+                        logger.debug("replace element with is brother" + str(base.requested_element.__str__()))
                         for other_base in LaboremRobotBase.objects.all():
                             if other_base.pk != base.pk:
                                 if base.requested_element == other_base.element:
@@ -130,9 +132,11 @@ def script(self):
                                     break
                     if base.requested_element is not None:
                         if base.requested_element.active == base.pk:
+                            logger.debug("Element yet placed" + str(base.requested_element.__str__()))
                             # Element yet placed
                             continue
                         elif base.requested_element.active != 0:
+                            logger.debug("Element yet placed in other base" + str(base.requested_element.__str__()))
                             self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
                                                          value_class='string', timestamp=now())
                             # Element in other base - remove actual element
@@ -145,6 +149,7 @@ def script(self):
                             base.change_selected_element(base.requested_element.pk)
                             LaboremRobotBase.objects.get(id=base.requested_element.active).change_selected_element(None)
                         else:
+                            logger.debug("Element to be placed" + str(base.requested_element.__str__()))
                             self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
                                                          value_class='string', timestamp=now())
                             # Element not in base

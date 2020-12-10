@@ -699,7 +699,7 @@ function check_users(one_shot=false) {
             }
             if (typeof data['plug']!= 'undefined' && data['plug']!= '') {
                 if (typeof data['plug']['name'] != 'undefined' && data['plug']['name'] != '') {
-                    summary += "<li>Montage en cours : <ul><li>" + data['plug']['name'] + "</li>"
+                    summary += "<li>Dernier montage selectionnê : <ul><li>" + data['plug']['name'] + "</li>"
                 }
                 if (typeof data['plug']['robot'] != 'undefined' && data['plug']['robot'] != '') {
                     if (data['plug']['robot'] == 'true') {

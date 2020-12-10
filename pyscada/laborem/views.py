@@ -315,19 +315,19 @@ def query_top10_question(request):
         return HttpResponse(status=404)
 
     data = {}
-    if LaboremRobotBase.objects.get(name="base1").element is not None \
-            and LaboremRobotBase.objects.get(name="base2").element is not None:
+    if LaboremRobotBase.objects.get(name="baseVert").element is not None \
+            and LaboremRobotBase.objects.get(name="baseRouge").element is not None:
         top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
-                                              robot_base1__value=LaboremRobotBase.objects.get(name="base1").
+                                              robot_base1__value=LaboremRobotBase.objects.get(name="baseVert").
                                               element.value,
-                                              robot_base1__unit=LaboremRobotBase.objects.get(name="base1").
+                                              robot_base1__unit=LaboremRobotBase.objects.get(name="baseVert").
                                               element.unit,
-                                              robot_base2__value=LaboremRobotBase.objects.get(name="base2").
+                                              robot_base2__value=LaboremRobotBase.objects.get(name="baseRouge").
                                               element.value,
-                                              robot_base2__unit=LaboremRobotBase.objects.get(name="base2").
+                                              robot_base2__unit=LaboremRobotBase.objects.get(name="baseRouge").
                                               element.unit).order_by('id').first()
-    elif LaboremRobotBase.objects.get(name="base1").element is None \
-            and LaboremRobotBase.objects.get(name="base2").element is None:
+    elif LaboremRobotBase.objects.get(name="baseVert").element is None \
+            and LaboremRobotBase.objects.get(name="baseRouge").element is None:
         top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
                                               robot_base1__value=None, robot_base1__unit=None,
                                               robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
@@ -381,19 +381,19 @@ def validate_top10_answers(request):
         logger.error("Level plug error : %s" % plug.level)
     note = 0
     note_max = 0
-    if LaboremRobotBase.objects.get(name="base1").element is not None \
-            and LaboremRobotBase.objects.get(name="base2").element is not None:
+    if LaboremRobotBase.objects.get(name="baseVert").element is not None \
+            and LaboremRobotBase.objects.get(name="baseRouge").element is not None:
         top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
-                                              robot_base1__value=LaboremRobotBase.objects.get(name="base1").element.
+                                              robot_base1__value=LaboremRobotBase.objects.get(name="baseVert").element.
                                               value,
-                                              robot_base1__unit=LaboremRobotBase.objects.get(name="base1").element.
+                                              robot_base1__unit=LaboremRobotBase.objects.get(name="baseVert").element.
                                               unit,
-                                              robot_base2__value=LaboremRobotBase.objects.get(name="base2").element.
+                                              robot_base2__value=LaboremRobotBase.objects.get(name="baseRouge").element.
                                               value,
-                                              robot_base2__unit=LaboremRobotBase.objects.get(name="base2").element.
+                                              robot_base2__unit=LaboremRobotBase.objects.get(name="baseRouge").element.
                                               unit).order_by('id').first()
-    elif LaboremRobotBase.objects.get(name="base1").element is None \
-            and LaboremRobotBase.objects.get(name="base2").element is None:
+    elif LaboremRobotBase.objects.get(name="baseVert").element is None \
+            and LaboremRobotBase.objects.get(name="baseRouge").element is None:
         top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
                                               robot_base1__value=None, robot_base1__unit=None,
                                               robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
