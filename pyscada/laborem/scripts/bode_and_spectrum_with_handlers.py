@@ -145,9 +145,9 @@ def script(self):
                             # then take element from other base
                             self.instruments.inst_robot.device.take_and_drop(
                                 LaboremRobotBase.objects.get(id=base.requested_element.active), base)
+                            LaboremRobotBase.objects.get(id=base.requested_element.active).change_selected_element(None)
                             base.requested_element.change_active_to_base_id(base.pk)
                             base.change_selected_element(base.requested_element.pk)
-                            LaboremRobotBase.objects.get(id=base.requested_element.active).change_selected_element(None)
                         else:
                             logger.debug("Element to be placed" + str(base.requested_element.__str__()))
                             self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
