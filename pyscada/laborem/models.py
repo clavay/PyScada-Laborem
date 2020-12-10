@@ -163,11 +163,17 @@ class LaboremMotherboardDevice(WidgetContentModel):
 
     def relay(self, value=True):
         io_config = self.MotherboardIOConfig
-        if io_config.pin5 is not None:
-            cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(),
-                                  user=None)
-            cwt.save()
-            return True
+        if io_config.pin5 is not None and io_config.pin5.gpio_variable is not None:
+            io_config.pin5.gpio_variable.refresh_from_db()
+            if int(RecordedData.objects.last_element(variable=io_config.pin5.gpio_variable, time_min=0).value()) != \
+                    int(value):
+                logger.debug("Switching relay to " + str(value))
+                cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(),
+                                      user=None)
+                cwt.save()
+                return True
+            else:
+                return False
         else:
             logger.debug('Laborem relay pin not defined !')
             return False

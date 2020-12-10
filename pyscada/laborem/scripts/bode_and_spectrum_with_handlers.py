@@ -191,6 +191,7 @@ def script(self):
                                                               'NB_POINTS'], current_value_only=True)
             for key, item in values.items():
                 values[key] = item[-1]
+                logger.debug(str(key) + " = " + str(values[key]))
 
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
@@ -289,6 +290,7 @@ def script(self):
                                                               'POINTS'], current_value_only=True)
             for key, item in values.items():
                 values[key] = item[-1]
+                logger.debug(str(key) + " = " + str(values[key]))
 
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
@@ -399,6 +401,7 @@ def script(self):
                                               current_value_only=True)
             for key, item in values.items():
                 values[key] = item[-1]
+                logger.debug(str(key) + " = " + str(values[key]))
 
             # Prepare AFG for Bode : output1 on, output imp max
             self.instruments.inst_afg.afg_prepare_for_bode(ch=1)
@@ -437,57 +440,55 @@ def script(self):
                     ch=1, points_resolution=resolution, frequency=f, refresh=True)
                 scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=2, points_resolution=resolution, frequency=f, refresh=False)
+                scaled_wave_ch1_mini = list()
+                scaled_wave_ch2_mini = list()
+                time_values = list()
+                time_values_to_show = list()
+                time_now = time()
+
+                # Prepare the lists to save
+                save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
+                logger.debug('save_resolution : %s' % save_resolution)
+                for i in range(0, save_resolution):
+                    # store one value each ms
+                    time_values.append(time_now + 0.001 * i)
+                    # store time in ms
+                    time_values_to_show.append(0.001 * i * self.instruments.inst_mdo.mdo_horizontal_time() * 1000 * 10)
+                    scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
+                    scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
+
+                # FFT CH1
+                spectrum_hanning_1 = self.instruments.inst_mdo.fft(scaled_wave_ch1)
+                tscale = self.instruments.inst_mdo.mdo_xincr()
+                frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
+                # FFT CH2
+                spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
+
+                logger.debug("tscale %s - f %s - Ech/s %s - Vepp %s" % (tscale, f, f / tscale, vepp))
+                logger.debug("spectrum_hanning_1 %s - frequencies %s" % (len(spectrum_hanning_1), len(frequencies)))
+
+                if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+                    self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                else:
+                    self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
+                    self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
+                    self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+                    self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
+                    self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
+                    self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             except pyvisa.VisaIOError:
                 scaled_wave_ch1 = list()
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
-                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                             timestamp=now())
-                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
-                self.write_variable_property(variable_name='Spectre_run', property_name='Spectre_9_Waveform', value=0,
-                                             value_class='BOOLEAN')
-                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-                return
+                self.write_variable_property("LABOREM", "message_laborem",
+                                             "Pas de signal à l'oscilloscope, vérifier les configurations du GBF et de "
+                                             "l'oscilloscope", value_class='string', timestamp=now())
+                sleep(6)
 
-            scaled_wave_ch1_mini = list()
-            scaled_wave_ch2_mini = list()
-            time_values = list()
-            time_values_to_show = list()
-            time_now = time()
-
-            # Prepare the lists to save
-            save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
-            logger.debug('save_resolution : %s' % save_resolution)
-            for i in range(0, save_resolution):
-                # store one value each ms
-                time_values.append(time_now + 0.001 * i)
-                # store time in ms
-                time_values_to_show.append(0.001 * i * self.instruments.inst_mdo.mdo_horizontal_time() * 1000 * 10)
-                scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
-                scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
-
-            # FFT CH1
-            spectrum_hanning_1 = self.instruments.inst_mdo.fft(scaled_wave_ch1)
-            tscale = self.instruments.inst_mdo.mdo_xincr()
-            frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
-            # FFT CH2
-            spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
-
-            logger.debug("tscale %s - f %s - Ech/s %s - Vepp %s" % (tscale, f, f / tscale, vepp))
-            logger.debug("spectrum_hanning_1 %s - frequencies %s" % (len(spectrum_hanning_1), len(frequencies)))
-
-            if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
-                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-            else:
-                self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
-                self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
-                self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
-                self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
-                self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
-                self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_spectrum': [0]})
+            self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
             # sleep(4)
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
 
@@ -518,6 +519,7 @@ def script(self):
                                               current_value_only=True)
             for key, item in values.items():
                 values[key] = item[-1]
+                logger.debug(str(key) + " = " + str(values[key]))
 
             # Set output state
             state1 = values.get('AFG_OUTPUT_STATE_1', False)
@@ -580,6 +582,7 @@ def script(self):
                                               current_value_only=True)
             for key, item in values.items():
                 values[key] = item[-1]
+                logger.debug(str(key) + " = " + str(values[key]))
 
             # Set the generator frequency to f
             f = values.get('AFG_FREQ_1', 1000)
@@ -609,54 +612,53 @@ def script(self):
                     ch=1, points_resolution=resolution, frequency=f, refresh=True)
                 scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=2, points_resolution=resolution, frequency=f, refresh=False)
+                scaled_wave_ch1_mini = list()
+                scaled_wave_ch2_mini = list()
+                time_values = list()
+                time_values_to_show = list()
+                time_now = time()
+
+                # Prepare the lists to save
+                save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
+                logger.debug('save_resolution : %s' % save_resolution)
+                for i in range(0, save_resolution):
+                    # store one value each ms
+                    time_values.append(time_now + 0.001 * i)
+                    # store time in ms
+                    time_values_to_show.append(0.001 * i * self.instruments.inst_mdo.mdo_horizontal_time() * 1000 * 10)
+                    scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
+                    scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
+
+                # FFT CH1
+                spectrum_hanning_1 = self.instruments.inst_mdo.fft(scaled_wave_ch1)
+                tscale = self.instruments.inst_mdo.mdo_xincr()
+                frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
+                # FFT CH2
+                spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
+
+                if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+                    self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                else:
+                    self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
+                    self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
+                    self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+                    self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
+                    self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
+                    self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             except pyvisa.VisaIOError:
                 scaled_wave_ch1 = list()
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
-                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                             timestamp=now())
-                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
-                self.write_values_to_db(data={'zzz_oscillo': [0]})
-                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-                return
+                self.write_variable_property("LABOREM", "message_laborem",
+                                             "Pas de signal à l'oscilloscope, vérifier les configurations du GBF et de "
+                                             "l'oscilloscope", value_class='string', timestamp=now())
+                sleep(6)
 
-            scaled_wave_ch1_mini = list()
-            scaled_wave_ch2_mini = list()
-            time_values = list()
-            time_values_to_show = list()
-            time_now = time()
-
-            # Prepare the lists to save
-            save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
-            logger.debug('save_resolution : %s' % save_resolution)
-            for i in range(0, save_resolution):
-                # store one value each ms
-                time_values.append(time_now + 0.001 * i)
-                # store time in ms
-                time_values_to_show.append(0.001 * i * self.instruments.inst_mdo.mdo_horizontal_time() * 1000 * 10)
-                scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
-                scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
-
-            # FFT CH1
-            spectrum_hanning_1 = self.instruments.inst_mdo.fft(scaled_wave_ch1)
-            tscale = self.instruments.inst_mdo.mdo_xincr()
-            frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
-            # FFT CH2
-            spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
-
-            if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
-                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-            else:
-                self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
-                self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
-                self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
-                self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
-                self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
-                self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_oscillo': [0]})
             # sleep(4)
+            self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
             logger.debug("Oscilloscope done")
 
@@ -678,6 +680,7 @@ def script(self):
                                               current_value_only=True)
             for key, item in values.items():
                 values[key] = item[-1]
+                logger.debug(str(key) + " = " + str(values[key]))
 
             vepp = values.get('AFG_VEPP_1', 5)
 
@@ -707,54 +710,53 @@ def script(self):
                     ch=1, points_resolution=resolution, frequency=f, refresh=True)
                 scaled_wave_ch2 = self.instruments.inst_mdo.mdo_query_waveform(
                     ch=2, points_resolution=resolution, frequency=f, refresh=False)
+                scaled_wave_ch1_mini = list()
+                scaled_wave_ch2_mini = list()
+                time_values = list()
+                time_values_to_show = list()
+                time_now = time()
+
+                # Prepare the lists to save
+                save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
+                logger.debug('save_resolution : %s' % save_resolution)
+                for i in range(0, save_resolution):
+                    # store one value each ms
+                    time_values.append(time_now + 0.001 * i)
+                    # store time in ms
+                    time_values_to_show.append(0.001 * i * self.instruments.inst_mdo.mdo_horizontal_time() * 1000 * 10)
+                    scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
+                    scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
+
+                # FFT CH1
+                spectrum_hanning_1 = self.instruments.inst_mdo.fft(scaled_wave_ch1)
+                tscale = self.instruments.inst_mdo.mdo_xincr()
+                frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
+                # FFT CH2
+                spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
+
+                if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+                    self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                else:
+                    self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
+                    self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
+                    self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
+                    self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
+                    self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
+                    self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             except pyvisa.VisaIOError:
                 scaled_wave_ch1 = list()
                 scaled_wave_ch2 = list()
                 logger.debug("Empty signals from MDO")
-                self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
-                                             timestamp=now())
-                self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
-                self.write_values_to_db(data={'zzz_autoset_oscillo': [0]})
-                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-                return
+                self.write_variable_property("LABOREM", "message_laborem",
+                                             "Pas de signal à l'oscilloscope, vérifier les configurations du GBF et de "
+                                             "l'oscilloscope", value_class='string', timestamp=now())
+                sleep(6)
 
-            scaled_wave_ch1_mini = list()
-            scaled_wave_ch2_mini = list()
-            time_values = list()
-            time_values_to_show = list()
-            time_now = time()
-
-            # Prepare the lists to save
-            save_resolution = min(100, len(scaled_wave_ch1), len(scaled_wave_ch2))
-            logger.debug('save_resolution : %s' % save_resolution)
-            for i in range(0, save_resolution):
-                # store one value each ms
-                time_values.append(time_now + 0.001 * i)
-                # store time in ms
-                time_values_to_show.append(0.001 * i * self.instruments.inst_mdo.mdo_horizontal_time() * 1000 * 10)
-                scaled_wave_ch1_mini.append(scaled_wave_ch1[i * int(len(scaled_wave_ch1) / save_resolution)])
-                scaled_wave_ch2_mini.append(scaled_wave_ch2[i * int(len(scaled_wave_ch2) / save_resolution)])
-
-            # FFT CH1
-            spectrum_hanning_1 = self.instruments.inst_mdo.fft(scaled_wave_ch1)
-            tscale = self.instruments.inst_mdo.mdo_xincr()
-            frequencies = np.linspace(0, 1 / tscale, len(scaled_wave_ch1), endpoint=False).tolist()
-            # FFT CH2
-            spectrum_hanning_2 = self.instruments.inst_mdo.fft(scaled_wave_ch2)
-
-            if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
-                self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
-            else:
-                self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
-                self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
-                self.write_values_to_db(data={'Wave_time': time_values_to_show, 'timevalues': time_values})
-                self.write_values_to_db(data={'FFT_CH1': spectrum_hanning_1[:100], 'timevalues': time_values})
-                self.write_values_to_db(data={'FFT_CH2': spectrum_hanning_2[:100], 'timevalues': time_values})
-                self.write_values_to_db(data={'Bode_Freq': frequencies[:100], 'timevalues': time_values})
             self.write_variable_property("LABOREM", "viewer_stop_timeline", 1, value_class="BOOLEAN",
                                          timestamp=now())
             self.write_values_to_db(data={'zzz_autoset_oscillo': [0]})
             # sleep(4)
+            self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
             logger.debug("Autoset Oscilloscope done")
 
