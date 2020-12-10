@@ -546,50 +546,27 @@ def move_robot(request):
     if LaboremGroupInputPermission.objects.count() > 0:
         for group in request.user.groups.iterator():
             if LaboremGroupInputPermission.objects.get(hmi_group=group).move_robot:
-                if 'move' in request.POST:
-                    move = request.POST['move']
-                    try:
-                        variable = Variable.objects.get(name="LABOREM")
-                    except Variable.DoesNotExist:
-                        return HttpResponse(status=200)
-                    if move == 'put':
-                        vp = VariableProperty.objects.get_property(variable=variable, name="ROBOT_PUT_ON")
-                        if vp is None:
-                            return HttpResponse(status=200)
-                        key = vp.id
-                        for base in LaboremRobotBase.objects.all():
-                            if base.element is not None and str(base.element.active) == '0':
-                                VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
-                                                                                   "message_laborem",
-                                                                                   "Le robot place les éléments...",
-                                                                                   value_class='string',
-                                                                                   timestamp=now())
-                                data['message_laborem'] = {}
-                                data['message_laborem']['message'] = "Le robot place les éléments..."
-                                data['message_laborem']['timestamp'] = int(format(now(), 'U')) * 1000
-                        cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
-                        cwt.save()
-                        return HttpResponse(json.dumps(data), content_type='application/json')
-                    if move == 'drop':
-                        vp = VariableProperty.objects.get_property(variable=variable, name="ROBOT_TAKE_OFF")
-                        if vp is None:
-                            return HttpResponse(status=200)
-                        key = vp.id
-                        for base in LaboremRobotBase.objects.all():
-                            if base.element is not None and str(base.element.active) != '0':
-                                VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
-                                                                                   "message_laborem",
-                                                                                   "Le robot retire les éléments...",
-                                                                                   value_class='string',
-                                                                                   timestamp=now())
-                                data['message_laborem'] = {}
-                                data['message_laborem']['message'] = "Le robot retire les éléments..."
-                                data['message_laborem']['timestamp'] = int(format(now(), 'U')) * 1000
-                        cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
-                        cwt.save()
-                        VariableProperty.objects.update_or_create_property(variable=Variable.objects.get(
-                            name="LABOREM"), name="viewer_start_timeline", value=1, timestamp=now())
-                        return HttpResponse(json.dumps(data), content_type='application/json')
+                try:
+                    variable = Variable.objects.get(name="LABOREM")
+                except Variable.DoesNotExist:
+                    return HttpResponse(status=200)
+                vp = VariableProperty.objects.get_property(variable=variable, name="ROBOT_PUT_ON")
+                if vp is None:
+                    return HttpResponse(status=200)
+                key = vp.id
+                for base in LaboremRobotBase.objects.all():
+                    if base.element is not None and str(base.element.active) == '0':
+                        VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
+                                                                           "message_laborem",
+                                                                           "Le robot place les éléments...",
+                                                                           value_class='string',
+                                                                           timestamp=now())
+                        data['message_laborem'] = {}
+                        data['message_laborem']['message'] = "Le robot place les éléments..."
+                        data['message_laborem']['timestamp'] = int(format(now(), 'U')) * 1000
+                cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
+                cwt.save()
+                return HttpResponse(json.dumps(data), content_type='application/json')
     return HttpResponse(status=200)
 
 

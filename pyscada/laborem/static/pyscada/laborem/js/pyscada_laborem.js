@@ -181,7 +181,6 @@ function reset_page(page_name) {
         $(".summary.side-menu").show()
         $(".user_stop_btn").hide()
         $('#ViewerModal').modal('hide');
-        //reset_robot_bases();
         //reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
@@ -189,7 +188,6 @@ function reset_page(page_name) {
         $('.dropdown-robot').hide();
     }else if (page_name === "plugs") {
         $(".user_stop_btn").hide()
-        //reset_robot_bases();
         //reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
@@ -198,7 +196,6 @@ function reset_page(page_name) {
     }else if (page_name === "preconf" || page_name === "robot") {
         $(".user_stop_btn").hide()
         change_plug_selected_motherboard();
-        //reset_robot_bases();
         reset_selected_expe();
         get_experience_list();
         $("#tooltip").hide();
@@ -209,7 +206,7 @@ function reset_page(page_name) {
         //update_plots(true);
         reset_selected_expe();
         get_experience_list();
-        move_robot("put");
+        move_robot();
         $("#tooltip").hide();
     }else if (experiences.indexOf(page_name) >= 0) {
         $(".user_stop_btn").show()
@@ -218,7 +215,7 @@ function reset_page(page_name) {
         change_plug_selected_motherboard();
         update_plots(false);
         change_bases();
-        move_robot("put");
+        move_robot();
     }else if (page_name === "viewer") {
         $(".dropdown-WaitingList").show()
         $(".summary.side-menu").show()
@@ -247,11 +244,11 @@ function update_plots(force) {
     });
 }
 
-function move_robot(mov) {
+function move_robot() {
     $.ajax({
         type: 'post',
         url: ROOT_URL+'form/move_robot/',
-        data: {move:mov},
+        data: {},
         success: function (data) {
             if (typeof data['message_laborem'] != 'undefined' && typeof data['message_laborem']['message'] != 'undefined' && typeof data['message_laborem']['timestamp'] != 'undefined' && window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "loading" && window.location.hash.substr(1) != "disconnect") {
                 if (data['message_laborem']['timestamp'] > $(".message-laborem").attr('data-timestamp')) {
@@ -311,15 +308,6 @@ function reset_selected_expe() {
             add_notification('write expe failed',3);
         }
     });
-};
-
-function reset_robot_bases() {
-    move_robot("drop");
-    $('.dropdown-base').removeClass('active');
-    $('.dropdown-base').show();
-    $('.ui-dropdown-robot-bnt').each(function() {
-        $(this)[0].innerHTML = $(this).data('name');
-    })
 };
 
 function change_plug_selected_motherboard() {
@@ -954,7 +942,6 @@ $( document ).ready(function() {
         }else {
             $('.dropdown-robot').hide();
         }
-        //reset_robot_bases();
         //var $mb_id = $this.data('motherboard-id');
         //var $plug_id = $this.data('plug-id');
         //var $plug_name = $this.data('plug-name');
