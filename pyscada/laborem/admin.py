@@ -78,7 +78,7 @@ class LaboremPlugDeviceAdmin(admin.ModelAdmin):
 
 
 class LaboremRobotBaseAdmin(admin.ModelAdmin):
-    list_display = ('name', 'element', 'R', 'theta', 'z')
+    list_display = ('name', 'element', 'requested_element', 'R', 'theta', 'z')
     save_as = True
     save_as_continue = True
 
