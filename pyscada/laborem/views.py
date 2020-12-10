@@ -753,7 +753,7 @@ def check_users(request):
                         data['plug']['base'][base.description] = base.element.__str__()
             else:
                 data['plug']['robot'] = "false"
-    except (LaboremMotherboardDevice.DoesNotExist, AttributeError):
+    except (LaboremMotherboardDevice.DoesNotExist, AttributeError, TypeError):
         pass
     try:
         experience = VariableProperty.objects.get_property(Variable.objects.get(name="LABOREM"),

@@ -54,6 +54,9 @@ class Tergane45(object):
         self.rotation_base(0)
         # on baisse le bras
         self.prepare_epaule_coude_poignet(17, 1, 2)
+        # on ouvre la pince
+        self.pince(1)
+        self.pince(0)
 
     def take_and_drop(self, r1, theta1, z1, r2, theta2, z2):
         # init
