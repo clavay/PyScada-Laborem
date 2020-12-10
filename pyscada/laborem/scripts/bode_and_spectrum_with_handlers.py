@@ -121,15 +121,17 @@ def script(self):
                             if other_base.pk != base.pk:
                                 if base.requested_element == other_base.element:
                                     if other_base.requested_element == base.element:
-                                        base.change_requested_element(base.element.id)
                                         other_base.change_requested_element(other_base.element.id)
-                                    else:
-                                        base.change_requested_element(base.element.id)
                                     self.write_variable_property("LABOREM", "message_laborem",
                                                                  "Certains éléments du robot sont déjà en place...",
                                                                  value_class='string', timestamp=now())
                                     sleep(2)
                                     break
+                        self.write_variable_property("LABOREM", "message_laborem",
+                                                     "Certains éléments du robot sont déjà en place...",
+                                                     value_class='string', timestamp=now())
+                        base.change_requested_element(base.element.id)
+                        sleep(2)
                     if base.requested_element is not None:
                         if base.requested_element.active == base.pk:
                             logger.debug("Element yet placed" + str(base.requested_element.__str__()))

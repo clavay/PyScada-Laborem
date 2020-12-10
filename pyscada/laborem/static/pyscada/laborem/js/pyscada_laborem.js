@@ -58,35 +58,11 @@ function query_previous_and_next_btn() {
 
     if (actual_hash === "start") {
         $(".navbar-left").show();
-        $(".btn-previous").hide();
-        $(".btn-next").attr("href", '#plugs');
-        $(".btn-next").show();
     }else if (actual_hash === "plugs") {
         $(".navbar-left").show();
-        $(".btn-previous").attr("href", '#start');
-        $(".btn-previous").show();
-        $(".btn-next").attr("href", '#expe_choice');
-        if (robot === '0') {
-            $(".btn-next").show();
-        }
-        else {$(".btn-next").hide();}
-    }else if (actual_hash === "expe_choice") {
-        $(".navbar-left").show();
-        $(".btn-previous").attr("href", '#plugs');
-        $(".btn-previous").show();
-        if (expe !='') {
-            $(".btn-next").attr("href", '#' + expe);
-            $(".btn-next").show();
-        }
-        else {$(".btn-next").hide();}
     }else if (experiences.indexOf(actual_hash) >= 0) {
         $(".navbar-left").show();
-        $(".btn-previous").attr("href", '#expe_choice');
-        $(".btn-previous").show();
-        $(".btn-next").hide();
     }else if (actual_hash === "viewer" || actual_hash === "waiting" || actual_hash === "disconnect" || actual_hash === "loading") {
-        $(".btn-previous").hide();
-        $(".btn-next").hide();
         $(".navbar-left").hide();
     }
 };
@@ -104,25 +80,6 @@ function redirect_to_page(page_name) {
         if ($('.list-dut-item.active .badge.robot').length || !$('.list-dut-item.active').length) { window.location.href = "#plugs";}
     }else if (page_name === "robot") {
         if (!$('.list-dut-item.active .badge.robot').length || !$('.list-dut-item.active').length) { window.location.href = "#plugs";}
-    }else if (page_name === "expe_choice") {
-        if (!$('.list-dut-item.active').length) {
-            window.location.href = "#plugs";
-            return 1;
-        }else {
-            if ($('.list-dut-item.active .badge.robot').length) {
-                // Finding if all robot bases are selected
-                base_empty = 'no'
-                $('.sub-page#plugs .ui-dropdown-robot-bnt').each(function() {
-                    if ($(this)[0].innerHTML === $(this).data('name')) {
-                        base_empty = 'yes'
-                    }
-                })
-                if (base_empty === 'yes') {
-                    window.location.href = "#plugs";
-                    return 1;
-                }
-            }
-        }
     }else if (experiences.indexOf(page_name) >= 0) {
         if (!$('.list-dut-item.active').length) {
             window.location.href = "#plugs";
@@ -132,39 +89,13 @@ function redirect_to_page(page_name) {
                 // Finding if all robot bases are selected
                 base_empty = 'no'
                 $('.sub-page#plugs .ui-dropdown-robot-bnt').each(function() {
-                    if ($(this)[0].innerHTML === $(this).data('name')) {
+                    if ($(this)[0].innerHTML.replace(/\s/g, '') === $(this).data('name').replace(/\s/g, '')) {
                         base_empty = 'yes'
                     }
                 })
                 if (base_empty === 'yes') {
                     window.location.href = "#plugs";
                     return 1;
-                }else {
-                    // finding if an expe is selected
-                    if (typeof $('.expe_list_item.active').attr('name') == 'undefined') {
-                        if ($('.btn-previous').length) {
-                            window.location.href = "#expe_choice";
-                            return 1;
-                        }
-                    }else {
-                        if (page_name !== $('.expe_list_item.active').attr('name')) {
-                            window.location.href = "#" + $('.expe_list_item.active').attr('name');
-                            return 1;
-                        }
-                    }
-                }
-            }else {
-                // finding if an expe is selected
-                if (typeof $('.expe_list_item.active').attr('name') == 'undefined') {
-                    if ($('.btn-previous').length) {
-                        window.location.href = "#expe_choice";
-                        return 1;
-                    }
-                }else {
-                    if (page_name !== $('.expe_list_item.active').attr('name')) {
-                        window.location.href = "#" + $('.expe_list_item.active').attr('name');
-                        return 1;
-                    }
                 }
             }
         }
@@ -198,15 +129,6 @@ function reset_page(page_name) {
         change_plug_selected_motherboard();
         reset_selected_expe();
         get_experience_list();
-        $("#tooltip").hide();
-    }else if (page_name === "expe_choice") {
-        $(".user_stop_btn").hide()
-        change_bases();
-        change_plug_selected_motherboard();
-        //update_plots(true);
-        reset_selected_expe();
-        get_experience_list();
-        move_robot();
         $("#tooltip").hide();
     }else if (experiences.indexOf(page_name) >= 0) {
         $(".user_stop_btn").show()
@@ -830,7 +752,6 @@ $( document ).ready(function() {
     $(".navbar-brand").removeAttr("target");
     $(".navbar-brand")[0].innerHTML = ' PyScada-Laborem';
     $(".navbar-brand").prepend('<span class="glyphicon glyphicon-home"></span>');
-    $(".btn-previous").hide();
 
     //hide menus
     $($('.navbar-right .divider')[1]).addClass('hidden')
@@ -970,25 +891,6 @@ $( document ).ready(function() {
         $this.addClass('active');
         //change_base_selected_element($($this[0]).parents(".dropdown-robot")[0].id, $this[0].id)
         query_previous_and_next_btn();
-        if (base_empty === 'no') {$(".btn-next").show();}
-    });
-
-    $('.btn-next-previous').on('click', function() {
-        id = $(".sub-page#"+window.location.hash.substr(1)).attr("page_position");
-        lower_id = id - 1;
-        higher_id = id + 1;
-        if ($(".sub-page[page_position=" + lower_id + "]").length == 1) {
-            $(".btn-previous").attr("href", "#" + $(".sub-page[page_position=" + lower_id + "]")[0].id);
-            $(".btn-previous").show();
-        }else {
-            $(".btn-previous").hide();
-        }
-        if ($(".sub-page[page_position=" + higher_id + "]").length == 1) {
-            $(".btn-next").attr("href", "#" + $(".sub-page[page_position=" + higher_id + "]")[0].id);
-            $(".btn-next").show();
-        }else {
-            $(".btn-next").hide();
-        }
     });
 
     // Send answer for TOP10
