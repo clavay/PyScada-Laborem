@@ -315,27 +315,30 @@ def query_top10_question(request):
         return HttpResponse(status=404)
 
     data = {}
-    if LaboremRobotBase.objects.get(name="baseVert").element is not None \
+    if plug.robot is None:
+        r_v_1 = None
+        r_u_1 = None
+        r_v_2 = None
+        r_u_2 = None
+    elif LaboremRobotBase.objects.get(name="baseVert").element is not None \
             and LaboremRobotBase.objects.get(name="baseRouge").element is not None:
-        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
-                                              robot_base1__value=LaboremRobotBase.objects.get(name="baseVert").
-                                              element.value,
-                                              robot_base1__unit=LaboremRobotBase.objects.get(name="baseVert").
-                                              element.unit,
-                                              robot_base2__value=LaboremRobotBase.objects.get(name="baseRouge").
-                                              element.value,
-                                              robot_base2__unit=LaboremRobotBase.objects.get(name="baseRouge").
-                                              element.unit).order_by('id').first()
-    elif LaboremRobotBase.objects.get(name="baseVert").element is None \
-            and LaboremRobotBase.objects.get(name="baseRouge").element is None:
-        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
-                                              robot_base1__value=None, robot_base1__unit=None,
-                                              robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
+        r_v_1 = LaboremRobotBase.objects.get(name="baseVert").element.value
+        r_u_1 = LaboremRobotBase.objects.get(name="baseVert").element.unit
+        r_v_2 = LaboremRobotBase.objects.get(name="baseRouge").element.value
+        r_u_2 = LaboremRobotBase.objects.get(name="baseRouge").element.unit
     else:
-        logger.debug("top10qa bases error")
-        return HttpResponse(status=404)
+        r_v_1 = None
+        r_u_1 = None
+        r_v_2 = None
+        r_u_2 = None
+    top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
+                                          robot_base1__value=r_v_1,
+                                          robot_base1__unit=r_u_1,
+                                          robot_base2__value=r_v_2,
+                                          robot_base2__unit=r_u_2).order_by('id').first()
+
     if top10qa is None:
-        # logger.debug("top10qa is None")
+        logger.debug("top10qa is None")
         return HttpResponse(json.dumps(data), content_type='application/json')
     data['disable'] = 0
     data['question1'] = top10qa.question1
@@ -381,24 +384,29 @@ def validate_top10_answers(request):
         logger.error("Level plug error : %s" % plug.level)
     note = 0
     note_max = 0
-    if LaboremRobotBase.objects.get(name="baseVert").element is not None \
+
+    if plug.robot is None:
+        r_v_1 = None
+        r_u_1 = None
+        r_v_2 = None
+        r_u_2 = None
+    elif LaboremRobotBase.objects.get(name="baseVert").element is not None \
             and LaboremRobotBase.objects.get(name="baseRouge").element is not None:
-        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
-                                              robot_base1__value=LaboremRobotBase.objects.get(name="baseVert").element.
-                                              value,
-                                              robot_base1__unit=LaboremRobotBase.objects.get(name="baseVert").element.
-                                              unit,
-                                              robot_base2__value=LaboremRobotBase.objects.get(name="baseRouge").element.
-                                              value,
-                                              robot_base2__unit=LaboremRobotBase.objects.get(name="baseRouge").element.
-                                              unit).order_by('id').first()
-    elif LaboremRobotBase.objects.get(name="baseVert").element is None \
-            and LaboremRobotBase.objects.get(name="baseRouge").element is None:
-        top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
-                                              robot_base1__value=None, robot_base1__unit=None,
-                                              robot_base2__value=None, robot_base2__unit=None).order_by('id').first()
+        r_v_1 = LaboremRobotBase.objects.get(name="baseVert").element.value
+        r_u_1 = LaboremRobotBase.objects.get(name="baseVert").element.unit
+        r_v_2 = LaboremRobotBase.objects.get(name="baseRouge").element.value
+        r_u_2 = LaboremRobotBase.objects.get(name="baseRouge").element.unit
     else:
-        return HttpResponse(status=404)
+        r_v_1 = None
+        r_u_1 = None
+        r_v_2 = None
+        r_u_2 = None
+    top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
+                                          robot_base1__value=r_v_1,
+                                          robot_base1__unit=r_u_1,
+                                          robot_base2__value=r_v_2,
+                                          robot_base2__unit=r_u_2).order_by('id').first()
+
     if top10qa is None:
         return HttpResponse(status=404)
     if top10qa.question1:
@@ -410,8 +418,10 @@ def validate_top10_answers(request):
     if top10qa.question4:
         note += calculate_note(level_plug, top10qa.score4, top10qa.answer4, request.POST['value4'])
     score = LaboremTOP10Score(user=request.user, TOP10QA=top10qa, note=note,
-                              answer1=request.POST['value1'], answer2=request.POST['value2'],
-                              answer3=request.POST['value3'], answer4=request.POST['value4'])
+                              answer1=request.POST['value1'] if 'value1' in request.POST else None,
+                              answer2=request.POST['value2'] if 'value2' in request.POST else None,
+                              answer3=request.POST['value3'] if 'value3' in request.POST else None,
+                              answer4=request.POST['value4'] if 'value4' in request.POST else None)
     score.save()
     if top10qa.question1:
         note_max += calculate_note(level_plug, top10qa.score1, top10qa.answer1, top10qa.answer1)

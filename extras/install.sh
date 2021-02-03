@@ -1,13 +1,48 @@
 #!/bin/bash
+# wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh
+# sudo chmod a+x install.sh
+# sudo ./install.sh
 
 function validate_url(){
-  if [[ `wget -S --spider $1  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
+  if [[ `wget_proxy -S --spider $1  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
     return 0
   else
     return 1
   fi
 }
 
+function add_line_if_not_exist(){
+  grep -qF "$1" "$2"  || echo "$1" | sudo tee --append "$2"
+}
+
+function pip3_proxy(){
+  if [[ "answer_proxy" == "n" ]]; then
+    sudo pip3 $*
+  else
+    echo "pip3 using" $answer_proxy "for" $*
+    sudo pip3 --proxy=$answer_proxy $*
+  fi
+}
+
+function apt_proxy(){
+  if [[ "answer_proxy" == "n" ]]; then
+    sudo apt-get $*
+  else
+    echo "apt using" $answer_proxy "for" $*
+    sudo "http_proxy=$answer_proxy" apt-get $*
+  fi
+}
+
+function wget_proxy(){
+  if [[ "answer_proxy" == "n" ]]; then
+    sudo wget $*
+  else
+    echo "wget using" $answer_proxy "for" $*
+    sudo http_proxy=$answer_proxy https_proxy=$answer_proxy ftp_proxy=$answer_proxy wget $*
+  fi
+}
+
+read -p "Use proxy ? [http://proxy:port or n]: " answer_proxy
 read -p "Update only (don't create db, user, copy services, settings and urls...) ? [y/n]: " answer_update
 read -p "Install PyScada clavay fork ? [y/n]: " answer_pyscada
 read -p "Install PyScada-Laborem ? [y/n]: " answer_laborem
@@ -20,57 +55,57 @@ if [[ "$answer_laborem" == "y" ]]; then
   read -p "Install mjpeg-streamer ? [y/n]: " answer_mjpeg
   read -p "Install PiCamera ? [y/n]: " answer_picamera
 else
-  answer_cas = "n"
-  answer_mjpeg = "n"
-  answer_picamera = "n"
+  answer_cas="n"
+  answer_mjpeg="n"
+  answer_picamera="n"
 fi
 
 echo "Stopping PyScada"
 sudo systemctl stop pyscada gunicorn gunicorn.socket
 echo "PyScada stopped"
 
-sudo apt-get update
-sudo apt-get -y upgrade
-sudo apt-get -y install mariadb-server python3-mysqldb
-sudo apt-get install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx libffi-dev
-sudo apt-get install -y libatlas-base-dev
-sudo apt-get install -y libopenjp2-7
-sudo pip3 install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvisa-py
+apt_proxy update
+apt_proxy -y upgrade
+apt_proxy -y install mariadb-server python3-mysqldb
+apt_proxy install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx libffi-dev
+apt_proxy install -y libatlas-base-dev
+apt_proxy install -y libopenjp2-7
+pip3_proxy install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvisa-py
 
 if [[ "$answer_pyscada" == "y" ]]; then
-  sudo pip3 install --upgrade https://github.com/clavay/PyScada/tarball/master
+  pip3_proxy install --upgrade https://github.com/clavay/PyScada/tarball/master
 else
-  sudo pip3 install --upgrade https://github.com/trombastic/PyScada/tarball/master
+  pip3_proxy install --upgrade https://github.com/trombastic/PyScada/tarball/master
 fi
 
-sudo apt-get -y install owfs
-sudo pip3 install pyownet
-sudo pip3 install smbus-cffi
-sudo pip3 install psutil
-sudo pip3 install pyusb gpiozero
+apt_proxy -y install owfs
+pip3_proxy install pyownet
+pip3_proxy install smbus-cffi
+pip3_proxy install psutil
+pip3_proxy install pyusb gpiozero
 
 if [[ "$answer_laborem" == "y" ]]; then
-  sudo pip3 install --upgrade https://github.com/clavay/PyScada-Laborem/tarball/master
+  pip3_proxy install --upgrade https://github.com/clavay/PyScada-Laborem/tarball/master
 fi
 if [[ "$answer_gpio" == "y" ]]; then
-  sudo pip3 install --upgrade https://github.com/clavay/PyScada-GPIO/tarball/master
+  pip3_proxy install --upgrade https://github.com/clavay/PyScada-GPIO/tarball/master
 fi
 if [[ "$answer_scripting" == "y" ]]; then
-  sudo pip3 install --upgrade https://github.com/clavay/PyScada-Scripting/tarball/master
+  pip3_proxy install --upgrade https://github.com/clavay/PyScada-Scripting/tarball/master
 fi
 if [[ "$answer_serial" == "y" ]]; then
-  sudo pip3 install --upgrade https://github.com/clavay/PyScada-Serial/tarball/master
+  pip3_proxy install --upgrade https://github.com/clavay/PyScada-Serial/tarball/master
 fi
 if [[ "$answer_webservice" == "y" ]]; then
-  sudo pip3 install --upgrade https://github.com/clavay/PyScada-WebService/tarball/master
+  pip3_proxy install --upgrade https://github.com/clavay/PyScada-WebService/tarball/master
 fi
-sudo pip3 install --upgrade mysqlclient
+pip3_proxy install --upgrade mysqlclient
 
 #CAS
 if [[ "$answer_cas" == "y" ]]; then
-  sudo apt-get -y install libxml2-dev libxslt-dev python-dev
-  sudo pip3 install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
-  sudo pip3 install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
+  apt_proxy -y install libxml2-dev libxslt-dev python-dev
+  pip3_proxy install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
+  pip3_proxy install --upgrade https://github.com/clavay/python-cas/tarball/clavay-proxy
 fi
 
 if [[ "$answer_update" == "n" ]]; then
@@ -84,8 +119,10 @@ if [[ "$answer_update" == "n" ]]; then
   sudo chmod a+w /var/log
 
   #Add rights for usb, i2c and serial
-  echo 'SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pyscada"' | sudo tee -a /etc/udev/rules.d/10-usb.rules
-  echo 'KERNEL=="ttyS[0-9]", GROUP="dialout", MODE="0777"' | sudo tee -a /etc/udev/rules.d/10-usb.rules
+  #echo 'SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pyscada"' | sudo tee -a /etc/udev/rules.d/10-usb.rules
+  #echo 'KERNEL=="ttyS[0-9]", GROUP="dialout", MODE="0777"' | sudo tee -a /etc/udev/rules.d/10-usb.rules
+  add_line_if_not_exist 'SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pyscada"' /etc/udev/rules.d/10-usb.rules
+  add_line_if_not_exist 'KERNEL=="ttyS[0-9]", GROUP="dialout", MODE="0777"' /etc/udev/rules.d/10-usb.rules
   sudo usermod -a -G pyscada www-data
   sudo usermod -a -G dialout pyscada
   sudo adduser pyscada i2c
@@ -97,8 +134,8 @@ if [[ "$answer_mjpeg" == "y" ]]; then
   cd ~
   url='https://github.com/jacksonliam/mjpg-streamer/archive/master.zip'
   if `validate_url $url >/dev/null`; then
-      wget $url
-      sudo apt-get -y install cmake libjpeg62-turbo-dev
+      wget_proxy $url
+      apt_proxy -y install cmake libjpeg62-turbo-dev
       unzip master.zip
       rm master.zip
       cd mjpg-streamer-master/mjpg-streamer-experimental/
@@ -107,15 +144,16 @@ if [[ "$answer_mjpeg" == "y" ]]; then
       cd ../..
       sudo rm -r mjpg-streamer-master
       sudo usermod -a -G video pyscada
-      sudo wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/service/systemd/laborem_camera.service -O /etc/systemd/system/laborem_camera.service
+      wget_proxy https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/service/systemd/laborem_camera.service -O /etc/systemd/system/laborem_camera.service
       sudo systemctl enable laborem_camera
       sudo systemctl restart laborem_camera;
   else echo $url "does not exist"; exit 1; fi
 fi
 
 if [[ "$answer_picamera" == "y" ]]; then
-  sudo pip3 install --upgrade picamera
-  echo 'SUBSYSTEM=="vchiq",MODE="0666", GROUP="pyscada"' | sudo tee -a /etc/udev/rules.d/99-camera.rules
+  pip3_proxy install --upgrade picamera
+  #echo 'SUBSYSTEM=="vchiq",MODE="0666", GROUP="pyscada"' | sudo tee -a /etc/udev/rules.d/99-camera.rules
+  add_line_if_not_exist 'SUBSYSTEM=="vchiq",MODE="0666", GROUP="pyscada"' /etc/udev/rules.d/99-camera.rules
 fi
 
 if [[ "$answer_update" == "n" ]]; then
@@ -133,13 +171,13 @@ if [[ "$answer_update" == "n" ]]; then
   printf -v var2 '%q' "$var1"
   url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/settings.py'
   if `validate_url $url >/dev/null`; then
-      sudo wget $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py
+      wget_proxy $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py
   else echo $url "does not exist"; exit 1; fi
   sudo sed -i "s/SECRET_KEY.*/$var2/g" settings.py
 
   url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/urls.py'
   if `validate_url $url >/dev/null`; then
-      sudo wget $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py
+      wget_proxy $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py
   else echo $url "does not exist"; exit 1; fi
 fi
 
@@ -163,7 +201,7 @@ if [[ "$answer_update" == "n" ]]; then
   # Nginx
   url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/nginx_sample.conf'
   if `validate_url $url >/dev/null`; then
-      sudo wget $url -O /etc/nginx/sites-available/pyscada.conf
+      wget_proxy $url -O /etc/nginx/sites-available/pyscada.conf
       sudo ln -s /etc/nginx/sites-available/pyscada.conf /etc/nginx/sites-enabled/
       sudo rm /etc/nginx/sites-enabled/default
       sudo mkdir /etc/nginx/ssl
@@ -176,17 +214,17 @@ if [[ "$answer_update" == "n" ]]; then
   # Gunicorn and PyScada
   url='https://raw.githubusercontent.com/trombastic/PyScada/master/extras/service/systemd/gunicorn.socket'
   if `validate_url $url >/dev/null`; then
-      sudo wget $url -O /etc/systemd/system/gunicorn.socket
+      wget_proxy $url -O /etc/systemd/system/gunicorn.socket
   else echo $url "does not exist"; exit 1; fi
 
   url='https://raw.githubusercontent.com/trombastic/PyScada/master/extras/service/systemd/gunicorn.service'
   if `validate_url $url >/dev/null`; then
-      sudo wget $url -O /etc/systemd/system/gunicorn.service
+      wget_proxy $url -O /etc/systemd/system/gunicorn.service
   else echo $url "does not exist"; exit 1; fi
 
   url='https://raw.githubusercontent.com/clavay/PyScada/master/extras/service/systemd/pyscada_daemon.service'
   if `validate_url $url >/dev/null`; then
-      sudo wget $url -O /etc/systemd/system/pyscada.service
+      wget_proxy $url -O /etc/systemd/system/pyscada.service
   else echo $url "does not exist"; exit 1; fi
 fi
 

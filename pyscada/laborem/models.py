@@ -165,10 +165,16 @@ class LaboremMotherboardDevice(WidgetContentModel):
         io_config = self.MotherboardIOConfig
         if io_config.pin5 is not None and io_config.pin5.gpio_variable is not None:
             io_config.pin5.gpio_variable.refresh_from_db()
-            if int(RecordedData.objects.last_element(variable=io_config.pin5.gpio_variable, time_min=0).value()) != \
-                    int(value):
+            last_element = RecordedData.objects.last_element(variable=io_config.pin5.gpio_variable, time_min=0)
+            if last_element is not None and int(last_element.value()) != int(value):
                 logger.debug("Switching relay to " + str(int(value)))
                 cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(),
+                                      user=None)
+                cwt.save()
+                return True
+            elif last_element is None:
+                logger.debug("No last relay config, switching relay to 1")
+                cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=1, start=time.time(),
                                       user=None)
                 cwt.save()
                 return True
@@ -233,6 +239,23 @@ class LaboremMotherboardDevice(WidgetContentModel):
             cwt = DeviceWriteTask(variable_id=io_config.pin4.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
                                   start=time.time(), user=None)
             cwt.save()
+
+        logger.debug(plug)
+        logger.debug(self._get_selected_plug_key())
+        while plug is not None:
+            if self._get_selected_plug_key() is not None and int(plug) == int(self._get_selected_plug_key()):
+                break
+            logger.debug("plug !=")
+            time.sleep(0.1)
+
+        logger.debug(sub_plug)
+        logger.debug(self._get_selected_sub_plug())
+        while sub_plug is not None:
+            if self._get_selected_sub_plug() is not None and int(sub_plug) == int(self._get_selected_sub_plug()):
+                break
+            logger.debug("sub plug !=")
+            time.sleep(0.1)
+
         return True
 
     def visible(self):
@@ -241,6 +264,15 @@ class LaboremMotherboardDevice(WidgetContentModel):
     def get_selected_plug(self):
         plug = None
         sub_plug = None
+        try:
+            plug = self._get_selected_plug(str(self._get_selected_plug_key()))
+            sub_plug = self._get_selected_sub_plug(plug)
+        except AttributeError as e:
+            pass
+        return plug, sub_plug
+
+    def _get_selected_plug_key(self):
+        plug = None
         try:
             io_config = self.MotherboardIOConfig
             io_config.pin1.gpio_variable.refresh_from_db()
@@ -252,8 +284,16 @@ class LaboremMotherboardDevice(WidgetContentModel):
             pin3 = int(RecordedData.objects.last_element(variable=io_config.pin3.gpio_variable, time_min=0).value())
             pin4 = int(RecordedData.objects.last_element(variable=io_config.pin4.gpio_variable, time_min=0).value())
             plug = 1 + (2**0) * pin1 + (2**1) * pin2 + (2**2) * pin3 + (2**3) * pin4
-            plug = self._get_selected_plug(str(plug))
+        except AttributeError as e:
+            pass
+        return plug
 
+    def _get_selected_sub_plug(self, plug=None):
+        if plug is None:
+            plug = self._get_selected_plug(str(self._get_selected_plug_key()))
+        sub_plug = None
+        try:
+            io_config = self.MotherboardIOConfig
             io_config.switch1.gpio_variable.refresh_from_db()
             io_config.switch2.gpio_variable.refresh_from_db()
             io_config.switch3.gpio_variable.refresh_from_db()
@@ -269,7 +309,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
                 sub_plug = None
         except AttributeError as e:
             pass
-        return plug, sub_plug
+        return sub_plug
 
     def _get_selected_plug(self, plug=None):
         if plug == '1':

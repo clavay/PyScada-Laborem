@@ -31,6 +31,7 @@ function reload_top10_ranking() {
         },
         error: function(data) {
             add_notification('rank top10 failed',3);
+            setTimeout(function() {reload_top10_ranking()}, 15000);
         }
     });
 };
@@ -82,6 +83,7 @@ function redirect_to_page(page_name) {
         if (!$('.list-dut-item.active .badge.robot').length || !$('.list-dut-item.active').length) { window.location.href = "#plugs";}
     }else if (experiences.indexOf(page_name) >= 0) {
         if (!$('.list-dut-item.active').length) {
+            add_notification("Sélectionnez un circuit", 3)
             window.location.href = "#plugs";
             return 1;
         }else {
@@ -94,6 +96,7 @@ function redirect_to_page(page_name) {
                     }
                 })
                 if (base_empty === 'yes') {
+                    add_notification("Sélectionnez les éléments du robot", 3)
                     window.location.href = "#plugs";
                     return 1;
                 }
@@ -107,30 +110,34 @@ function redirect_to_page(page_name) {
 function reset_page(page_name) {
     if (redirect_to_page(page_name)) { return;};
     if (page_name === "start") {
+        $(".dropdown-TOP10QA").hide();
         $(".camera").show()
         $(".dropdown-WaitingList").show()
         $(".summary.side-menu").show()
         $(".user_stop_btn").hide()
         $('#ViewerModal').modal('hide');
-        reset_selected_plug();
+        //reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
         $("#tooltip").hide();
-        $('.dropdown-robot').hide();
+        //$('.dropdown-robot').hide();
     }else if (page_name === "plugs") {
+        $(".dropdown-TOP10QA").hide();
         $(".user_stop_btn").hide()
-        reset_selected_plug();
+        //reset_selected_plug();
         reset_selected_expe();
         get_experience_list();
         $("#tooltip").hide();
-        $('.dropdown-robot').hide();
+        //$('.dropdown-robot').hide();
     }else if (page_name === "preconf" || page_name === "robot") {
+        $(".dropdown-TOP10QA").hide();
         $(".user_stop_btn").hide()
         change_plug_selected_motherboard();
         reset_selected_expe();
         get_experience_list();
         $("#tooltip").hide();
     }else if (experiences.indexOf(page_name) >= 0) {
+        $(".dropdown-TOP10QA").show();
         $(".user_stop_btn").show()
         $(".user_stop_btn").removeClass("disabled")
         $(".user_stop_btn").html("Arrêter")
@@ -139,6 +146,7 @@ function reset_page(page_name) {
         change_bases();
         move_robot();
     }else if (page_name === "viewer") {
+        $(".dropdown-TOP10QA").hide();
         $(".dropdown-WaitingList").show()
         $(".summary.side-menu").show()
         $(".camera").show()
@@ -146,12 +154,14 @@ function reset_page(page_name) {
         update_plots(false);
         $('#ViewerModal').modal('show');
     }else if (page_name === "waiting") {
+        $(".dropdown-TOP10QA").hide();
         $(".dropdown-WaitingList").show()
         $(".summary.side-menu").hide()
         $('#ViewerModal').modal('hide');
         $(".user_stop_btn").hide()
         $(".camera").hide()
     }else if (page_name === "disconnect" || page_name === "loading" ) {
+        $(".dropdown-TOP10QA").hide();
         $('#ViewerModal').modal('hide');
         $(".camera").hide()
         $(".user_stop_btn").hide()
@@ -174,7 +184,7 @@ function move_robot() {
         success: function (data) {
             if (typeof data['message_laborem'] != 'undefined' && typeof data['message_laborem']['message'] != 'undefined' && typeof data['message_laborem']['timestamp'] != 'undefined' && window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "loading" && window.location.hash.substr(1) != "disconnect") {
                 if (data['message_laborem']['timestamp'] > $(".message-laborem").attr('data-timestamp')) {
-                    if (data['message_laborem']['message'] != '') {
+                    if (data['message_laborem']['message'] != '' && $(".sub-page#plugs .list-dut-item.active .badge.robot").length) {
                         $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem']['message'];
                         $(".user_stop_btn").hide()
                         $('#MessageModal').modal('show');
@@ -223,6 +233,7 @@ function reset_selected_expe() {
 };
 
 function change_plug_selected_motherboard() {
+    loading_top10_qa();
     plug_active = $(".sub-page#plugs .list-dut-item.active");
     mb_id = plug_active.data('motherboard-id');
     plug_id = plug_active.data('plug-id');
@@ -233,11 +244,13 @@ function change_plug_selected_motherboard() {
         $.ajax({
             type: 'post',
             url: ROOT_URL+'form/write_plug/',
+            timeout: 10000,
             data: {mb_id:mb_id, plug_id:plug_id, sub_plug_id:sub_plug_id},
             success: function (data) {
-
+                refresh_top10_qa();
             },
             error: function(data) {
+                refresh_top10_qa();
                 add_notification('write plug selected failed',3);
             }
         });
@@ -250,6 +263,23 @@ function change_bases() {
         change_base_selected_element($(dropdown_item_active[i]).parents(".dropdown-robot")[0].id, dropdown_item_active[i].id)
     }
 }
+
+function loading_top10_qa() {
+    questions = $(".dropdown-TOP10QA .input-group-addon-label-left");
+    input_group = $(".dropdown-TOP10QA .input-group-addon-label-right");
+    form_control = $(".dropdown-TOP10QA .form-control");
+    ok_button = $(".dropdown-TOP10QA .write-task-form-top10-set");
+    $(".dropdown-TOP10QA").removeClass("hidden");
+    $(".dropdown-TOP10QA").show();
+    for (i=0;i<questions.length;i++) {
+        ok_button[0].disabled = true
+        ok_button[0].innerHTML = "Chargement en cours ..."
+        questions[i].classList.remove("hidden");
+        questions[i].className += " hidden";
+        input_group[i].classList.remove("hidden");
+        input_group[i].className += " hidden";
+    }
+};
 
 function refresh_top10_qa() {
     questions = $(".dropdown-TOP10QA .input-group-addon-label-left");
@@ -348,6 +378,7 @@ function remove_id() {
             data: {connection_id:CONNECTION_ID},
             success: function (data) {
                 window.location.href = "#loading";
+                REFRESH_RATE = 2500;
                 check_time(true);
                 check_users(true);
             },
@@ -371,9 +402,12 @@ function check_time(one_shot=false) {
             if (data['connection_accepted'] == "1") {
                 CONNECTION_ACCEPTED = 1;
                 if (window.location.hash.substr(1) == "disconnect") {
+                    REFRESH_RATE = 2500;
                     window.location.href = "#loading";
+                    check_users(true);
                 }else if (window.location.hash.substr(1) == "loading") {
-                    check_users()
+                    REFRESH_RATE = 2500;
+                    check_users(true);
                 }
                 if (!one_shot) {setTimeout(function() {check_time()}, data['setTimeout']);}
             }else {
@@ -575,7 +609,7 @@ function check_users(one_shot=false) {
             //Message Modal part
             if (typeof data['message_laborem'] != 'undefined' && typeof data['message_laborem']['message'] != 'undefined' && typeof data['message_laborem']['timestamp'] != 'undefined' && window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "loading" && window.location.hash.substr(1) != "disconnect") {
                 if (data['message_laborem']['timestamp'] > $(".message-laborem").attr('data-timestamp')) {
-                    if (data['message_laborem']['message'] != '') {
+                    if (data['message_laborem']['message'] != '' && ($(".sub-page#plugs .list-dut-item.active .badge.robot").length || data['message_laborem']['message'].indexOf("robot") == -1)) {
                         $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem']['message'];
                         $('#MessageModal').modal('show');
                         $(".message-laborem").attr('data-timestamp', data['message_laborem']['timestamp'])
@@ -781,8 +815,9 @@ $( document ).ready(function() {
         query_previous_and_next_btn()
 
         // Check if we are on a page that need to show the TOP10QAs
-        refresh_top10_qa();
-        setTimeout(function() {refresh_top10_qa()}, 3000);
+        //refresh_top10_qa();
+        //setTimeout(function() {refresh_top10_qa()}, 3000);
+        //setTimeout(function() {refresh_top10_qa()}, 5000);
 
         // Reset the pages settings to force the user to interact with
         reset_page(window.location.hash.substr(1));
@@ -927,4 +962,8 @@ $( document ).ready(function() {
         };
         reload_top10_ranking();
     });
+
+    // Add onload for camera when the page is loaded to avoid uncaught error with the $(this)
+    $(".camera-img").attr('onload', "$(this).attr('data-loaded', 1)");
+
 });

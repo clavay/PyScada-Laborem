@@ -111,57 +111,10 @@ def script(self):
             if self.instruments.inst_robot is not None:
                 logger.debug("Putting on Elements...")
                 # Move the robot
-                for base in LaboremRobotBase.objects.all():
-                    if base.requested_element is not None and base.element is not None and \
-                            base.requested_element != base.element and \
-                            base.requested_element.value == base.element.value and \
-                            base.requested_element.unit == base.element.unit:
-                        logger.debug("replace element with is brother" + str(base.requested_element.__str__()))
-                        for other_base in LaboremRobotBase.objects.all():
-                            if other_base.pk != base.pk:
-                                if base.requested_element == other_base.element:
-                                    if other_base.requested_element == base.element:
-                                        other_base.change_requested_element(other_base.element.id)
-                                    self.write_variable_property("LABOREM", "message_laborem",
-                                                                 "Certains éléments du robot sont déjà en place...",
-                                                                 value_class='string', timestamp=now())
-                                    sleep(2)
-                                    break
-                        self.write_variable_property("LABOREM", "message_laborem",
-                                                     "Certains éléments du robot sont déjà en place...",
-                                                     value_class='string', timestamp=now())
-                        base.change_requested_element(base.element.id)
-                        sleep(2)
-                    if base.requested_element is not None:
-                        if base.requested_element.active == base.pk:
-                            logger.debug("Element yet placed" + str(base.requested_element.__str__()))
-                            # Element yet placed
-                            continue
-                        elif base.requested_element.active != 0:
-                            logger.debug("Element yet placed in other base" + str(base.requested_element.__str__()))
-                            self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
-                                                         value_class='string', timestamp=now())
-                            # Element in other base - remove actual element
-                            self.instruments.inst_robot.device.take_and_drop(base, base.element)
-                            base.element.change_active_to_base_id(0)
-                            # then take element from other base
-                            self.instruments.inst_robot.device.take_and_drop(
-                                LaboremRobotBase.objects.get(id=base.requested_element.active), base)
-                            LaboremRobotBase.objects.get(id=base.requested_element.active).change_selected_element(None)
-                            base.requested_element.change_active_to_base_id(base.pk)
-                            base.change_selected_element(base.requested_element.pk)
-                        else:
-                            logger.debug("Element to be placed" + str(base.requested_element.__str__()))
-                            self.write_variable_property("LABOREM", "message_laborem", "Le robot place les éléments...",
-                                                         value_class='string', timestamp=now())
-                            # Element not in base
-                            self.instruments.inst_robot.device.take_and_drop(base, base.element)
-                            base.element.change_active_to_base_id(0)
-                            self.instruments.inst_robot.device.take_and_drop(base.requested_element, base)
-                            base.requested_element.change_active_to_base_id(base.pk)
-                            base.change_selected_element(base.requested_element.pk)
-                    else:
-                        logger.debug("Base : %s  - requested element : %s" % (base, base.requested_element))
+                bases_dict = dict()
+                for i in LaboremRobotBase.objects.all():
+                    bases_dict[i.id] = i
+                self.instruments.inst_robot.device.set_bases(bases_dict)
             self.write_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON', value=0,
                                          value_class='BOOLEAN')
             self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())

@@ -5,6 +5,7 @@ from pyscada.visa.devices import GenericDevice
 import numpy as np
 import time
 import logging
+from pyvisa.errors import VisaIOError
 
 logger = logging.getLogger(__name__)
 # -*- coding: utf-8 -*-
@@ -63,6 +64,28 @@ class Tergane45(object):
         self.pince(0)
         self.pince(1)
 
+    def query(self, write_sring):
+        self.instr.timeout = 50
+        i = 0
+        while i < 10:
+            while True:
+                try:
+                    self.instr.read_raw()
+                except VisaIOError:
+                    break
+            self.instr.write(write_sring)
+            r1 = str(self.instr.read_raw())
+            r2 = str(self.instr.read_raw())
+            if write_sring in r1 and 'MESSAGE CORRECT' in r2:
+                logger.debug(write_sring + ' ok')
+                break
+            else:
+                i += 1
+                logger.debug(write_sring + ' nok')
+                logger.debug(r1)
+                logger.debug(r2)
+                time.sleep(1)
+
     def take_and_drop(self, to_take, to_drop):
         r_to_take = to_take.R
         theta_to_take = to_take.theta
@@ -73,11 +96,11 @@ class Tergane45(object):
         self._take_and_drop(r_to_take, theta_to_take, z_to_take, r_to_drop, theta_to_drop, z_to_drop)
 
     def _take_and_drop(self, r1, theta1, z1, r2, theta2, z2):
-        # init
+        # on ouvre la pince
         self.pince(1)
         # prepare_epaule_coude_poignet(20, 5, 3)
         # rotation_base(0)
-        # on place le bras pour prendre
+        # on place le bras pour prendre en l'air
         self.prepare_epaule_coude_poignet(r1, z1, 1)
         # on tourne le bras pour prendre
         self.rotation_base(theta1)
@@ -121,7 +144,7 @@ class Tergane45(object):
 
         correction_angle_poignet = 28.5
 
-        temps_entre_cmd = 0.1
+        temps_entre_cmd = 0.05
 
         xp = r
         yp = z - l_base + l_poignet
@@ -136,35 +159,51 @@ class Tergane45(object):
         theta_poignet = -np.pi / 2 - np.pi / 4 - theta_epaule - theta_coude
 
         if mouvement == 1:
-            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
-                                                                angle_max_poignet), 'F'))
+            self.query(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+                                                           angle_max_poignet), 'F'))
             time.sleep(temps_entre_cmd)
-            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
+            self.query(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
             time.sleep(temps_entre_cmd)
-            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+            self.query(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
             time.sleep(1)
         elif mouvement == 2:
-            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+            self.query(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
             time.sleep(temps_entre_cmd)
-            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
+            self.query(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
             time.sleep(temps_entre_cmd)
-            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
-                                                                angle_max_poignet), 'F'))
+            self.query(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+                                                           angle_max_poignet), 'F'))
             time.sleep(1)
         elif mouvement == 3:
-            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
+            self.query(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
             time.sleep(temps_entre_cmd)
-            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+            self.query(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
             time.sleep(temps_entre_cmd)
-            self.instr.write(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
-                                                                angle_max_poignet), 'F'))
+            self.query(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+                                                           angle_max_poignet), 'F'))
+            time.sleep(1)
+        elif mouvement == 4:
+            self.query(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
+            time.sleep(temps_entre_cmd)
+            self.query(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+                                                           angle_max_poignet), 'F'))
+            time.sleep(temps_entre_cmd)
+            self.query(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+            time.sleep(1)
+        elif mouvement == 5:
+            self.query(self.format_ascii(self.deg_to_ascii(theta_epaule * 180 / np.pi, angle_max_epaule), 'E'))
+            time.sleep(temps_entre_cmd)
+            self.query(self.format_ascii(self.deg_to_ascii(theta_poignet * 180 / np.pi + correction_angle_poignet,
+                                                           angle_max_poignet), 'F'))
+            time.sleep(temps_entre_cmd)
+            self.query(self.format_ascii(self.deg_to_ascii(theta_coude * 180 / np.pi, angle_max_coude), 'C'))
             time.sleep(1)
         return True
 
     def rotation_base(self, theta):
         angle_max_base = 130
         theta_base = theta * np.pi / 180
-        self.instr.write(self.format_ascii(self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base), 'B'))
+        self.query(self.format_ascii(self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base), 'B'))
         try:
             theta = 0.0 - self.old_theta
             tempo = abs(sum([self.deg_to_ascii(theta_base * 180 / np.pi, angle_max_base), theta])) * 5000 / 1024
@@ -177,12 +216,121 @@ class Tergane45(object):
 
     def pince(self, openclose):
         if openclose == 0:
-            self.instr.write('P+511')
+            self.query('P+511')
             time.sleep(1.7)
         else:
-            self.instr.write('P-511')
+            self.query('P-511')
             time.sleep(1.7)
         return True
+
+    def set_bases(self, bases_dict):
+        logger.debug("set_bases")
+        temp_actions = dict()
+
+        # Find moves between bases
+        for i in bases_dict.keys():
+            if bases_dict[i].requested_element is None:
+                continue
+            if bases_dict[i].requested_element == bases_dict[i].element:
+                # Nothing to move
+                logger.debug("Nothing to do")
+                pass
+            elif bases_dict[i].element is not None and \
+                    bases_dict[i].requested_element.value == bases_dict[i].element.value and \
+                    bases_dict[i].requested_element.unit == bases_dict[i].element.unit:
+                # Replace requested element by is brother
+                logger.debug("Replace req element by element")
+                bases_dict[i].requested_element = bases_dict[i].element
+                bases_dict[i].save()
+                while bases_dict[i].requested_element != bases_dict[i].element:
+                    bases_dict[i].refresh_from_db()
+                    logger.debug("Waiting to replace req element by element...")
+                    time.sleep(1)
+            else:
+                # Find requested element in other base
+                for j in bases_dict.keys():
+                    if i != j and bases_dict[j].element is not None \
+                            and bases_dict[i].requested_element == bases_dict[j].element:
+                        # Req element in other base
+                        logger.debug("Req element in other base")
+                        temp_actions[i] = bases_dict[j]
+                        break
+                if i not in temp_actions.keys():
+                    logger.debug("Not in other base")
+                    temp_actions[i] = None
+
+        # Break loops
+        for i in bases_dict.keys():
+            stop = False
+            k = i
+            count = 0
+            while not stop and len(temp_actions):
+                if k in temp_actions.keys():
+                    count += 1
+                    if temp_actions[k] == bases_dict[i]:
+                        if count == 1:
+                            logger.debug("Something is strange !")
+                            stop = True
+                        else:
+                            logger.debug("Temp actions is a loop")
+                            stop = True
+                            temp_actions[k] = None
+                    elif temp_actions[k] is not None and temp_actions[k].id in temp_actions.keys():
+                        k = temp_actions[k].id
+                        logger.debug("Replacing k")
+                    else:
+                        logger.debug("Temp actions is not a loop")
+                        stop = True
+                else:
+                    stop = True
+
+        while len(temp_actions):
+            actions = dict()
+            logger.debug("loop temp actions")
+            for i in temp_actions.keys():
+                if i not in temp_actions.values():
+                    logger.debug("First action")
+                    actions[i] = temp_actions[i]
+
+            for i in actions.keys():
+                del temp_actions[i]
+                self.unset_base(bases_dict[i])
+                if actions[i] is None:
+                    self.set_base(bases_dict[i])
+                else:
+                    self.move_base(actions[i], bases_dict[i])
+
+    def unset_base(self, base):
+        logger.debug("unset_base")
+        if base.element is not None:
+            self.take_and_drop(base, base.element)
+            base.element = None
+            base.save()
+            while base.element is not None:
+                base.refresh_from_db()
+                time.sleep(1)
+
+    def set_base(self, base):
+        logger.debug("set_base")
+        self.take_and_drop(base.requested_element, base)
+        base.element = base.requested_element
+        base.save()
+        while base.element != base.requested_element:
+            base.refresh_from_db()
+            time.sleep(1)
+
+    def move_base(self, base1, base2):
+        logger.debug("move_base")
+        self.take_and_drop(base1, base2)
+        e = base1.element
+        base2.element = e
+        base2.save()
+        base1.element = None
+        base1.save()
+        while base2.element != e or base1.element is not None:
+            base2.refresh_from_db()
+            base1.refresh_from_db()
+            time.sleep(1)
 
 
 class Handler(GenericDevice):
