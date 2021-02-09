@@ -60,9 +60,9 @@ class Tergane45(object):
         # on baisse le bras
         self.prepare_epaule_coude_poignet(17, 1, 2)
         # on ouvre la pince
-        self.pince(1)
-        self.pince(0)
-        self.pince(1)
+        # self.pince(1)
+        # self.pince(0)
+        # self.pince(1)
 
     def query(self, write_sring):
         self.instr.timeout = 50

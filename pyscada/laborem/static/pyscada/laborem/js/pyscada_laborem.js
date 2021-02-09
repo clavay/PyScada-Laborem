@@ -122,6 +122,7 @@ function reset_page(page_name) {
         $("#tooltip").hide();
         //$('.dropdown-robot').hide();
     }else if (page_name === "plugs") {
+        $(".dropdown-TOP10QA").removeClass("hidden");
         $(".dropdown-TOP10QA").hide();
         $(".user_stop_btn").hide()
         //reset_selected_plug();
@@ -269,8 +270,8 @@ function loading_top10_qa() {
     input_group = $(".dropdown-TOP10QA .input-group-addon-label-right");
     form_control = $(".dropdown-TOP10QA .form-control");
     ok_button = $(".dropdown-TOP10QA .write-task-form-top10-set");
-    $(".dropdown-TOP10QA").removeClass("hidden");
-    $(".dropdown-TOP10QA").show();
+    //$(".dropdown-TOP10QA").removeClass("hidden");
+    //$(".dropdown-TOP10QA").show();
     for (i=0;i<questions.length;i++) {
         ok_button[0].disabled = true
         ok_button[0].innerHTML = "Chargement en cours ..."
@@ -340,7 +341,15 @@ function refresh_top10_qa() {
                         }
                     }
                 }else {
-                    $(".dropdown-TOP10QA").hide();
+                    for (i=0;i<questions.length;i++) {
+                        questions[i].classList.remove("hidden");
+                        questions[i].className += " hidden";
+                        input_group[i].classList.remove("hidden");
+                        input_group[i].className += " hidden";
+                    }
+                    ok_button[0].disabled = true
+                    ok_button[0].innerHTML = "Pas de questions."
+                    //$(".dropdown-TOP10QA").hide();
                 }
             },
             error: function(data) {
@@ -655,7 +664,7 @@ function check_users(one_shot=false) {
             }
             if (typeof data['plug']!= 'undefined' && data['plug']!= '') {
                 if (typeof data['plug']['name'] != 'undefined' && data['plug']['name'] != '') {
-                    summary += "<li>Dernier montage selectionnê : <ul><li>" + data['plug']['name'] + "</li>"
+                    summary += "<li>Dernier montage selectionné : <ul><li>" + data['plug']['name'] + "</li>"
                 }
                 if (typeof data['plug']['robot'] != 'undefined' && data['plug']['robot'] != '') {
                     if (data['plug']['robot'] == 'true') {
@@ -966,4 +975,7 @@ $( document ).ready(function() {
     // Add onload for camera when the page is loaded to avoid uncaught error with the $(this)
     $(".camera-img").attr('onload', "$(this).attr('data-loaded', 1)");
 
+    // Hide some buttons
+    $(".bootstrap-switch-id-AutoUpdateButton").hide();
+    $('#ReadAllTask').hide();
 });

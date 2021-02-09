@@ -185,8 +185,6 @@ class LaboremMotherboardDevice(WidgetContentModel):
             return False
 
     def change_selected_plug(self, plug, sub_plug=None):
-        # self.plug = self.plug_choices[plug][0]
-        # self.save()
 
         plug_device = self._get_selected_plug(str(plug))
         if plug_device is None:
@@ -206,54 +204,60 @@ class LaboremMotherboardDevice(WidgetContentModel):
             io_config.switch3 = None
             io_config.switch4 = None
 
+        cwts = []
+
         if io_config.switch1 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.switch1.gpio_variable.pk, value=plug_device.switch1_value,
                                   start=time.time(), user=None)
-            cwt.save()
+            cwts.append(cwt)
         if io_config.switch2 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.switch2.gpio_variable.pk, value=plug_device.switch2_value,
                                   start=time.time(), user=None)
-            cwt.save()
+            cwts.append(cwt)
         if io_config.switch3 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.switch3.gpio_variable.pk, value=plug_device.switch3_value,
                                   start=time.time(), user=None)
-            cwt.save()
+            cwts.append(cwt)
         if io_config.switch4 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.switch4.gpio_variable.pk, value=plug_device.switch4_value,
                                   start=time.time(), user=None)
-            cwt.save()
+            cwts.append(cwt)
 
         if io_config.pin1 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.pin1.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[3:4]),
                                   start=time.time(), user=None)
-            cwt.save()
+            cwts.append(cwt)
         if io_config.pin2 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.pin2.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[2:3]),
                                   start=time.time(), user=None)
-            cwt.save()
+            cwts.append(cwt)
         if io_config.pin3 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.pin3.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[1:2]),
                                   start=time.time(), user=None)
-            cwt.save()
+            cwts.append(cwt)
         if io_config.pin4 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.pin4.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
                                   start=time.time(), user=None)
-            cwt.save()
+            cwts.append(cwt)
 
-        logger.debug(plug)
-        logger.debug(self._get_selected_plug_key())
-        while plug is not None:
+        DeviceWriteTask.objects.bulk_create(cwts)
+
+        logger.debug("demandé " + str(plug))
+        count = 0
+        while plug is not None and count < 50:
             if self._get_selected_plug_key() is not None and int(plug) == int(self._get_selected_plug_key()):
                 break
-            logger.debug("plug !=")
+            #logger.debug("plug !=")
+            count += 1
             time.sleep(0.1)
+        logger.debug("ok " + str(self._get_selected_plug_key()))
 
-        logger.debug(sub_plug)
-        logger.debug(self._get_selected_sub_plug())
-        while sub_plug is not None:
+        count = 0
+        while sub_plug is not None and count < 50:
             if self._get_selected_sub_plug() is not None and int(sub_plug) == int(self._get_selected_sub_plug()):
                 break
-            logger.debug("sub plug !=")
+            #logger.debug("sub plug !=")
+            count += 1
             time.sleep(0.1)
 
         return True
@@ -471,6 +475,7 @@ class LaboremTOP10Score(models.Model):
     answer4 = models.CharField(default='', max_length=255, blank=True, null=True)
     note = models.FloatField(default=0)
     active = models.BooleanField(default=True, blank=True)
+    time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return str(self.id)

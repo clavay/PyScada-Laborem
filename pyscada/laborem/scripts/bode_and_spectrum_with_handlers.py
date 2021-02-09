@@ -78,6 +78,8 @@ def script(self):
 
     :return:
     """
+    self.connect_errors = 0
+
     relay = self.read_values_from_db(variable_names=['relay'], current_value_only=True, time_from=time()-10,
                                      time_to=time()).get('relay', True)
     if relay:
@@ -741,39 +743,47 @@ def disconnect_all(self):
 
 def connect_all(self):
 
-    try:
-        self.instruments.inst_mdo.inst.query("*IDN?")
-        self.instruments.inst_afg.inst.query("*IDN?")
-    except Exception as e:
-        logger.debug("VISA query failed : " + str(e))
-        logger.debug('Experiences script starting')
-        self.write_variable_property("LABOREM", "message_laborem", "Laborem is starting. Please Wait...",
-                                     value_class='string', timestamp=now())
-        disconnect_all(self)
-        self.instruments = lambda: None
-        self.instruments.inst_mdo = None
-        self.instruments.inst_afg = None
-        self.instruments.inst_robot = None
-        while self.instruments.inst_mdo is None or self.instruments.inst_mdo.inst is None:
-            self.instruments.inst_mdo = connect_check_visa(self.io_conf.mdo1)
-        while self.instruments.inst_afg is None or self.instruments.inst_afg.inst is None:
-            self.instruments.inst_afg = connect_check_visa(self.io_conf.afg1)
-        while self.instruments.inst_robot is None or self.instruments.inst_robot.inst is None:
-            self.instruments.inst_robot = connect_check_visa(self.io_conf.robot1, False)
-        # while self.instruments.inst_mdo is None or self.instruments.inst_mdo.inst is None:
-            # self.instruments.inst_mdo2 = connect_check_visa(self.io_conf.mdo2)
-        # while self.instruments.inst_mdo is None or self.instruments.inst_mdo.inst is None:
-            # self.instruments.inst_mdo2 = None
-
+    while self.connect_errors < 5:
         try:
-            if self.instruments.inst_robot is not None:
-                self.instruments.inst_robot.device.init()
+            self.instruments.inst_mdo.inst.query("*IDN?")
+            self.instruments.inst_afg.inst.query("*IDN?")
+            self.connect_errors = 0
+            break
+        except Exception as err:
+            self.connect_errors += 1
+            e = err
+            logger.debug("VISA query failed : " + str(e))
 
-        except pyvisa.VisaIOError:
+        if self.connect_errors > 3:
+            logger.debug("VISA query failed : " + str(e))
+            logger.debug('Experiences script starting')
+            self.write_variable_property("LABOREM", "message_laborem", "Laborem is starting. Please Wait...",
+                                         value_class='string', timestamp=now())
+            disconnect_all(self)
+            self.instruments = lambda: None
+            self.instruments.inst_mdo = None
+            self.instruments.inst_afg = None
             self.instruments.inst_robot = None
-        logger.debug('Experiences script started')
+            while self.instruments.inst_mdo is None or self.instruments.inst_mdo.inst is None:
+                self.instruments.inst_mdo = connect_check_visa(self.io_conf.mdo1)
+            while self.instruments.inst_afg is None or self.instruments.inst_afg.inst is None:
+                self.instruments.inst_afg = connect_check_visa(self.io_conf.afg1)
+            while self.instruments.inst_robot is None or self.instruments.inst_robot.inst is None:
+                self.instruments.inst_robot = connect_check_visa(self.io_conf.robot1, False)
+            # while self.instruments.inst_mdo is None or self.instruments.inst_mdo.inst is None:
+                # self.instruments.inst_mdo2 = connect_check_visa(self.io_conf.mdo2)
+            # while self.instruments.inst_mdo is None or self.instruments.inst_mdo.inst is None:
+                # self.instruments.inst_mdo2 = None
 
-        self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
+            try:
+                if self.instruments.inst_robot is not None:
+                    self.instruments.inst_robot.device.init()
+
+            except pyvisa.VisaIOError:
+                self.instruments.inst_robot = None
+            logger.debug('Experiences script started')
+
+            self.write_variable_property("LABOREM", "message_laborem", "", value_class='string', timestamp=now())
 
 
 def connect_check_visa(config, idn=True):
