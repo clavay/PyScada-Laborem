@@ -77,7 +77,7 @@ class Tergane45(object):
             r1 = str(self.instr.read_raw())
             r2 = str(self.instr.read_raw())
             if write_sring in r1 and 'MESSAGE CORRECT' in r2:
-                logger.debug(write_sring + ' ok')
+                #logger.debug(write_sring + ' ok')
                 break
             else:
                 i += 1
@@ -287,10 +287,14 @@ class Tergane45(object):
         while len(temp_actions):
             actions = dict()
             logger.debug("loop temp actions")
+            logger.debug(temp_actions.keys())
+            logger.debug(temp_actions.values())
             for i in temp_actions.keys():
-                if i not in temp_actions.values():
-                    logger.debug("First action")
+                if bases_dict[i] not in temp_actions.values():
+                    logger.debug("First action" + str(i))
                     actions[i] = temp_actions[i]
+                else:
+                    logger.debug("base " + str(i) + ": " + str(bases_dict[i]) + " - in temp action : ")
 
             for i in actions.keys():
                 del temp_actions[i]

@@ -1,5 +1,6 @@
 #!/bin/bash
 # wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh
+# or wget https://s.42l.fr/pyscada
 # sudo chmod a+x install.sh
 # sudo ./install.sh
 

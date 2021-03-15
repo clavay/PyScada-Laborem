@@ -110,6 +110,7 @@ function redirect_to_page(page_name) {
 function reset_page(page_name) {
     if (redirect_to_page(page_name)) { return;};
     if (page_name === "start") {
+        $(".dropdown-TOP10QA").removeClass("hidden");
         $(".dropdown-TOP10QA").hide();
         $(".camera").show()
         $(".dropdown-WaitingList").show()
@@ -131,6 +132,7 @@ function reset_page(page_name) {
         $("#tooltip").hide();
         //$('.dropdown-robot').hide();
     }else if (page_name === "preconf" || page_name === "robot") {
+        $(".dropdown-TOP10QA").removeClass("hidden");
         $(".dropdown-TOP10QA").hide();
         $(".user_stop_btn").hide()
         change_plug_selected_motherboard();
@@ -138,6 +140,7 @@ function reset_page(page_name) {
         get_experience_list();
         $("#tooltip").hide();
     }else if (experiences.indexOf(page_name) >= 0) {
+        $(".dropdown-TOP10QA").removeClass("hidden");
         $(".dropdown-TOP10QA").show();
         $(".user_stop_btn").show()
         $(".user_stop_btn").removeClass("disabled")
@@ -147,6 +150,7 @@ function reset_page(page_name) {
         change_bases();
         move_robot();
     }else if (page_name === "viewer") {
+        $(".dropdown-TOP10QA").removeClass("hidden");
         $(".dropdown-TOP10QA").hide();
         $(".dropdown-WaitingList").show()
         $(".summary.side-menu").show()
@@ -155,6 +159,7 @@ function reset_page(page_name) {
         update_plots(false);
         $('#ViewerModal').modal('show');
     }else if (page_name === "waiting") {
+        $(".dropdown-TOP10QA").removeClass("hidden");
         $(".dropdown-TOP10QA").hide();
         $(".dropdown-WaitingList").show()
         $(".summary.side-menu").hide()
@@ -162,6 +167,7 @@ function reset_page(page_name) {
         $(".user_stop_btn").hide()
         $(".camera").hide()
     }else if (page_name === "disconnect" || page_name === "loading" ) {
+        $(".dropdown-TOP10QA").removeClass("hidden");
         $(".dropdown-TOP10QA").hide();
         $('#ViewerModal').modal('hide');
         $(".camera").hide()
@@ -617,7 +623,7 @@ function check_users(one_shot=false) {
 
             //Message Modal part
             if (typeof data['message_laborem'] != 'undefined' && typeof data['message_laborem']['message'] != 'undefined' && typeof data['message_laborem']['timestamp'] != 'undefined' && window.location.hash.substr(1) != "waiting" && window.location.hash.substr(1) != "loading" && window.location.hash.substr(1) != "disconnect") {
-                if (data['message_laborem']['timestamp'] > $(".message-laborem").attr('data-timestamp')) {
+                if (data['message_laborem']['timestamp'] >= $(".message-laborem").attr('data-timestamp')) {
                     if (data['message_laborem']['message'] != '' && ($(".sub-page#plugs .list-dut-item.active .badge.robot").length || data['message_laborem']['message'].indexOf("robot") == -1)) {
                         $(".message-laborem h2")[0].innerHTML = ' ' + data['message_laborem']['message'];
                         $('#MessageModal').modal('show');
@@ -907,7 +913,7 @@ $( document ).ready(function() {
         $(".img-plug").attr("src",$img);
         //change_plug_selected_motherboard($mb_id, $plug_id, $plug_name)
         query_previous_and_next_btn()
-        change_plug_selected_motherboard();
+        //change_plug_selected_motherboard();
     });
 
     // For the robot : active the selected item in a listbox and disable it in others listboxes

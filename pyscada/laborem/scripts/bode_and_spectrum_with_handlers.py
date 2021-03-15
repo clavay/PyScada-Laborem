@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from pyscada.models import Device, Variable, DeviceProtocol, Unit
+from pyscada.models import Device, Variable, DeviceProtocol, Unit, VariableProperty
 from pyscada.laborem.models import LaboremRobotBase, LaboremMotherboardDevice
 import logging
 import pyvisa
@@ -111,6 +111,11 @@ def script(self):
         put_on_robot = bool(self.read_variable_property(variable_name='LABOREM', property_name='ROBOT_PUT_ON'))
         if put_on_robot:
             if self.instruments.inst_robot is not None:
+                VariableProperty.objects.update_or_create_property(Variable.objects.get(name="LABOREM"),
+                                                                   "message_laborem",
+                                                                   "Le robot place les éléments...",
+                                                                   value_class='string',
+                                                                   timestamp=now())
                 logger.debug("Putting on Elements...")
                 # Move the robot
                 bases_dict = dict()
@@ -278,6 +283,7 @@ def script(self):
             for f in np.geomspace(fmin, fmax, nb_points):
                 if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                    logger.debug("User stop requested")
                     break
                 # Progress bar
                 n += 1
@@ -422,6 +428,7 @@ def script(self):
 
                 if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                    logger.debug("User stop requested")
                 else:
                     self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
                     self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
@@ -591,6 +598,7 @@ def script(self):
 
                 if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                    logger.debug("User stop requested")
                 else:
                     self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
                     self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
@@ -689,6 +697,7 @@ def script(self):
 
                 if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
                     self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+                    logger.debug("User stop requested")
                 else:
                     self.write_values_to_db(data={'Wave_CH1': scaled_wave_ch1_mini, 'timevalues': time_values})
                     self.write_values_to_db(data={'Wave_CH2': scaled_wave_ch2_mini, 'timevalues': time_values})
@@ -714,7 +723,9 @@ def script(self):
             logger.debug("Autoset Oscilloscope done")
 
         # Reset stop button value
-        self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+        if self.read_variable_property(variable_name='LABOREM', property_name='USER_STOP'):
+            self.write_variable_property("LABOREM", "USER_STOP", 0, value_class='BOOLEAN')
+            logger.debug("User stop requested")
 
     else:
         logger.debug("An instrument is None : %s %s" % (self.instruments.inst_afg, self.instruments.inst_mdo))

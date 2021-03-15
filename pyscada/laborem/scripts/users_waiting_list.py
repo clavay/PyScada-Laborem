@@ -76,6 +76,7 @@ def script(self):
         # if no worker take the first viewer by waiting time
         if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="worker").count() == 0:
             if LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").count() > 0:
+                reset_laborem_on_user_or_session_change(self)
                 lu = LaboremUser.objects.filter(laborem_group_input__hmi_group__name="viewer").\
                         order_by("connection_time").first()
                 lu.laborem_group_input = LaboremGroupInputPermission.objects.filter(hmi_group__name="worker").first()
@@ -87,7 +88,6 @@ def script(self):
             else:
                 # Nobody connected, switch off relay
                 LaboremMotherboardDevice.objects.first().relay(0)
-            reset_laborem_on_user_or_session_change(self)
         else:
             # Someone connected, switch on relay
             LaboremMotherboardDevice.objects.first().relay(1)
@@ -133,7 +133,7 @@ def reset_laborem_on_user_or_session_change(self):
     self.write_variable_property("LABOREM", "viewer_start_timeline", 1, value_class="BOOLEAN",
                                  timestamp=now())
     self.write_variable_property("LABOREM", "USER_STOP", 1, value_class="BOOLEAN")
-    self.write_variable_property("LABOREM", "ROBOT_TAKE_OFF", 1, value_class="BOOLEAN")
+    #self.write_variable_property("LABOREM", "ROBOT_TAKE_OFF", 1, value_class="BOOLEAN")
     reset_all_vp_of_a_var(self, "BODE_RUN")
     reset_all_vp_of_a_var(self, "SPECTRE_RUN")
 
