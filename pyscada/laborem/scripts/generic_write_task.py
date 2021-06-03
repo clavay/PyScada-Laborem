@@ -34,7 +34,12 @@ def script(self):
     write your code loop code here, don't change the name of this function
     :return:
     """
+    t_start = time()
+
     # add
+    tasks = []
+    items = []
+
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
                                                variable_property__variable__device__protocol=1)\
             .order_by('variable_property__name'):
@@ -47,13 +52,15 @@ def script(self):
             if vp:
                 task.done = True
                 task.finished = time()
-                task.save()
+                # task.save()
+                tasks.append(task)
                 continue
 
         logger.debug('nothing to do for device write task %d' % task.pk)
         task.failed = True
         task.finished = time()
-        task.save()
+        # task.save()
+        tasks.append(task)
 
     for task in DeviceWriteTask.objects.filter(done=False, start__lte=time(), failed=False,
                                                variable__device__protocol=1).order_by('variable__name'):
@@ -66,11 +73,19 @@ def script(self):
             if tmp_data:
                 task.done = True
                 task.finished = time()
-                task.save()
+                # task.save()
+                tasks.append(task)
                 item = task.variable.create_recorded_data_element()
                 item.date_saved = now()
-                RecordedData.objects.bulk_create([item])
+                # RecordedData.objects.bulk_create([item])
+                items.append(item)
             else:
                 task.failed = True
                 task.finished = time()
-                task.save()
+                # task.save()
+                tasks.append(task)
+
+    DeviceWriteTask.objects.bulk_update(tasks, ['done', 'finished', 'failed'])
+    RecordedData.objects.bulk_create(items)
+    if time() - t_start > 1:
+        logger.debug("generic in : " + str(int(time() - t_start)))

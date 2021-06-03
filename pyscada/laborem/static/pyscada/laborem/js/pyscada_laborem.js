@@ -1,12 +1,12 @@
 /* Javascript library for the PyScada-Laborem web client based on jquery,
 
-version 0.7.5
+version 0.7.6
 
 Copyright (c) 2018 Camille Lavayssière
 Licensed under the GPL.
 
 */
-var version = "0.7.5";
+var version = "0.7.6";
 var CONNECTION_ID = "";
 var USER_TYPE = "";
 var CONNECTION_ACCEPTED = 0;

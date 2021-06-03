@@ -44,19 +44,22 @@ Installation
  - Add pyscada and gpio apps in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
     INSTALLED_APPS = [
         ...
+
         'pyscada.laborem',
+
         'pyscada.gpio',
+
         'pyscada.scripting',
 
     ]
  - Add access to USB devices for pyscada user :
-    Add in /etc/udev/rules.d/10-usb.rules : SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pyscada"
-    sudo usermod -a -G pyscada www-data
+    - Add in /etc/udev/rules.d/10-usb.rules : SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pyscada"
+    - sudo usermod -a -G pyscada www-data
  - Add access to serial devices for pyscada user :
-    Add : KERNEL=="ttyS[0-9]", GROUP="dialout", MODE="0777"
-    sudo usermod -a -G dialout pyscada
+    - Add : KERNEL=="ttyS[0-9]", GROUP="dialout", MODE="0777"
+    - sudo usermod -a -G dialout pyscada
  - Add access to I2C for pyscada user :
-    sudo adduser pyscada i2c
+    - sudo adduser pyscada i2c
 
 To use CAS auth
 ---------------
@@ -68,14 +71,16 @@ To use CAS auth
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
 
    INSTALLED_APPS = [
-    - ...
-    - 'django_cas_ng',
+    ...
+
+    'django_cas_ng',
 
    ]
 
    AUTHENTICATION_BACKENDS = [
-    - 'django.contrib.auth.backends.ModelBackend',
-    - 'django_cas_ng.backends.CASBackend',
+    'django.contrib.auth.backends.ModelBackend',
+
+    'django_cas_ng.backends.CASBackend',
 
    ]
 
@@ -85,10 +90,13 @@ To use CAS auth
 
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
 
-   - import django_cas_ng.views
-   - url(r'^accounts/login$', django_cas_ng.views.LoginView.as_view(), name='cas_ng_login'),
-   - url(r'^accounts/logout$', django_cas_ng.views.LogoutView.as_view(), name='cas_ng_logout'),
-   - url(r'^accounts/callback$', django_cas_ng.views.CallbackView.as_view(), name='cas_ng_proxy_callback'),
+   import django_cas_ng.views
+
+   url(r'^accounts/login$', django_cas_ng.views.LoginView.as_view(), name='cas_ng_login'),
+
+   url(r'^accounts/logout$', django_cas_ng.views.LogoutView.as_view(), name='cas_ng_logout'),
+
+   url(r'^accounts/callback$', django_cas_ng.views.CallbackView.as_view(), name='cas_ng_proxy_callback'),
 
  Behind a proxy for CAS V2 :
   - sudo pip3 install --upgrade https://github.com/clavay/django-cas-ng/tarball/clavay-proxy
@@ -96,14 +104,16 @@ To use CAS auth
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py :
 
    INSTALLED_APPS = [
-    - ...
-    - 'django_cas_ng',
+    ...
+
+    'django_cas_ng',
 
    ]
 
    AUTHENTICATION_BACKENDS = [
-    - 'django.contrib.auth.backends.ModelBackend',
-    - 'django_cas_ng.backends.CASBackend',
+    'django.contrib.auth.backends.ModelBackend',
+
+    'django_cas_ng.backends.CASBackend',
 
    ]
 
@@ -115,10 +125,13 @@ To use CAS auth
 
   - Add in /var/www/pyscada/PyScadaServer/PyScadaServer/urls.py :
 
-   - import django_cas_ng.views
-   - url(r'^accounts/CASlogin/$', django_cas_ng.views.LoginView.as_view(), name='cas_ng_login'),
-   - url(r'^accounts/logout$', django_cas_ng.views.LogoutView.as_view(), name='cas_ng_logout'),
-   - url(r'^accounts/callback$', django_cas_ng.views.CallbackView.as_view(), name='cas_ng_proxy_callback'),
+   import django_cas_ng.views
+
+   url(r'^accounts/CASlogin/$', django_cas_ng.views.LoginView.as_view(), name='cas_ng_login'),
+
+   url(r'^accounts/logout$', django_cas_ng.views.LogoutView.as_view(), name='cas_ng_logout'),
+
+   url(r'^accounts/callback$', django_cas_ng.views.CallbackView.as_view(), name='cas_ng_proxy_callback'),
 
  - sudo /var/www/pyscada/PyScadaServer/manage.py migrate
 

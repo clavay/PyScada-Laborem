@@ -16,17 +16,33 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 
+from pkgutil import iter_modules
+from importlib.util import find_spec
+import pyscada
+
+
+def list_submodules(module):
+    submodules = []
+    for submodule in iter_modules(module.__path__):
+        submodules.append(submodule)
+    return submodules
+
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 ]
 
-try:
-    import pyscada.laborem
-    urlpatterns += [
-        url(r'^', include('pyscada.laborem.urls')),
-    ]
-except ImportError:
-    pass
+
+lsm = list_submodules(pyscada)
+for m in lsm:
+    try:
+        if m.name != 'hmi' and find_spec('pyscada.' + m.name + '.urls'):
+            urlpatterns += [
+                url(r'^', include('pyscada.' + m.name + '.urls')),
+            ]
+    except:
+        pass
+
 
 urlpatterns += [
     url(r'^', include('pyscada.hmi.urls')),

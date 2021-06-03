@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 import pyvisa
+import importlib.util
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -49,37 +50,25 @@ INSTALLED_APPS = [
     'pyscada.smbus',
 ]
 
-try:
-    import pyscada.gpio
+if importlib.util.find_spec('pyscada.gpio') is not None:
     INSTALLED_APPS += [
         'pyscada.gpio',
     ]
-except ImportError:
-    pass
 
-try:
-    import pyscada.scripting
+if importlib.util.find_spec('pyscada.scripting') is not None:
     INSTALLED_APPS += [
         'pyscada.scripting',
     ]
-except ImportError:
-    pass
 
-try:
-    import pyscada.laborem
+if importlib.util.find_spec('pyscada.laborem') is not None:
     INSTALLED_APPS += [
         'pyscada.laborem',
     ]
-except ImportError:
-    pass
 
-try:
-    import django_cas_ng
+if importlib.util.find_spec('django_cas_ng') is not None:
     INSTALLED_APPS += [
         'django_cas_ng',
     ]
-except ImportError:
-    pass
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -96,20 +85,15 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-try:
-    import django_cas_ng
+if importlib.util.find_spec('django_cas_ng') is not None:
     AUTHENTICATION_BACKENDS += [
         'django_cas_ng.backends.CASBackend',
     ]
     CAS_SERVER_URL = 'https://sso.univ-pau.fr/cas/'
     CAS_VERSION = '2'
-    # CAS_EXTRA_LOGIN_KWARGS = {'proxies': {'https': 'http://cache.iutbayonne.univ-pau.fr:3128'}, 'timeout': 5}
+    CAS_EXTRA_LOGIN_KWARGS = {'proxies': {'https': 'http://cache.iutbayonne.univ-pau.fr:3128'}, 'timeout': 5}
 
-    # UNAUTHENTICATED_REDIRECT = '/accounts/choose_login/'
-except ImportError:
-    pass
-
-
+    UNAUTHENTICATED_REDIRECT = '/accounts/choose_login/'
 
 
 ROOT_URLCONF = 'PyScadaServer.urls'

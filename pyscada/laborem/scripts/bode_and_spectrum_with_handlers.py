@@ -78,6 +78,8 @@ def script(self):
 
     :return:
     """
+    t_start = time()
+
     self.connect_errors = 0
 
     relay = self.read_values_from_db(variable_names=['relay'], current_value_only=True, time_from=time()-10,
@@ -732,6 +734,8 @@ def script(self):
         self.write_variable_property("LABOREM", "message_laborem", "An instrument is not connected or not defined",
                                      value_class='string', timestamp=now())
         raise ResourceWarning("An instrument is None : %s %s" % (self.instruments.inst_afg, self.instruments.inst_mdo))
+    if time() - t_start > 1:
+        logger.debug("experiences in : " + str(int(time() - t_start)))
 
 
 def disconnect_all(self):

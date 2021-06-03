@@ -10,6 +10,7 @@ from django.utils.timezone import now, timedelta
 from django.contrib.auth.models import User, Group
 from django.db.models import F, Q
 import logging
+from time import time
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ def script(self):
     write your code loop code here, don't change the name of this function
     :return:
     """
+    t_start = time()
     time_before_remove_group = 30
     working_time = VariableProperty.objects.get_property(Variable.objects.get(
         name="LABOREM"), "working_time").value_int16
@@ -127,6 +129,8 @@ def script(self):
     #             "update user group to the laborem group : %s"
     #             % (t7-t1, round((t2-t1)*100/(t7-t1)), round((t3-t2)*100/(t7-t1)), round((t4-t3)*100/(t7-t1)),
     #                round((t5-t4)*100/(t7-t1)), round((t6-t5)*100/(t7-t1)), round((t7-t6)*100/(t7-t1))))
+    if time() - t_start > 1:
+        logger.debug("user script in : " + str(int(time() - t_start)))
 
 
 def reset_laborem_on_user_or_session_change(self):

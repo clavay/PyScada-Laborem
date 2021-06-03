@@ -5,6 +5,7 @@ from pyscada.models import Device, Unit, Variable, VariableProperty, DeviceWrite
 from pyscada.gpio.models import GPIOVariable
 from pyscada.visa.models import VISADevice
 from pyscada.hmi.models import WidgetContentModel, Page
+from . import PROTOCOL_ID
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -158,6 +159,11 @@ class LaboremMotherboardDevice(WidgetContentModel):
                                             on_delete=models.SET_NULL)
     # TODO : Make the motherboard Config to be restrictive on plug selection
 
+    protocol_id = PROTOCOL_ID
+
+    def parent_device(self):
+        return self.laboremmotherboard_device
+
     def __str__(self):
         return self.laboremmotherboard_device.short_name
 
@@ -184,7 +190,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
             logger.debug('Laborem relay pin not defined !')
             return False
 
-    def change_selected_plug(self, plug, sub_plug=None):
+    def change_selected_plug(self, plug, sub_plug=None, user=None):
 
         plug_device = self._get_selected_plug(str(plug))
         if plug_device is None:
@@ -208,36 +214,36 @@ class LaboremMotherboardDevice(WidgetContentModel):
 
         if io_config.switch1 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.switch1.gpio_variable.pk, value=plug_device.switch1_value,
-                                  start=time.time(), user=None)
+                                  start=time.time(), user=user)
             cwts.append(cwt)
         if io_config.switch2 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.switch2.gpio_variable.pk, value=plug_device.switch2_value,
-                                  start=time.time(), user=None)
+                                  start=time.time(), user=user)
             cwts.append(cwt)
         if io_config.switch3 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.switch3.gpio_variable.pk, value=plug_device.switch3_value,
-                                  start=time.time(), user=None)
+                                  start=time.time(), user=user)
             cwts.append(cwt)
         if io_config.switch4 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.switch4.gpio_variable.pk, value=plug_device.switch4_value,
-                                  start=time.time(), user=None)
+                                  start=time.time(), user=user)
             cwts.append(cwt)
 
         if io_config.pin1 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.pin1.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[3:4]),
-                                  start=time.time(), user=None)
+                                  start=time.time(), user=user)
             cwts.append(cwt)
         if io_config.pin2 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.pin2.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[2:3]),
-                                  start=time.time(), user=None)
+                                  start=time.time(), user=user)
             cwts.append(cwt)
         if io_config.pin3 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.pin3.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[1:2]),
-                                  start=time.time(), user=None)
+                                  start=time.time(), user=user)
             cwts.append(cwt)
         if io_config.pin4 is not None:
             cwt = DeviceWriteTask(variable_id=io_config.pin4.gpio_variable.pk, value=int(bin(plug-1)[2:].zfill(4)[0:1]),
-                                  start=time.time(), user=None)
+                                  start=time.time(), user=user)
             cwts.append(cwt)
 
         DeviceWriteTask.objects.bulk_create(cwts)
@@ -249,7 +255,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
                 break
             #logger.debug("plug !=")
             count += 1
-            time.sleep(0.1)
+            time.sleep(0.5)
         logger.debug("ok " + str(self._get_selected_plug_key()))
 
         count = 0

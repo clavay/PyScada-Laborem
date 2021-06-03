@@ -4,6 +4,8 @@
 # sudo chmod a+x install.sh
 # sudo ./install.sh
 
+# todo : add inputs for mysql root pwd, db name, username, user pwd
+
 function validate_url(){
   if [[ `wget_proxy -S --spider $1  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then
     return 0

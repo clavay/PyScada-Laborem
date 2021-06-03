@@ -83,7 +83,7 @@ def view_laborem(request, link_title):
 
     try:
         v = View.objects.get(link_title=link_title)
-    except View.DoesNotExist or View.MultipleObjectsReturned:
+    except (View.DoesNotExist, View.MultipleObjectsReturned):
         return HttpResponse(status=404)
 
     if GroupDisplayPermission.objects.count() == 0:
@@ -166,7 +166,7 @@ def view_laborem(request, link_title):
 
     try:
         form_top10qa = Form.objects.get(title="TOP10QA")
-    except Form.DoesNotExist or Form.MultipleObjectsReturned:
+    except (Form.DoesNotExist, Form.MultipleObjectsReturned):
         form_top10qa = ""
 
     if LaboremGroupInputPermission.objects.count() == 0:
@@ -218,7 +218,7 @@ def form_write_plug(request):
                                (mb_id, request.user.groups.exclude(name='teacher')))
                 return HttpResponse(status=200)
         if mb is not None:
-            mb.change_selected_plug(plug_id, sub_plug_id)
+            mb.change_selected_plug(plug_id, sub_plug_id, request.user)
             logger.debug("Change selected plug_id %s sub_plug_id %s - user %s - mb_id %s" % (plug_id, sub_plug_id, request.user, mb_id))
             return HttpResponse(status=200)
     return HttpResponse(status=404)
@@ -331,7 +331,7 @@ def query_top10_question(request):
         r_u_1 = None
         r_v_2 = None
         r_u_2 = None
-    top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug,
+    top10qa = LaboremTOP10.objects.filter(page__link_title=page, plug=plug, sub_plug=sub_plug, active=True,
                                           robot_base1__value=r_v_1,
                                           robot_base1__unit=r_u_1,
                                           robot_base2__value=r_v_2,
@@ -345,12 +345,15 @@ def query_top10_question(request):
     data['question2'] = top10qa.question2
     data['question3'] = top10qa.question3
     data['question4'] = top10qa.question4
-    if LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).count() > 0:
-        data['answer1'] = LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).first().answer1
-        data['answer2'] = LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).first().answer2
-        data['answer3'] = LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).first().answer3
-        data['answer4'] = LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa).first().answer4
+    top10qaScore = LaboremTOP10Score.objects.filter(user=request.user, TOP10QA=top10qa, active=True)
+    if len(top10qaScore) > 0:
+        top10qaScoreFirst = top10qaScore.first()
+        data['answer1'] = top10qaScoreFirst.answer1
+        data['answer2'] = top10qaScoreFirst.answer2
+        data['answer3'] = top10qaScoreFirst.answer3
+        data['answer4'] = top10qaScoreFirst.answer4
         data['disable'] = 1
+        logger.debug("top10qa %s already done by %s" % (top10qa, request.user))
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
@@ -478,7 +481,7 @@ def rank_top10(request):
         score_total = 0
         found = False
         for item in LaboremTOP10Score.objects.filter(user=user, active=True).values_list('TOP10QA').distinct():
-            score_total += LaboremTOP10Score.objects.filter(user=user, TOP10QA=item).order_by('id').first().note
+            score_total += LaboremTOP10Score.objects.filter(user=user, TOP10QA=item, active=True).order_by('id').first().note
             found = True
         if found:
             rank = LaboremTOP10Ranking(user=User.objects.get(pk=user[0]), score=score_total)

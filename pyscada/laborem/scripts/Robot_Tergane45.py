@@ -13,19 +13,18 @@ logger = logging.getLogger(__name__)
 
 
 Example::
-    from pyscada.laborem.scripts.Robot_Tergane45 import Tergane45
-    unit = Tergane45()
-    import pyvisa
-    import time
-    visa_backend = '@py'  # use PyVISA-py as backend
-    rm = pyvisa.ResourceManager(visa_backend)
-    inst = rm.open_resource('ASRL/dev/ttyS0::INSTR', baud_rate=9600, data_bits=8, parity=pyvisa.constants.Parity.none,
-        stop_bits=pyvisa.constants.StopBits.one, write_termination='')
-    unit.connect(inst)
-    unit.init()
-    unit.pince(0)
-    time.sleep(1)
-    unit.pince(1)
+from pyscada.laborem.scripts.Robot_Tergane45 import Tergane45
+unit = Tergane45()
+import pyvisa
+import time
+visa_backend = '@py'  # use PyVISA-py as backend
+rm = pyvisa.ResourceManager(visa_backend)
+inst = rm.open_resource('ASRL/dev/serial0::INSTR', baud_rate=9600, data_bits=8, parity=pyvisa.constants.Parity.none, stop_bits=pyvisa.constants.StopBits.one, write_termination='')
+unit.connect(inst)
+unit.init()
+unit.pince(0)
+time.sleep(1)
+unit.pince(1)
 
 """
 __author__ = "Camille Lavayssière"

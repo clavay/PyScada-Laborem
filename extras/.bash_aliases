@@ -1,4 +1,4 @@
-alias plog='tail -fn100 /var/log/pyscada_debug.log'
+alias plog='function _plog(){ if [ $# -eq 1 ]; then tail -fn$1 /var/log/pyscada_debug.log; else tail -fn100 /var/log/pyscada_debug.log;fi };_plog'
 alias ll='ls -lah'
 alias prestart='sudo systemctl restart pyscada'
 alias grestart='sudo systemctl restart gunicorn'
