@@ -1,8 +1,12 @@
 #!/bin/bash
 # wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh
-# or wget https://s.42l.fr/pyscada
+# or wget https://s.42l.fr/pyscada -O install.sh
 # sudo chmod a+x install.sh
 # sudo ./install.sh
+
+version='1.1'
+
+echo "version" $version
 
 # todo : add inputs for mysql root pwd, db name, username, user pwd
 
@@ -19,7 +23,7 @@ function add_line_if_not_exist(){
 }
 
 function pip3_proxy(){
-  if [[ "answer_proxy" == "n" ]]; then
+  if [[ "$answer_proxy" == "n" ]]; then
     sudo pip3 $*
   else
     echo "pip3 using" $answer_proxy "for" $*
@@ -28,7 +32,7 @@ function pip3_proxy(){
 }
 
 function apt_proxy(){
-  if [[ "answer_proxy" == "n" ]]; then
+  if [[ "$answer_proxy" == "n" ]]; then
     sudo apt-get $*
   else
     echo "apt using" $answer_proxy "for" $*
@@ -37,7 +41,7 @@ function apt_proxy(){
 }
 
 function wget_proxy(){
-  if [[ "answer_proxy" == "n" ]]; then
+  if [[ "$answer_proxy" == "n" ]]; then
     sudo wget $*
   else
     echo "wget using" $answer_proxy "for" $*
@@ -53,6 +57,7 @@ read -p "Install PyScada-GPIO ? [y/n]: " answer_gpio
 read -p "Install PyScada-Scripting ? [y/n]: " answer_scripting
 read -p "Install PyScada-Serial ? [y/n]: " answer_serial
 read -p "Install PyScada-WebService ? [y/n]: " answer_webservice
+
 if [[ "$answer_laborem" == "y" ]]; then
   read -p "Install CAS ? [y/n]: " answer_cas
   read -p "Install mjpeg-streamer ? [y/n]: " answer_mjpeg
@@ -78,7 +83,7 @@ pip3_proxy install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvi
 if [[ "$answer_pyscada" == "y" ]]; then
   pip3_proxy install --upgrade https://github.com/clavay/PyScada/tarball/master
 else
-  pip3_proxy install --upgrade https://github.com/trombastic/PyScada/tarball/master
+  pip3_proxy install --upgrade https://github.com/pyscada/PyScada/tarball/master
 fi
 
 apt_proxy -y install owfs
@@ -215,12 +220,12 @@ if [[ "$answer_update" == "n" ]]; then
   else echo $url "does not exist"; exit 1; fi
 
   # Gunicorn and PyScada
-  url='https://raw.githubusercontent.com/trombastic/PyScada/master/extras/service/systemd/gunicorn.socket'
+  url='https://raw.githubusercontent.com/pyscada/PyScada/master/extras/service/systemd/gunicorn.socket'
   if `validate_url $url >/dev/null`; then
       wget_proxy $url -O /etc/systemd/system/gunicorn.socket
   else echo $url "does not exist"; exit 1; fi
 
-  url='https://raw.githubusercontent.com/trombastic/PyScada/master/extras/service/systemd/gunicorn.service'
+  url='https://raw.githubusercontent.com/pyscada/PyScada/master/extras/service/systemd/gunicorn.service'
   if `validate_url $url >/dev/null`; then
       wget_proxy $url -O /etc/systemd/system/gunicorn.service
   else echo $url "does not exist"; exit 1; fi

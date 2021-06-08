@@ -10,3 +10,4 @@ alias pstatic='sudo -u pyscada python3 /var/www/pyscada/PyScadaServer/manage.py 
 alias pshell='sudo -u pyscada python3 /var/www/pyscada/PyScadaServer/manage.py shell'
 alias pmakemigrations='sudo -u pyscada python3 /var/www/pyscada/PyScadaServer/manage.py makemigrations'
 alias pshowmigrations='sudo -u pyscada python3 /var/www/pyscada/PyScadaServer/manage.py showmigrations'
+alias pinit='sudo -u pyscada python3 /var/www/pyscada/PyScadaServer/manage.py pyscada_daemon init'
