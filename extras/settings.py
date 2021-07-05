@@ -15,6 +15,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 import pyvisa
 import importlib.util
+import pkg_resources
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -50,20 +51,14 @@ INSTALLED_APPS = [
     'pyscada.smbus',
 ]
 
-if importlib.util.find_spec('pyscada.gpio') is not None:
-    INSTALLED_APPS += [
-        'pyscada.gpio',
-    ]
-
-if importlib.util.find_spec('pyscada.scripting') is not None:
-    INSTALLED_APPS += [
-        'pyscada.scripting',
-    ]
-
-if importlib.util.find_spec('pyscada.laborem') is not None:
-    INSTALLED_APPS += [
-        'pyscada.laborem',
-    ]
+installed_packages = pkg_resources.working_set
+for i in installed_packages:
+    if 'pyscada-' in str(i):
+        lib = str(i).split(" ")[0].split("-")[1]
+        if importlib.util.find_spec('pyscada.' + str(lib)) is not None:
+            INSTALLED_APPS += [
+                'pyscada.' + str(lib),
+            ]
 
 if importlib.util.find_spec('django_cas_ng') is not None:
     INSTALLED_APPS += [

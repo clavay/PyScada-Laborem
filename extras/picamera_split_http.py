@@ -20,7 +20,8 @@ PAGE="""\
 </body>
 </html>
 """
-#<img src="stream.mjpg" width="640" height="480" />
+# <img src="stream.mjpg" width="640" height="480" />
+
 
 class StreamingOutput(object):
     def __init__(self, im):
@@ -43,6 +44,7 @@ class StreamingOutput(object):
             self.condition.notify_all()
         self.buffer.seek(0)
         return self.buffer.write(buf)
+
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):

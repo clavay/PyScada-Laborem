@@ -1,10 +1,11 @@
 #!/bin/bash
-# wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh
-# or wget https://s.42l.fr/pyscada -O install.sh
-# sudo chmod a+x install.sh
-# sudo ./install.sh
+download_version=$'Download the new version \n
+wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh \n
+or wget https://s.42l.fr/pyscada -O install.sh \n
+sudo chmod a+x install.sh \n
+sudo ./install.sh'
 
-version='1.1'
+version=2
 
 echo "version" $version
 
@@ -50,6 +51,24 @@ function wget_proxy(){
 }
 
 read -p "Use proxy ? [http://proxy:port or n]: " answer_proxy
+
+# Check if the actual version is lower than the remote
+remote_version=$(wget -qO- https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh | sed -n 's/^version=\(.*\)/\1/p')
+echo "remote_version" $remote_version
+
+if ! [[ "$remote_version" =~ ^[0-9]+$ ]]
+then
+  echo "Very old remote version :" $remote_version
+  exit
+elif [ $version -ge $remote_version ] 2>/dev/null
+then
+ echo "Remote version" $remote_version;
+else
+  echo "Old remote version :" $remote_version
+  echo "$download_version"
+  exit
+fi
+
 read -p "Update only (don't create db, user, copy services, settings and urls...) ? [y/n]: " answer_update
 read -p "Install PyScada clavay fork ? [y/n]: " answer_pyscada
 read -p "Install PyScada-Laborem ? [y/n]: " answer_laborem
