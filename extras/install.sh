@@ -1,11 +1,11 @@
 #!/bin/bash
 download_version=$'Download the new version \n
-wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh \n
+wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh -O install.sh \n
 or wget https://s.42l.fr/pyscada -O install.sh \n
 sudo chmod a+x install.sh \n
 sudo ./install.sh'
 
-version=2
+version=3
 
 echo "Local version" $version
 
