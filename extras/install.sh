@@ -7,7 +7,7 @@ sudo ./install.sh'
 
 version=2
 
-echo "version" $version
+echo "Local version" $version
 
 # todo : add inputs for mysql root pwd, db name, username, user pwd
 
@@ -27,7 +27,7 @@ function pip3_proxy(){
   if [[ "$answer_proxy" == "n" ]]; then
     sudo pip3 $*
   else
-    echo "pip3 using" $answer_proxy "for" $*
+    echo "pip3 using" $answer_proxy "for" $* > /dev/tty
     sudo pip3 --proxy=$answer_proxy $*
   fi
 }
@@ -36,16 +36,17 @@ function apt_proxy(){
   if [[ "$answer_proxy" == "n" ]]; then
     sudo apt-get $*
   else
-    echo "apt using" $answer_proxy "for" $*
+    echo "apt using" $answer_proxy "for" $* > /dev/tty
     sudo "http_proxy=$answer_proxy" apt-get $*
   fi
 }
 
 function wget_proxy(){
   if [[ "$answer_proxy" == "n" ]]; then
-    sudo wget $*
+    echo "wget no proxy" $* > /dev/tty
+    sudo wget --no-proxy $*
   else
-    echo "wget using" $answer_proxy "for" $*
+    echo "wget using" $answer_proxy "for" $* > /dev/tty
     sudo http_proxy=$answer_proxy https_proxy=$answer_proxy ftp_proxy=$answer_proxy wget $*
   fi
 }
@@ -53,8 +54,8 @@ function wget_proxy(){
 read -p "Use proxy ? [http://proxy:port or n]: " answer_proxy
 
 # Check if the actual version is lower than the remote
-remote_version=$(wget -qO- https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh | sed -n 's/^version=\(.*\)/\1/p')
-echo "remote_version" $remote_version
+remote_version=$(wget_proxy -qO- https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install.sh | sed -n 's/^version=\(.*\)/\1/p')
+echo "Remote version" $remote_version
 
 if ! [[ "$remote_version" =~ ^[0-9]+$ ]]
 then
@@ -62,9 +63,9 @@ then
   exit
 elif [ $version -ge $remote_version ] 2>/dev/null
 then
- echo "Remote version" $remote_version;
+ echo "Local version check ok";
 else
-  echo "Old remote version :" $remote_version
+  echo "Old local version :" $remote_version
   echo "$download_version"
   exit
 fi
