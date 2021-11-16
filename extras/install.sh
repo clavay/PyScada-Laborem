@@ -32,6 +32,17 @@ function pip3_proxy(){
   fi
 }
 
+function pip3_proxy_not_rust(){
+  if [[ "$answer_proxy" == "n" ]]; then
+    sudo CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 cryptography==3.4.6 --no-cache-dir
+    sudo pip3 $*
+  else
+    echo "pip3 using" $answer_proxy "for" $* > /dev/tty
+    sudo CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 --proxy=$answer_proxy cryptography==3.4.6 --no-cache-dir
+    sudo pip3 --proxy=$answer_proxy $*
+  fi
+}
+
 function apt_proxy(){
   if [[ "$answer_proxy" == "n" ]]; then
     sudo apt-get $*
@@ -101,7 +112,12 @@ apt_proxy install -y libopenjp2-7
 pip3_proxy install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvisa-py
 
 if [[ "$answer_pyscada" == "y" ]]; then
-  pip3_proxy install --upgrade https://github.com/clavay/PyScada/tarball/master
+  if grep -R "Raspberry Pi 3"  "/proc/device-tree/model" ; then
+    echo "Don't install Rust for RPI3"
+    pip3_proxy_not_rust install --upgrade https://github.com/clavay/PyScada/tarball/master
+  else
+    pip3_proxy install --upgrade https://github.com/clavay/PyScada/tarball/master
+  fi
 else
   pip3_proxy install --upgrade https://github.com/pyscada/PyScada/tarball/master
 fi
