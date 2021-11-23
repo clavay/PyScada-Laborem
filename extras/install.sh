@@ -5,7 +5,7 @@ or wget https://s.42l.fr/pyscada -O install.sh \n
 sudo chmod a+x install.sh \n
 sudo ./install.sh'
 
-version=3
+version=3.2
 
 echo "Local version" $version
 
@@ -116,6 +116,7 @@ if [[ "$answer_pyscada" == "y" ]]; then
     echo "Don't install Rust for RPI3"
     pip3_proxy_not_rust install --upgrade https://github.com/clavay/PyScada/tarball/master
   else
+    pip3_proxy install cryptography==3.4.6
     pip3_proxy install --upgrade https://github.com/clavay/PyScada/tarball/master
   fi
 else
