@@ -34,11 +34,11 @@ function pip3_proxy(){
 
 function pip3_proxy_not_rust(){
   if [[ "$answer_proxy" == "n" ]]; then
-    sudo CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 cryptography==3.4.6 --no-cache-dir
+    sudo CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 install cryptography==3.4.6 --no-cache-dir
     sudo pip3 $*
   else
     echo "pip3 using" $answer_proxy "for" $* > /dev/tty
-    sudo CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 --proxy=$answer_proxy cryptography==3.4.6 --no-cache-dir
+    sudo CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 --proxy=$answer_proxy install cryptography==3.4.6 --no-cache-dir
     sudo pip3 --proxy=$answer_proxy $*
   fi
 }
