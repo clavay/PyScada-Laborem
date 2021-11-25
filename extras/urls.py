@@ -43,11 +43,6 @@ for m in lsm:
     except:
         pass
 
-
-urlpatterns += [
-    url(r'^', include('pyscada.hmi.urls')),
-]
-
 try:
     import django_cas_ng.views
     urlpatterns += [
@@ -57,3 +52,8 @@ try:
     ]
 except ImportError:
     pass
+
+
+urlpatterns += [
+    url(r'^', include('pyscada.hmi.urls')),
+]

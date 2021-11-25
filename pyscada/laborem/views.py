@@ -578,7 +578,7 @@ def move_robot(request):
                         data['message_laborem']['message'] = "Le robot place les éléments..."
                         data['message_laborem']['timestamp'] = int(format(now(), 'U')) * 1000
                 cwt = DeviceWriteTask(variable_property_id=key, value=1, start=time.time(), user=request.user)
-                cwt.save()
+                cwt.create_and_notificate(cwt)
                 return HttpResponse(json.dumps(data), content_type='application/json')
     return HttpResponse(status=200)
 

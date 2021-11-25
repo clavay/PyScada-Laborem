@@ -27,12 +27,12 @@ urlpatterns = [
     url(r'^form/get_experience_list/$', views.get_experience_list),
 ]
 
-try:
-    import django_cas_ng.views
-    urlpatterns += [
-        url(r'^accounts/CASlogin/$', django_cas_ng.views.LoginView.as_view(), name='cas_ng_login'),
-        url(r'^accounts/logout$', django_cas_ng.views.LogoutView.as_view(), name='cas_ng_logout'),
-        url(r'^accounts/callback$', django_cas_ng.views.CallbackView.as_view(), name='cas_ng_proxy_callback'),
-    ]
-except ImportError:
-    pass
+#try:
+#    import django_cas_ng.views
+#    urlpatterns += [
+#        url(r'^accounts/CASlogin/$', django_cas_ng.views.LoginView.as_view(), name='cas_ng_login'),
+#        url(r'^accounts/logout$', django_cas_ng.views.LogoutView.as_view(), name='cas_ng_logout'),
+#        url(r'^accounts/callback$', django_cas_ng.views.CallbackView.as_view(), name='cas_ng_proxy_callback'),
+#    ]
+#except ImportError:
+#    pass

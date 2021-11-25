@@ -49,7 +49,17 @@ INSTALLED_APPS = [
     'pyscada.export',
     'pyscada.onewire',
     'pyscada.smbus',
+    'channels',
 ]
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 installed_packages = pkg_resources.working_set
 for i in installed_packages:
@@ -75,7 +85,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -89,7 +98,6 @@ if importlib.util.find_spec('django_cas_ng') is not None:
     CAS_EXTRA_LOGIN_KWARGS = {'proxies': {'https': 'http://cache.iutbayonne.univ-pau.fr:3128'}, 'timeout': 5}
 
     UNAUTHENTICATED_REDIRECT = '/accounts/choose_login/'
-
 
 ROOT_URLCONF = 'PyScadaServer.urls'
 
@@ -192,11 +200,11 @@ PYSCADA_META = {
 }
 
 # export properties
-
 PYSCADA_EXPORT = {
     'file_prefix': 'PREFIX_',
     'output_folder': '~/measurement_data_dumps',
 }
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

@@ -176,13 +176,13 @@ class LaboremMotherboardDevice(WidgetContentModel):
                 logger.debug("Switching relay to " + str(int(value)))
                 cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=value, start=time.time(),
                                       user=None)
-                cwt.save()
+                cwt.create_and_notificate(cwt)
                 return True
             elif last_element is None:
                 logger.debug("No last relay config, switching relay to 1")
                 cwt = DeviceWriteTask(variable_id=io_config.pin5.gpio_variable.pk, value=1, start=time.time(),
                                       user=None)
-                cwt.save()
+                cwt.create_and_notificate(cwt)
                 return True
             else:
                 return False
@@ -246,7 +246,7 @@ class LaboremMotherboardDevice(WidgetContentModel):
                                   start=time.time(), user=user)
             cwts.append(cwt)
 
-        DeviceWriteTask.objects.bulk_create(cwts)
+        DeviceWriteTask.create_and_notificate(cwts)
 
         logger.debug("demandé " + str(plug))
         count = 0

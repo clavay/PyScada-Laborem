@@ -138,7 +138,6 @@ To use CAS auth
 To add a USB camera
 -------------------
 
-
  Install mjpg-streamer :
      - Edit /etc/nginx/sites-available/pyscada.conf and add before "location /" :
          location /camera/ {
@@ -161,7 +160,6 @@ To add a USB camera
 To add a PiCamera
 -------------------
 
-
  Install picamera : sudo apt-get install python3-picamera
      - Edit /etc/nginx/sites-available/pyscada.conf and add before "location /" :
          location /picamera/ {
@@ -176,6 +174,30 @@ To add a PiCamera
 
 To use less the SD card on a Raspberry Pi
 -----------------------------------------
+
+- Using Log2ram :
+    - echo "deb http://packages.azlux.fr/debian/ buster main" | sudo tee /etc/apt/sources.list.d/azlux.list
+    - wget -qO - https://azlux.fr/repo.gpg.key | sudo apt-key add -
+    - sudo apt update
+    - sudo apt install log2ram rsync
+    - sudo nano /etc/log2ram.conf
+     - Put a size bigger than : du -sh /var/log and than the db size
+     - Example : 500
+     - Set RSYNC too true
+     - set : PATH_DISK="/var/log;/var/mysql"
+    - Stop pyscada, gunicorn and mysql, move the DB :
+     - sudo systemctl stop pyscada gunicorn gunicorn.socket
+     - sudo systemctl stop mysql
+     - sudo rsync -a /var/lib/mysql /var/mysql
+     - sudo chown mysql:mysql /var/mysql/
+     - sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
+     - set : datadir = /var/mysql/mysql
+     - sudo nano /etc/systemd/system/mysqld.service
+     - add : After=log2ram.service
+    - sudo reboot
+
+
+ - OLD VERSION
 
  - You will loose everything in /tmp, /var/tmp, /var/log after each reboot !
  - Move /tamp, /var/tmp and /var/log to memory :
