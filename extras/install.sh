@@ -88,6 +88,7 @@ read -p "Install PyScada-GPIO ? [y/n]: " answer_gpio
 read -p "Install PyScada-Scripting ? [y/n]: " answer_scripting
 read -p "Install PyScada-Serial ? [y/n]: " answer_serial
 read -p "Install PyScada-WebService ? [y/n]: " answer_webservice
+read -p "Install PyScada-BACnet ? [y/n]: " answer_bacnet
 
 if [[ "$answer_laborem" == "y" ]]; then
   read -p "Install CAS ? [y/n]: " answer_cas
@@ -143,6 +144,9 @@ if [[ "$answer_serial" == "y" ]]; then
 fi
 if [[ "$answer_webservice" == "y" ]]; then
   pip3_proxy install --upgrade https://github.com/clavay/PyScada-WebService/tarball/master
+fi
+if [[ "$answer_bacnet" == "y" ]]; then
+  pip3_proxy install --upgrade https://github.com/clavay/PyScada-BACnet/tarball/master
 fi
 apt_proxy install -y libmariadb-dev
 pip3_proxy install --upgrade mysqlclient

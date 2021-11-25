@@ -1,7 +1,6 @@
 #!/bin/bash
 download_version=$'Download the new version \n
 wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/install_various.sh -O install_various.sh \n
-or wget https://s.42l.fr/pyscada -O install_various.sh \n
 sudo chmod a+x install_various.sh \n
 sudo ./install_various.sh'
 
@@ -77,6 +76,7 @@ read -p "Install PyScada-GPIO ? [y/n]: " answer_gpio
 read -p "Install PyScada-Scripting ? [y/n]: " answer_scripting
 read -p "Install PyScada-Serial ? [y/n]: " answer_serial
 read -p "Install PyScada-WebService ? [y/n]: " answer_webservice
+read -p "Install PyScada-BACnet ? [y/n]: " answer_bacnet
 
 port_start=8081
 read -e -i "$port_start" -p "Port start : " input
@@ -135,6 +135,9 @@ if [[ "$answer_serial" == "y" ]]; then
 fi
 if [[ "$answer_webservice" == "y" ]]; then
   pip3_proxy install --upgrade https://github.com/clavay/PyScada-WebService/tarball/master
+fi
+if [[ "$answer_bacnet" == "y" ]]; then
+  pip3_proxy install --upgrade https://github.com/clavay/PyScada-BACnet/tarball/master
 fi
 apt_proxy install -y libmariadb-dev
 pip3_proxy install --upgrade mysqlclient
