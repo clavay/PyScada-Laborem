@@ -5,7 +5,7 @@ or wget https://s.42l.fr/pyscada -O install_various.sh \n
 sudo chmod a+x install_various.sh \n
 sudo ./install_various.sh'
 
-version=3.1
+version=4
 
 echo "Local version" $version
 
