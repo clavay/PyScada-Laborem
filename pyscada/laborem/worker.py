@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 
 from pyscada.utils.scheduler import SingleDeviceDAQProcessWorker
+from pyscada.laborem import PROTOCOL_ID
 
 from pyscada.laborem.models import LaboremMotherboardDevice, LaboremGroupInputPermission
 from pyscada.models import Variable, VariableProperty
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class Process(SingleDeviceDAQProcessWorker):
-    device_filter = dict(laboremmotherboarddevice__isnull=False)
+    device_filter = dict(laboremmotherboarddevice__isnull=False, protocol_id=PROTOCOL_ID)
     bp_label = 'pyscada.laborem-%s'
 
     def __init__(self, dt=5, **kwargs):
