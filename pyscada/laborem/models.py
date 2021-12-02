@@ -162,7 +162,10 @@ class LaboremMotherboardDevice(WidgetContentModel):
     protocol_id = PROTOCOL_ID
 
     def parent_device(self):
-        return self.laboremmotherboard_device
+        try:
+            return self.laboremmotherboard_device
+        except:
+            return None
 
     def __str__(self):
         return self.laboremmotherboard_device.short_name
