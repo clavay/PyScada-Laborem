@@ -1,5 +1,5 @@
 alias plog='function _plog(){ if [ $# -eq 1 ]; then tail -fn$1 /var/log/pyscada_debug.log; else tail -fn100 /var/log/pyscada_debug.log;fi };_plog'
-alias syslog='function _syslog(){ if [ $# -eq 1 ]; then tail -fn$1 /var/log/syslog; else tail -fn100 /var/log/syslog;fi };_syslog'
+alias syslog='function _syslog(){ if [ $# -eq 1 ]; then sudo tail -fn$1 /var/log/syslog; else sudo tail -fn100 /var/log/syslog;fi };_syslog'
 alias ll='ls -lah'
 
 alias prestart='function _prestart(){ if [ $# -eq 1 ]; then sudo systemctl restart pyscada_$1; else full_path=$( pwd ); cd /etc/systemd/system/; for i in `sudo ls pyscada*`; do $( sudo systemctl restart $i >/dev/null & ) ; done; cd $full_path;fi };_prestart'
@@ -14,6 +14,8 @@ alias pstatus='function _pstatus(){ if [ $# -eq 1 ]; then sudo systemctl status 
 alias gstatus='function _gstatus(){ if [ $# -eq 1 ]; then sudo systemctl status gunicorn_$1.service; else full_path=$( pwd ); cd /etc/systemd/system/; for i in `sudo ls gunicorn*service`; do $( sudo systemctl status $i >/dev/null & ) ; done; cd $full_path;fi };_gstatus'
 alias pgstatus='function _pgstatus(){ if [ $# -eq 1 ]; then gstatus $1; pstatus $1; else pstatus; gstatus; fi };_pgstatus'
 
+alias psettings='function _psettings(){ if [ $# -eq 1 ]; then sudo -u pyscada nano /var/www/pyscada/PyScadaServer_$1/PyScadaServer_$1/settings.py; else full_path=$( pwd ); cd /var/www/pyscada/; for i in `sudo ls -d PyScadaServer*`; do echo $i; cmd="sudo -u pyscada nano /var/www/pyscada/$i/$i/settings.py"; $cmd ; done; cd $full_path;fi };_psettings'
+alias purls='function _purls(){ if [ $# -eq 1 ]; then sudo -u pyscada nano /var/www/pyscada/PyScadaServer_$1/PyScadaServer_$1/urls.py; else full_path=$( pwd ); cd /var/www/pyscada/; for i in `sudo ls -d PyScadaServer*`; do echo $i; cmd="sudo -u pyscada nano /var/www/pyscada/$i/$i/urls.py"; $cmd ; done; cd $full_path;fi };_purls'
 alias pstatic='function _pstatic(){ if [ $# -eq 1 ]; then sudo -u pyscada python3 /var/www/pyscada/PyScadaServer_$1/manage.py collectstatic --no-input; else full_path=$( pwd ); cd /var/www/pyscada/; for i in `sudo ls -d PyScadaServer*`; do echo $i; cmd="sudo -u pyscada /usr/bin/python3 /var/www/pyscada/$i/manage.py collectstatic --no-input"; $cmd ; done; cd $full_path;fi };_pstatic'
 alias pshell='function _pshell(){ if [ $# -eq 1 ]; then sudo -u pyscada python3 /var/www/pyscada/PyScadaServer_$1/manage.py shell; fi };_pshell'
 alias pmakemigrations='function _pmakemigrations(){ if [ $# -eq 1 ]; then sudo python3 /var/www/pyscada/PyScadaServer_$1/manage.py makemigrations; else full_path=$( pwd ); cd /var/www/pyscada/; for i in `sudo ls -d PyScadaServer*`; do echo $i; cmd="sudo /usr/bin/python3 /var/www/pyscada/$i/manage.py makemigrations"; $cmd ; done; cd $full_path;fi };_pmakemigrations'

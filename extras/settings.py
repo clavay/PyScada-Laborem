@@ -49,17 +49,7 @@ INSTALLED_APPS = [
     'pyscada.export',
     'pyscada.onewire',
     'pyscada.smbus',
-    'channels',
 ]
-
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-    },
-}
 
 installed_packages = pkg_resources.working_set
 for i in installed_packages:
@@ -70,10 +60,19 @@ for i in installed_packages:
                 'pyscada.' + str(lib),
             ]
 
-if importlib.util.find_spec('django_cas_ng') is not None:
+if importlib.util.find_spec('channels') is not None:
     INSTALLED_APPS += [
-        'django_cas_ng',
+        'channels',
     ]
+
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [('127.0.0.1', 6379)],
+            },
+        },
+    }
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -90,6 +89,9 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 if importlib.util.find_spec('django_cas_ng') is not None:
+    INSTALLED_APPS += [
+        'django_cas_ng',
+    ]
     AUTHENTICATION_BACKENDS += [
         'django_cas_ng.backends.CASBackend',
     ]

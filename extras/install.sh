@@ -5,7 +5,7 @@ or wget https://s.42l.fr/pyscada -O install.sh \n
 sudo chmod a+x install.sh \n
 sudo ./install.sh'
 
-version=4
+version=5
 
 echo "Local version" $version
 
@@ -89,6 +89,7 @@ read -p "Install PyScada-Scripting ? [y/n]: " answer_scripting
 read -p "Install PyScada-Serial ? [y/n]: " answer_serial
 read -p "Install PyScada-WebService ? [y/n]: " answer_webservice
 read -p "Install PyScada-BACnet ? [y/n]: " answer_bacnet
+read -p "Install channels and redis ? [y/n]: " answer_channels
 
 if [[ "$answer_laborem" == "y" ]]; then
   read -p "Install CAS ? [y/n]: " answer_cas
@@ -113,13 +114,7 @@ apt_proxy install -y libopenjp2-7
 pip3_proxy install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvisa-py
 
 if [[ "$answer_pyscada" == "y" ]]; then
-  if grep -R "Raspberry Pi 3"  "/proc/device-tree/model" ; then
-    echo "Don't install Rust for RPI3"
-    pip3_proxy_not_rust install --upgrade https://github.com/clavay/PyScada/tarball/master
-  else
-    pip3_proxy install cryptography==3.4.6
-    pip3_proxy install --upgrade https://github.com/clavay/PyScada/tarball/master
-  fi
+  pip3_proxy install --upgrade https://github.com/clavay/PyScada/tarball/master
 else
   pip3_proxy install --upgrade https://github.com/pyscada/PyScada/tarball/master
 fi
@@ -148,6 +143,17 @@ fi
 if [[ "$answer_bacnet" == "y" ]]; then
   pip3_proxy install --upgrade https://github.com/clavay/PyScada-BACnet/tarball/master
 fi
+if [[ "$answer_channels" == "y" ]]; then
+  apt_proxy -y install redis-server
+  if grep -R "Raspberry Pi 3"  "/proc/device-tree/model" ; then
+    echo "Don't install Rust for RPI3"
+    pip3_proxy_not_rust install --upgrade channels channels-redis asgiref
+  else
+    #pip3_proxy install cryptography==3.4.6
+    pip3_proxy install --upgrade channels channels-redis asgiref
+  fi
+fi
+
 apt_proxy install -y libmariadb-dev
 pip3_proxy install --upgrade mysqlclient
 
@@ -176,7 +182,9 @@ if [[ "$answer_update" == "n" ]]; then
   sudo usermod -a -G pyscada www-data
   sudo usermod -a -G dialout pyscada
   sudo adduser pyscada i2c
-  sudo adduser pyscada gpio
+  if [[ "$answer_gpio" == "y" ]]; then
+    sudo adduser pyscada gpio
+  fi
 fi
 
 #Mjpeg-streamer

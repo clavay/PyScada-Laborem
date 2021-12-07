@@ -4,7 +4,7 @@ wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/inst
 sudo chmod a+x install_various.sh \n
 sudo ./install_various.sh'
 
-version=4
+version=5
 
 echo "Local version" $version
 
@@ -77,6 +77,7 @@ read -p "Install PyScada-Scripting ? [y/n]: " answer_scripting
 read -p "Install PyScada-Serial ? [y/n]: " answer_serial
 read -p "Install PyScada-WebService ? [y/n]: " answer_webservice
 read -p "Install PyScada-BACnet ? [y/n]: " answer_bacnet
+read -p "Install channels and redis ? [y/n]: " answer_channels
 
 port_start=8081
 read -e -i "$port_start" -p "Port start : " input
@@ -139,6 +140,17 @@ fi
 if [[ "$answer_bacnet" == "y" ]]; then
   pip3_proxy install --upgrade https://github.com/clavay/PyScada-BACnet/tarball/master
 fi
+if [[ "$answer_channels" == "y" ]]; then
+  apt_proxy -y install redis-server
+  if grep -R "Raspberry Pi 3"  "/proc/device-tree/model" ; then
+    echo "Don't install Rust for RPI3"
+    pip3_proxy_not_rust install --upgrade channels channels-redis asgiref
+  else
+    #pip3_proxy install cryptography==3.4.6
+    pip3_proxy install --upgrade channels channels-redis asgiref
+  fi
+fi
+
 apt_proxy install -y libmariadb-dev
 pip3_proxy install --upgrade mysqlclient
 
@@ -167,7 +179,9 @@ if [[ "$answer_update" == "n" ]]; then
   sudo usermod -a -G pyscada www-data
   sudo usermod -a -G dialout pyscada
   sudo adduser pyscada i2c
-  sudo adduser pyscada gpio
+  if [[ "$answer_gpio" == "y" ]]; then
+    sudo adduser pyscada gpio
+  fi
 fi
 
 #Mjpeg-streamer
