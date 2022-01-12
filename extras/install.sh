@@ -5,7 +5,7 @@ or wget https://s.42l.fr/pyscada -O install.sh \n
 sudo chmod a+x install.sh \n
 sudo ./install.sh'
 
-version=5
+version=6
 
 echo "Local version" $version
 
@@ -74,12 +74,15 @@ then
   exit
 elif [ $version -ge $remote_version ] 2>/dev/null
 then
- echo "Local version check ok";
+ echo "Version check ok";
 else
   echo "Old local version :" $remote_version
   echo "$download_version"
   exit
 fi
+
+echo 'Some python3 packages installed:'
+echo "$(pip3 list | grep -i -E 'pyscada|channels|asgiref')"
 
 read -p "Update only (don't create db, user, copy services, settings and urls...) ? [y/n]: " answer_update
 read -p "Install PyScada clavay fork ? [y/n]: " answer_pyscada
@@ -150,7 +153,7 @@ if [[ "$answer_channels" == "y" ]]; then
     pip3_proxy_not_rust install --upgrade channels channels-redis asgiref
   else
     #pip3_proxy install cryptography==3.4.6
-    pip3_proxy install --upgrade channels channels-redis asgiref
+    pip3_proxy install --upgrade cryptography==3.4.6 channels channels-redis asgiref
   fi
 fi
 
