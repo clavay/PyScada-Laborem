@@ -5,7 +5,7 @@ or wget https://s.42l.fr/pyscada -O install.sh \n
 sudo chmod a+x install.sh \n
 sudo ./install.sh'
 
-version=6
+version=7
 
 echo "Local version" $version
 
@@ -81,6 +81,7 @@ else
   exit
 fi
 
+apt_proxy install -y python3-pip
 echo 'Some python3 packages installed:'
 echo "$(pip3 list | grep -i -E 'pyscada|channels|asgiref')"
 
@@ -111,7 +112,7 @@ echo "PyScada stopped"
 apt_proxy update
 apt_proxy -y upgrade
 apt_proxy -y install mariadb-server python3-mysqldb
-apt_proxy install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx libffi-dev
+apt_proxy install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx libffi-dev zlib1g-dev libjpeg-dev
 apt_proxy install -y libatlas-base-dev
 apt_proxy install -y libopenjp2-7
 pip3_proxy install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvisa-py

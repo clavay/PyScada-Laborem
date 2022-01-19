@@ -249,7 +249,8 @@ class LaboremMotherboardDevice(WidgetContentModel):
                                   start=time.time(), user=user)
             cwts.append(cwt)
 
-        DeviceWriteTask.create_and_notificate(cwts)
+        if len(cwts):
+            cwts[0].create_and_notificate(cwts)
 
         logger.debug("demandé " + str(plug))
         count = 0
