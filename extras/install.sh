@@ -95,6 +95,14 @@ read -p "Install PyScada-WebService ? [y/n]: " answer_webservice
 read -p "Install PyScada-BACnet ? [y/n]: " answer_bacnet
 read -p "Install channels and redis ? [y/n]: " answer_channels
 
+if [[ "$answer_update" == "n" ]]; then
+  read -p "DB name ? [PyScada_db]: " answer_db_name
+fi
+if [[ "$answer_db_name" == "" ]]; then
+  answer_db_name="PyScada_db"
+fi
+echo $answer_db_name
+
 if [[ "$answer_laborem" == "y" ]]; then
   read -p "Install CAS ? [y/n]: " answer_cas
   read -p "Install mjpeg-streamer ? [y/n]: " answer_mjpeg
@@ -221,7 +229,7 @@ fi
 if [[ "$answer_update" == "n" ]]; then
 
   #create DB
-  sudo mysql -uroot -p -e "CREATE DATABASE PyScada_db CHARACTER SET utf8;GRANT ALL PRIVILEGES ON PyScada_db.* TO 'PyScada-user'@'localhost' IDENTIFIED BY 'PyScada-user-password';"
+  sudo mysql -e "CREATE DATABASE ${answer_db_name} CHARACTER SET utf8;GRANT ALL PRIVILEGES ON ${answer_db_name}.* TO 'PyScada-user'@'localhost' IDENTIFIED BY 'PyScada-user-password';"
 
   cd /var/www/pyscada/
   sudo -u pyscada django-admin startproject PyScadaServer
@@ -236,6 +244,7 @@ if [[ "$answer_update" == "n" ]]; then
       wget_proxy $url -O /var/www/pyscada/PyScadaServer/PyScadaServer/settings.py
   else echo $url "does not exist"; exit 1; fi
   sudo sed -i "s/SECRET_KEY.*/$var2/g" settings.py
+  sudo sed -i "s/PyScada_db'/${answer_db_name}'/g" settings.py
 
   url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/urls.py'
   if `validate_url $url >/dev/null`; then
@@ -258,7 +267,8 @@ sudo -u pyscada python3 manage.py pyscada_daemon init
 if [[ "$answer_update" == "n" ]]; then
 
   cd /var/www/pyscada/PyScadaServer
-  sudo -u pyscada python3 manage.py createsuperuser
+  #sudo -u pyscada python3 manage.py createsuperuser
+  echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('pyscada', 'admin@myproject.com', 'password')" | python3 manage.py shell
 
   # Nginx
   url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/nginx_sample.conf'

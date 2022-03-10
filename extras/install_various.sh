@@ -62,12 +62,16 @@ then
   exit
 elif [ $version -ge $remote_version ] 2>/dev/null
 then
- echo "Local version check ok";
+ echo "Version check ok";
 else
   echo "Old local version :" $remote_version
   echo "$download_version"
   exit
 fi
+
+apt_proxy install -y python3-pip
+echo 'Some python3 packages installed:'
+echo "$(pip3 list | grep -i -E 'pyscada|channels|asgiref')"
 
 read -p "Update only (don't create db, user, copy services, settings and urls...) ? [y/n]: " answer_update
 read -p "Install PyScada clavay fork ? [y/n]: " answer_pyscada
@@ -78,6 +82,14 @@ read -p "Install PyScada-Serial ? [y/n]: " answer_serial
 read -p "Install PyScada-WebService ? [y/n]: " answer_webservice
 read -p "Install PyScada-BACnet ? [y/n]: " answer_bacnet
 read -p "Install channels and redis ? [y/n]: " answer_channels
+
+if [[ "$answer_update" == "n" ]]; then
+  read -p "DB name ? [PyScada_db]: " answer_db_name
+fi
+if [[ "$answer_db_name" == "" ]]; then
+  answer_db_name="PyScada_db"
+fi
+echo $answer_db_name
 
 port_start=8081
 read -e -i "$port_start" -p "Port start : " input
@@ -105,7 +117,7 @@ echo "PyScada stopped"
 apt_proxy update
 apt_proxy -y upgrade
 apt_proxy -y install mariadb-server python3-mysqldb
-apt_proxy install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx libffi-dev
+apt_proxy install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx libffi-dev zlib1g-dev libjpeg-dev
 apt_proxy install -y libatlas-base-dev
 apt_proxy install -y libopenjp2-7
 pip3_proxy install gunicorn pyserial docutils cffi Cython numpy lxml pyvisa pyvisa-py
@@ -147,7 +159,7 @@ if [[ "$answer_channels" == "y" ]]; then
     pip3_proxy_not_rust install --upgrade channels channels-redis asgiref
   else
     #pip3_proxy install cryptography==3.4.6
-    pip3_proxy install --upgrade channels channels-redis asgiref
+    pip3_proxy install --upgrade cryptography==3.4.6 channels channels-redis asgiref
   fi
 fi
 
@@ -218,7 +230,7 @@ do
 if [[ "$answer_update" == "n" ]]; then
 
   #create DB
-  sudo mysql -e "CREATE DATABASE PyScada_db_$i CHARACTER SET utf8;GRANT ALL PRIVILEGES ON PyScada_db_$i.* TO 'PyScada-user'@'localhost' IDENTIFIED BY 'PyScada-user-password';"
+  sudo mysql -e "CREATE DATABASE ${answer_db_name}_${i} CHARACTER SET utf8;GRANT ALL PRIVILEGES ON ${answer_db_name}_${i}.* TO 'PyScada-user'@'localhost' IDENTIFIED BY 'PyScada-user-password';"
 
   cd /var/www/pyscada/
   sudo -u pyscada django-admin startproject PyScadaServer_$i
@@ -233,10 +245,20 @@ if [[ "$answer_update" == "n" ]]; then
       wget_proxy $url -O /var/www/pyscada/PyScadaServer_$i/PyScadaServer_$i/settings.py
   else echo $url "does not exist"; exit 1; fi
   sudo sed -i "s/SECRET_KEY.*/$var2/g" settings.py
-  sudo sed -i "s/PyScada_db/PyScada_db_$i/g" settings.py
-  sudo sed -i "s/PyScadaServer/PyScadaServer_$i/g" settings.py
+  sudo sed -i "s/PyScada_db'/${answer_db_name}_${i}'/g" settings.py
+  sudo sed -i "s/PyScadaServer /PyScadaServer_$i /g" settings.py
+  sudo sed -i "s/PyScadaServer./PyScadaServer_$i./g" settings.py
   sudo sed -i "s/\[%(asctime)s]/[$i][%(asctime)s]/g" settings.py
-  sudo sed -i "/# export properties/i PID_FILE_NAME = '/tmp/pyscada_daemon_$i.pid'\n" settings.py
+  PATTERN='PID_FILE_NAME'
+  FILE='settings.py'
+  if grep -q $PATTERN $FILE;
+   then
+       echo "Here are the Strings with the Pattern '$PATTERN':"
+       echo -e "$(grep $PATTERN $FILE)\n"
+   else
+       sudo sed -i "/# export properties/i PID_FILE_NAME = '/tmp/pyscada_daemon_$i.pid'\n" settings.py
+  fi
+
 
   url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/urls.py'
   if `validate_url $url >/dev/null`; then
@@ -260,7 +282,7 @@ if [[ "$answer_update" == "n" ]]; then
 
   cd /var/www/pyscada/PyScadaServer_$i
   #sudo -u pyscada python3 manage.py createsuperuser
-  echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('pyscada', 'admin@myproject.com', 'ArthaVpn_2019')" | python3 manage.py shell
+  echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('pyscada', 'admin@myproject.com', 'password')" | python3 manage.py shell
 
   # Nginx
   url='https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/nginx_sample.conf'
@@ -268,9 +290,10 @@ if [[ "$answer_update" == "n" ]]; then
       wget_proxy $url -O /etc/nginx/sites-available/pyscada_$i.conf
       sudo sed -i "/proxy_pass http:\/\/127.0.0.1:8090/d" /etc/nginx/sites-available/pyscada_$i.conf
       sudo sed -i "/proxy_pass http:\/\/127.0.0.1:8091/d" /etc/nginx/sites-available/pyscada_$i.conf
-      sudo sed -i "s/app_server/app_server_$i/g" /etc/nginx/sites-available/pyscada_$i.conf
-      sudo sed -i "s/80/$i/g" /etc/nginx/sites-available/pyscada_$i.conf
-      sudo sed -i "s/443/443${i:2:2}/g" /etc/nginx/sites-available/pyscada_$i.conf
+      sudo sed -i "s/app_server {/app_server_$i {/g" /etc/nginx/sites-available/pyscada_$i.conf
+      sudo sed -i "s/app_server;/app_server_$i;/g" /etc/nginx/sites-available/pyscada_$i.conf
+      sudo sed -i "s/80;/$i;/g" /etc/nginx/sites-available/pyscada_$i.conf
+      sudo sed -i "s/443 /443${i:2:2} /g" /etc/nginx/sites-available/pyscada_$i.conf
       sudo sed -i "s/gunicorn.sock/gunicorn_$i.sock/g" /etc/nginx/sites-available/pyscada_$i.conf
       sudo ln -s /etc/nginx/sites-available/pyscada_$i.conf /etc/nginx/sites-enabled/
       sudo rm /etc/nginx/sites-enabled/default
@@ -301,7 +324,7 @@ if [[ "$answer_update" == "n" ]]; then
   if `validate_url $url >/dev/null`; then
       wget_proxy $url -O /etc/systemd/system/pyscada_$i.service
       sudo sed -i "s/pyscada_daemon.pid/pyscada_daemon_$i.pid/g" /etc/systemd/system/pyscada_$i.service
-      sudo sed -i "s/PyScadaServer/PyScadaServer_$i/g" /etc/systemd/system/pyscada_$i.service
+      sudo sed -i "s/PyScadaServer\//PyScadaServer_$i\//g" /etc/systemd/system/pyscada_$i.service
   else echo $url "does not exist"; exit 1; fi
 fi
 
