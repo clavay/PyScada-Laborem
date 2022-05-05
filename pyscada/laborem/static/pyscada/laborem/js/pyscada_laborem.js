@@ -1,12 +1,12 @@
 /* Javascript library for the PyScada-Laborem web client based on jquery,
 
-version 0.7.6
+version 0.7.7
 
 Copyright (c) 2018 Camille Lavayssière
 Licensed under the GPL.
 
 */
-var version = "0.7.6";
+var version = "0.7.7";
 var CONNECTION_ID = "";
 var USER_TYPE = "";
 var CONNECTION_ACCEPTED = 0;
@@ -982,6 +982,7 @@ $( document ).ready(function() {
     $(".camera-img").attr('onload', "$(this).attr('data-loaded', 1)");
 
     // Hide some buttons
-    $(".bootstrap-switch-id-AutoUpdateButton").hide();
-    $('#ReadAllTask').hide();
+    //$(".bootstrap-switch-id-AutoUpdateButton").hide();
+    $("AutoUpdateButtonParent").hide();
+    $('#ReadAllTask').parent().parent().hide();
 });

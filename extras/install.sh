@@ -81,6 +81,15 @@ else
   exit
 fi
 
+echo 'date :'
+echo date
+read -p "Is the date correct ? [y/n]: " answer_date
+if [[ "answer_date" == "n" ]]; then
+  exit
+fi
+
+apt_proxy update
+apt_proxy -y upgrade
 apt_proxy install -y python3-pip
 echo 'Some python3 packages installed:'
 echo "$(pip3 list | grep -i -E 'pyscada|channels|asgiref')"

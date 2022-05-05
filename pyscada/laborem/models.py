@@ -4,11 +4,10 @@ from __future__ import unicode_literals
 from pyscada.models import Device, Unit, Variable, VariableProperty, DeviceWriteTask, RecordedData
 from pyscada.gpio.models import GPIOVariable
 from pyscada.visa.models import VISADevice
-from pyscada.hmi.models import WidgetContentModel, Page
-from . import PROTOCOL_ID
+from pyscada.hmi.models import WidgetContentModel, Page, Form
+from . import PROTOCOL_ID, version as laborem_version
 
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.template.loader import get_template
 from django.contrib.auth.models import User, Group
 
@@ -19,7 +18,6 @@ import time
 logger = logging.getLogger(__name__)
 
 
-@python_2_unicode_compatible
 class LaboremMotherboardIOConfig(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
@@ -111,7 +109,6 @@ class LaboremMotherboardIOConfig(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class LaboremMotherboardIOElement(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
@@ -120,7 +117,6 @@ class LaboremMotherboardIOElement(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class LaboremPlugDevice(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
@@ -136,7 +132,6 @@ class LaboremPlugDevice(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class LaboremSubPlugDevice(models.Model):
     master_plug = models.ForeignKey(LaboremPlugDevice, on_delete=models.CASCADE)
     sub_name = models.CharField(default='', max_length=255)
@@ -152,7 +147,6 @@ class LaboremSubPlugDevice(models.Model):
         return self.sub_name
 
 
-@python_2_unicode_compatible
 class LaboremMotherboardDevice(WidgetContentModel):
     laboremmotherboard_device = models.OneToOneField(Device, blank=True, null=True, on_delete=models.CASCADE)
     MotherboardIOConfig = models.ForeignKey('LaboremMotherboardIOConfig', blank=True, null=True,
@@ -371,10 +365,27 @@ class LaboremMotherboardDevice(WidgetContentModel):
         main_template = get_template('DUT_selector.html')
         main_content = main_template.render(dict(dut_selector=self))
         sidebar_content = None
-        return main_content, sidebar_content
+        visible_robot_element_list = LaboremRobotElement.objects.all()
+        visible_robot_base_list = LaboremRobotBase.objects.all()
+        try:
+            form_top10qa = Form.objects.get(title="TOP10QA")
+        except (Form.DoesNotExist, Form.MultipleObjectsReturned):
+            form_top10qa = ""
+        if LaboremGroupInputPermission.objects.count() == 0:
+            visible_experience_list = LaboremExperience.objects.all()
+        else:
+            visible_experience_list = LaboremExperience.objects.filter(
+                laboremgroupinputpermission__hmi_group__name="worker")
+        context = {'visible_robot_element_list': visible_robot_element_list,
+                   'visible_robot_base_list': visible_robot_base_list,
+                   'form_top10qa': form_top10qa,
+                   'visible_experience_list': visible_experience_list,
+                   'laborem_version': laborem_version,
+                   }
+        opts = {'view_template': 'view_laborem.html', 'add_context': context,}
+        return main_content, sidebar_content, opts
 
 
-@python_2_unicode_compatible
 class LaboremRobotElement(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
@@ -395,7 +406,6 @@ class LaboremRobotElement(models.Model):
         return True
 
 
-@python_2_unicode_compatible
 class LaboremRobotBase(WidgetContentModel):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
@@ -435,14 +445,30 @@ class LaboremRobotBase(WidgetContentModel):
 
         :return: main panel html and sidebar html as
         """
-        visible_robot_element_list = LaboremRobotElement.objects.all()
+
         main_template = get_template('robot_selector.html')
         main_content = main_template.render(dict(base=self, visible_robot_element_list=visible_robot_element_list))
         sidebar_content = None
-        return main_content, sidebar_content
+        visible_robot_element_list = LaboremRobotElement.objects.all()
+        visible_robot_base_list = LaboremRobotBase.objects.all()
+        try:
+            form_top10qa = Form.objects.get(title="TOP10QA")
+        except (Form.DoesNotExist, Form.MultipleObjectsReturned):
+            form_top10qa = ""
+        if LaboremGroupInputPermission.objects.count() == 0:
+            visible_experience_list = LaboremExperience.objects.all()
+        else:
+            visible_experience_list = LaboremExperience.objects.filter(
+                laboremgroupinputpermission__hmi_group__name="worker")
+        context = {'visible_robot_element_list': visible_robot_element_list,
+                   'visible_robot_base_list': visible_robot_base_list,
+                   'form_top10qa': form_top10qa,
+                   'visible_experience_list': visible_experience_list,
+                   'laborem_version': laborem_version,
+                   }
+        opts = {'view_template': 'view_laborem.html', 'add_context': context}
+        return main_content, sidebar_content, opts
 
-
-@python_2_unicode_compatible
 class LaboremTOP10(models.Model):
     name = models.CharField(default='', max_length=255)
     description = models.TextField(default='', verbose_name="Description", null=True)
@@ -475,7 +501,6 @@ class LaboremTOP10(models.Model):
         verbose_name_plural = 'Laborem TOP10 Questions/Answers'
 
 
-@python_2_unicode_compatible
 class LaboremTOP10Score(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     TOP10QA = models.ForeignKey(LaboremTOP10, null=True, on_delete=models.SET_NULL)
@@ -495,7 +520,6 @@ class LaboremTOP10Score(models.Model):
         verbose_name_plural = 'Laborem TOP10 Scores'
 
 
-@python_2_unicode_compatible
 class LaboremTOP10Ranking(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     score = models.FloatField(default=0)
@@ -510,7 +534,6 @@ class LaboremTOP10Ranking(models.Model):
         ordering = ['-score']
 
 
-@python_2_unicode_compatible
 class LaboremExperience(models.Model):
     page = models.OneToOneField(Page, null=True, on_delete=models.SET_NULL)
     description = models.TextField(default='', verbose_name="Description", null=True)
@@ -521,7 +544,6 @@ class LaboremExperience(models.Model):
         return str(self.page.link_title) if self.page is not None else str(self.pk)
 
 
-@python_2_unicode_compatible
 class LaboremGroupInputPermission(models.Model):
     hmi_group = models.OneToOneField(Group, null=True, on_delete=models.SET_NULL)
     variables = models.ManyToManyField(Variable, blank=True)
@@ -535,7 +557,6 @@ class LaboremGroupInputPermission(models.Model):
         return self.hmi_group.name
 
 
-@python_2_unicode_compatible
 class LaboremUser(models.Model):
     user = models.OneToOneField(User, null=True, on_delete=models.SET_NULL)
     laborem_group_input = models.ForeignKey(LaboremGroupInputPermission, null=True, blank=True,

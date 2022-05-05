@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "view.html" %}
 {% load i18n staticfiles %}
 
 {% block head_css %}
@@ -14,8 +14,6 @@
 {% endblock %}
 
 {% block title %}{{ view_title }} - PyScada-Laborem Control Center{% endblock %}
-
-{% block body_confic_data %} data-data-file="json/cache_data/" {% endblock %}
 
 {% block top_menu_left %}
     {% include "top_menu_left.html" %}
@@ -40,4 +38,3 @@
 {% block script_bottom %}
     {% include "script_bottom.html" %}
 {% endblock %}
-
