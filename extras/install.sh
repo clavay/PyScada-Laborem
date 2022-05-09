@@ -5,7 +5,7 @@ or wget https://s.42l.fr/pyscada -O install.sh \n
 sudo chmod a+x install.sh \n
 sudo ./install.sh'
 
-version=7
+version=8
 
 echo "Local version" $version
 
@@ -82,9 +82,9 @@ else
 fi
 
 echo 'date :'
-echo date
+echo $(date)
 read -p "Is the date correct ? [y/n]: " answer_date
-if [[ "answer_date" == "n" ]]; then
+if [[ "$answer_date" == "n" ]]; then
   exit
 fi
 
@@ -126,8 +126,6 @@ echo "Stopping PyScada"
 sudo systemctl stop pyscada gunicorn gunicorn.socket
 echo "PyScada stopped"
 
-apt_proxy update
-apt_proxy -y upgrade
 apt_proxy -y install mariadb-server python3-mysqldb
 apt_proxy install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx libffi-dev zlib1g-dev libjpeg-dev
 apt_proxy install -y libatlas-base-dev

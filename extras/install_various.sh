@@ -4,7 +4,7 @@ wget https://raw.githubusercontent.com/clavay/PyScada-Laborem/master/extras/inst
 sudo chmod a+x install_various.sh \n
 sudo ./install_various.sh'
 
-version=5
+version=6
 
 echo "Local version" $version
 
@@ -69,6 +69,15 @@ else
   exit
 fi
 
+echo 'date :'
+echo $(date)
+read -p "Is the date correct ? [y/n]: " answer_date
+if [[ "$answer_date" == "n" ]]; then
+  exit
+fi
+
+apt_proxy update
+apt_proxy -y upgrade
 apt_proxy install -y python3-pip
 echo 'Some python3 packages installed:'
 echo "$(pip3 list | grep -i -E 'pyscada|channels|asgiref')"
@@ -114,8 +123,6 @@ sudo systemctl stop pyscada gunicorn gunicorn.socket
 pgstop
 echo "PyScada stopped"
 
-apt_proxy update
-apt_proxy -y upgrade
 apt_proxy -y install mariadb-server python3-mysqldb
 apt_proxy install -y python3-pip libhdf5-103 libhdf5-dev python3-dev nginx libffi-dev zlib1g-dev libjpeg-dev
 apt_proxy install -y libatlas-base-dev

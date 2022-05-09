@@ -446,9 +446,6 @@ class LaboremRobotBase(WidgetContentModel):
         :return: main panel html and sidebar html as
         """
 
-        main_template = get_template('robot_selector.html')
-        main_content = main_template.render(dict(base=self, visible_robot_element_list=visible_robot_element_list))
-        sidebar_content = None
         visible_robot_element_list = LaboremRobotElement.objects.all()
         visible_robot_base_list = LaboremRobotBase.objects.all()
         try:
@@ -460,6 +457,9 @@ class LaboremRobotBase(WidgetContentModel):
         else:
             visible_experience_list = LaboremExperience.objects.filter(
                 laboremgroupinputpermission__hmi_group__name="worker")
+        main_template = get_template('robot_selector.html')
+        main_content = main_template.render(dict(base=self, visible_robot_element_list=visible_robot_element_list))
+        sidebar_content = None
         context = {'visible_robot_element_list': visible_robot_element_list,
                    'visible_robot_base_list': visible_robot_base_list,
                    'form_top10qa': form_top10qa,
@@ -468,6 +468,7 @@ class LaboremRobotBase(WidgetContentModel):
                    }
         opts = {'view_template': 'view_laborem.html', 'add_context': context}
         return main_content, sidebar_content, opts
+
 
 class LaboremTOP10(models.Model):
     name = models.CharField(default='', max_length=255)
