@@ -983,6 +983,6 @@ $( document ).ready(function() {
 
     // Hide some buttons
     //$(".bootstrap-switch-id-AutoUpdateButton").hide();
-    $("AutoUpdateButtonParent").hide();
-    $('#ReadAllTask').parent().parent().hide();
+    $(".AutoUpdateButtonParent").hide();
+    $('.ReadAllTask').parent().parent().hide();
 });
