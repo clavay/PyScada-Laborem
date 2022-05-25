@@ -285,7 +285,7 @@ if [[ "$answer_update" == "n" ]]; then
       sudo rm /etc/nginx/sites-enabled/default
       sudo mkdir /etc/nginx/ssl
       # the certificate will be valid for 5 Years,
-      sudo openssl req -x509 -nodes -days 1780 -newkey rsa:2048 -keyout /etc/nginx/ssl/pyscada_server.key -out /etc/nginx/ssl/pyscada_server.crt
+      sudo openssl req -x509 -nodes -days 1780 -newkey rsa:2048 -keyout /etc/nginx/ssl/pyscada_server.key -out /etc/nginx/ssl/pyscada_server.crt -subj '/CN=www.mydom.com/O=My Company Name LTD./C=US'
       sudo systemctl enable nginx.service # enable autostart on boot
       sudo systemctl restart nginx
   else echo $url "does not exist"; exit 1; fi
