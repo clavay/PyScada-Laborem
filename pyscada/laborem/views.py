@@ -7,7 +7,8 @@ from pyscada.hmi.models import Form
 from pyscada.hmi.models import GroupDisplayPermission
 from pyscada.hmi.models import Widget
 from pyscada.hmi.models import View
-from pyscada.hmi.models import Page
+from pyscada.hmi.models import Page, CustomHTMLPanel, Chart, ProcessFlowDiagram
+from pyscada.utils import get_group_display_permission_list
 
 from pyscada.laborem import version as laborem_version
 from pyscada.models import Variable, VariableProperty, DeviceWriteTask
@@ -65,7 +66,7 @@ def index(request):
     if GroupDisplayPermission.objects.count() == 0:
         view_list = View.objects.all()
     else:
-        view_list = View.objects.filter(groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).distinct()
+        view_list = get_group_display_permission_list(View.objects, request.user.groups.all())
     c = {
         'user': request.user,
         'view_list': view_list,
@@ -90,32 +91,27 @@ def view_laborem(request, link_title):
         # no groups
         page_list = v.pages.all()
         sliding_panel_list = v.sliding_panel_menus.all()
-
         visible_widget_list = Widget.objects.filter(page__in=page_list.iterator()).values_list('pk', flat=True)
-        # visible_custom_html_panel_list = CustomHTMLPanel.objects.all().values_list('pk', flat=True)
-        # visible_chart_list = Chart.objects.all().values_list('pk', flat=True)
+        visible_custom_html_panel_list = CustomHTMLPanel.objects.all().values_list('pk', flat=True)
+        visible_chart_list = Chart.objects.all().values_list('pk', flat=True)
         visible_control_element_list = ControlItem.objects.all().values_list('pk', flat=True)
         visible_form_list = Form.objects.all().values_list('pk', flat=True)
+        visible_process_flow_diagram_list = ProcessFlowDiagram.objects.all().values_list('pk', flat=True)
     else:
-        page_list = v.pages.filter(groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).distinct()
-
-        sliding_panel_list = v.sliding_panel_menus.filter(
-            groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).distinct()
-
-        visible_widget_list = Widget.objects.filter(
-            groupdisplaypermission__hmi_group__in=request.user.groups.iterator(),
+        page_list = get_group_display_permission_list(v.pages, request.user.groups.all())
+        sliding_panel_list = get_group_display_permission_list(v.sliding_panel_menus, request.user.groups.all())
+        visible_widget_list = get_group_display_permission_list(Widget.objects, request.user.groups.all()).filter(
             page__in=page_list.iterator()).values_list('pk', flat=True)
-        """
-        # todo update permission model to reflect new widget structure
-        visible_custom_html_panel_list = CustomHTMLPanel.objects.filter(
-            groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).values_list('pk', flat=True)
-        visible_chart_list = Chart.objects.filter(
-            groupdisplaypermission__hmi_group__in=request.user.groups.iterator()).values_list('pk', flat=True)
-        """
-        visible_control_element_list = GroupDisplayPermission.objects.filter(
-            hmi_group__in=request.user.groups.iterator()).values_list('control_items', flat=True)
-        visible_form_list = GroupDisplayPermission.objects.filter(
-            hmi_group__in=request.user.groups.iterator()).values_list('forms', flat=True)
+        visible_custom_html_panel_list = get_group_display_permission_list(
+            CustomHTMLPanel.objects, request.user.groups.all()).values_list('pk', flat=True)
+        visible_chart_list = get_group_display_permission_list(Chart.objects, request.user.groups.all()). \
+            values_list('pk', flat=True)
+        visible_control_element_list = get_group_display_permission_list(
+            ControlItem.objects, request.user.groups.all()).values_list('pk', flat=True)
+        visible_form_list = get_group_display_permission_list(Form.objects, request.user.groups.all()). \
+            values_list('pk', flat=True)
+        visible_process_flow_diagram_list = get_group_display_permission_list(
+            ProcessFlowDiagram.objects, request.user.groups.all()).values_list('pk', flat=True)
 
     visible_robot_element_list = LaboremRobotElement.objects.all()
     visible_robot_base_list = LaboremRobotBase.objects.all()
@@ -477,15 +473,18 @@ def calculate_note(level, score, answer, student_answer):
 def rank_top10(request):
     time.sleep(2)
     LaboremTOP10Ranking.objects.all().delete()
+    ranks = []
+    scores = LaboremTOP10Score.objects.all()
     for user in LaboremTOP10Score.objects.values_list('user').distinct():
         score_total = 0
         found = False
-        for item in LaboremTOP10Score.objects.filter(user=user, active=True).values_list('TOP10QA').distinct():
+        for item in scores.filter(user=user, active=True).values_list('TOP10QA').distinct():
             score_total += LaboremTOP10Score.objects.filter(user=user, TOP10QA=item, active=True).order_by('id').first().note
             found = True
         if found:
             rank = LaboremTOP10Ranking(user=User.objects.get(pk=user[0]), score=score_total)
-            rank.save()
+            ranks.append(rank)
+    LaboremTOP10Ranking.objects.bulk_create(ranks)
     top10ranking_list = LaboremTOP10Ranking.objects.all().order_by('-score')
     data = ""
     for item in top10ranking_list:
