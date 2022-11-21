@@ -1,4 +1,4 @@
-{% load i18n staticfiles %}
+{% load i18n static %}
 {% for js_file in javascript_files_list %}
     <script language="javascript" type="text/javascript" src={{ js_file.src }}></script>
 {% endfor %}

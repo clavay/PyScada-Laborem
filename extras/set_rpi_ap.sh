@@ -79,11 +79,11 @@ apt_proxy update
 apt_proxy -y upgrade
 
 # Install AP and Management Software
-apt_proxy install hostapd
+apt_proxy install -y hostapd
 sudo systemctl unmask hostapd
 sudo systemctl enable hostapd
-apt_proxy install dnsmasq
-sudo DEBIAN_FRONTEND=noninteractive apt_proxy -y netfilter-persistent iptables-persistent
+apt_proxy install -y dnsmasq
+sudo DEBIAN_FRONTEND=noninteractive apt_proxy -y install netfilter-persistent iptables-persistent
 
 # Set up the Network Router
 # Define the Wireless Interface IP Configuration

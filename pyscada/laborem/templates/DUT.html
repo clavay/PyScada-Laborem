@@ -1,4 +1,4 @@
-{% load i18n staticfiles %}
+{% load i18n static %}
 {% if plug.laboremsubplugdevice_set.count %}
     {% for sub_plug in plug.laboremsubplugdevice_set.all %}
         <a href="javascript:;" class="list-group-item list-dut-item" data-img="{% if sub_plug.sub_plug_image %}{{ sub_plug.sub_plug_image.url }}{% elif plug.plug_image %}{{ plug.plug_image.url }}{% else %}{% static 'pyscada/laborem/img/no_img.jpg' %}{% endif %}" data-motherboard-id="{{ dut_selector.pk }}" data-plug-id="{{ plug_id }}" data-sub-plug-id="{{ sub_plug.pk }}" data-plug-name="{{ plug.name|upper }}">{{ plug.name }} {{ sub_plug.sub_name }}
