@@ -806,7 +806,7 @@ def connect_check_visa(config, idn=True):
     range_i = range(0, 10)
     for i in range_i:
         try:
-            inst = config.get_device_instance().get_handler_instance()
+            inst = config.get_device_instance()._h
         except Device.DoesNotExist:
             logger.error("Script Laborem - Device %s does not exist" % config)
         except AttributeError:
