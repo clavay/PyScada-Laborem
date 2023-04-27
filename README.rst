@@ -288,4 +288,4 @@ Contribute
 License
 -------
 
-The project is licensed under the _GNU General Public License v3 (GPLv3)_.-
+The project is licensed under the _GNU AFFERO GENERAL PUBLIC LICENSE Version 3 (AGPLv3)_.
